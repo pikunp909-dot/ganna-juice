@@ -201,7 +201,7 @@ function AnimatedWords({ text, className, start = 0, goldWords = [] }) {
 /* ================= Nav ================= */
 
 function Nav({ onMenu, onContact }) {
-  const { lang, setLang } = useLanguage();
+  const { t, lang, setLang } = useLanguage();
   const targetLang = lang === "en" ? "or" : "en";
   const targetLabel = lang === "en" ? "ଓଡ଼ିଆ" : "EN";
 
