@@ -1,7 +1,20 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../auth";
+import { api } from "../api";
+import { Spinner } from "../components/ui";
+
+// Converts a base64url VAPID key (from the API) into the Uint8Array
+// that pushManager.subscribe expects.
+function urlBase64ToUint8Array(base64) {
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  const b64 = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(b64);
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return bytes;
+}
 
 const NAV = [
   { to: "/admin", label: "Analytics", end: true, Icon: ChartIcon },
@@ -24,8 +37,52 @@ export default function DashboardLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [notifPermission, setNotifPermission] = useState(
+    () => (typeof window !== "undefined" && "Notification" in window ? Notification.permission : "unsupported")
+  );
+  const [toast, setToast] = useState(null);
 
   const title = TITLES[location.pathname] || "Dashboard";
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  function showToast(type, message) {
+    setToast({ type, message, key: Date.now() });
+  }
+
+  async function enableNotifications() {
+    if (!("Notification" in window)) {
+      showToast("error", "This browser doesn't support notifications");
+      return;
+    }
+    setNotifLoading(true);
+    try {
+      const perm = await Notification.requestPermission();
+      setNotifPermission(perm);
+      if (perm !== "granted") {
+        showToast("error", "Notification permission denied");
+        return;
+      }
+
+      const reg = await navigator.serviceWorker.ready;
+      const { publicKey } = await api.get("/notifications/vapid");
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
+      });
+      await api.post("/notifications/subscribe", subscription.toJSON());
+      showToast("success", "Notifications enabled — you'll get order alerts!");
+    } catch (err) {
+      showToast("error", err.message || "Failed to enable notifications");
+    } finally {
+      setNotifLoading(false);
+    }
+  }
 
   function handleLogout() {
     logout();
@@ -200,6 +257,23 @@ export default function DashboardLayout() {
           </div>
 
           <div className="relative flex items-center gap-4">
+            {notifPermission === "default" && (
+              <button
+                onClick={enableNotifications}
+                disabled={notifLoading}
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-sm font-bold text-cream px-4 py-2.5 transition hover:border-gold/50 hover:text-gold hover:shadow-glowGoldSoft disabled:opacity-60 disabled:pointer-events-none"
+                title="Enable push notifications for new orders"
+              >
+                {notifLoading ? (
+                  <Spinner className="w-4 h-4" />
+                ) : (
+                  <BellIcon className="w-4 h-4" />
+                )}
+                <span className="hidden sm:inline">
+                  {notifLoading ? "Enabling…" : "Enable Notifications"}
+                </span>
+              </button>
+            )}
             <div className="hidden md:flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-gold-metal grid place-items-center text-sm font-bold text-forest shadow-glowGoldSoft">
                 {admin?.email?.charAt(0)?.toUpperCase() || "O"}
@@ -224,6 +298,27 @@ export default function DashboardLayout() {
           <Outlet />
         </main>
       </div>
+
+      {/* Notification result toast */}
+      <AnimatePresence>
+        {toast && (
+          <div className="fixed bottom-5 inset-x-0 z-[60] flex justify-center pointer-events-none">
+            <motion.div
+              key={toast.key}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              className={`pointer-events-auto px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl border ${
+                toast.type === "success"
+                  ? "bg-forest2 text-mint border-mint/40"
+                  : "bg-red-950 text-red-200 border-red-500/40"
+              }`}
+            >
+              {toast.message}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -310,6 +405,15 @@ function LogoutIcon(p) {
     <IconBase {...p}>
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
       <path d="M16 17l5-5-5-5M21 12H9" />
+    </IconBase>
+  );
+}
+
+function BellIcon(p) {
+  return (
+    <IconBase {...p}>
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
     </IconBase>
   );
 }

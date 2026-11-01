@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { run, all, get } from "../db.js";
 import requireAdmin from "../middleware/requireAdmin.js";
+import { notifyAllSubscribers } from "../push.js";
 
 const router = Router();
 
@@ -46,6 +47,14 @@ router.post("/", (req, res) => {
 
   const order = get("SELECT * FROM Orders WHERE id = ?", [lastId]);
   order.items = all("SELECT menuItemId, name, quantity, price FROM OrderItems WHERE orderId = ?", [lastId]);
+
+  // Fire-and-forget owner push — never block/break the order response.
+  notifyAllSubscribers({
+    title: "New Order!",
+    body: `₹${total} from ${customerName}`,
+    data: { url: "/orders", orderId: lastId }
+  }).catch((err) => console.error("Order push error:", err.message));
+
   res.status(201).json({ order });
 });
 

@@ -1,5 +1,6 @@
-/* Kunal Juice Admin — service worker.
+/* Sugarcane Juice Owner — service worker.
  * Caches the app shell for offline start; API calls are never cached.
+ * Also handles Web Push: display order notifications, open app on tap.
  */
 const CACHE = "kunal-admin-v1";
 const SHELL = ["/", "/index.html"];
@@ -23,6 +24,48 @@ self.addEventListener("activate", (event) => {
       .then(() => self.clients.claim())
   );
 });
+
+/* -------- Web Push -------- */
+
+self.addEventListener("push", (event) => {
+  let payload = {};
+  try {
+    payload = event.data ? event.data.json() : {};
+  } catch {
+    payload = { title: "New Order!", body: event.data ? event.data.text() : "" };
+  }
+
+  const title = payload.title || "Sugarcane Juice";
+  const options = {
+    body: payload.body || "",
+    icon: "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    vibrate: [120, 60, 120],
+    data: payload.data || { url: "/admin/orders" },
+    tag: "owner-order"
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const url = event.notification.data?.url || "/admin/orders";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ("focus" in client) {
+          client.navigate(url);
+          return client.focus();
+        }
+      }
+      return self.clients.openWindow(url);
+    })
+  );
+});
+
+/* -------- Fetch caching -------- */
 
 self.addEventListener("fetch", (event) => {
   const { request } = event;

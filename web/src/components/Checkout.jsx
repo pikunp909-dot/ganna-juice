@@ -115,19 +115,43 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
   /* ---- whatsapp receipt link ---- */
 
   function waLink() {
-    const itemsText = lines
-      .map((l) => `• ${l.item.name} x${l.qty} — ${inr(l.item.price * l.qty)}`)
+    // Build the receipt from the confirmed order (server response) when
+    // available — the cart is cleared on success, so `total` / `lines`
+    // props drop to 0/empty on the re-render. Fall back to live form state.
+    const o = order;
+    const customerName = o?.customerName || form.customerName;
+    const customerPhone = o?.customerPhone || form.customerPhone;
+    const isDelivery = o ? o.address !== "Pickup" : mode === "Delivery";
+    const address = o ? (isDelivery ? o.address : "") : isDelivery ? form.address : "";
+    const orderMode = isDelivery ? "Delivery" : "Pickup";
+    const orderLines = o?.items && o.items.length ? o.items : lines;
+    const orderTotal = o?.totalAmount ?? total;
+    const payMethod = o?.paymentMethod || paymentMethod;
+    const utrNo = o?.utrNumber || utr.trim();
+
+    // Normalize cart lines ({ item, qty }) and server order items ({ name, quantity, price }).
+    const itemsText = orderLines
+      .map((l) => {
+        const qty = l.qty ?? l.quantity;
+        const name = l.item?.name ?? l.name;
+        const price = l.item?.price ?? l.price;
+        return `• ${qty} x ${name} - ${inr(price * qty)}`;
+      })
       .join("\n");
-    const ref = order ? `#${order.id}` : "";
-    const payLine =
-      paymentMethod === "COD"
-        ? t("waPayCod")
-        : t("waPayUpi").replace("{utr}", utr.trim());
+
     const msg = encodeURIComponent(
-      `${t("waHeader").replace("{ref}", ref)}\n\n${itemsText}\n\n${t("waTotal").replace(
-        "{total}",
-        inr(total)
-      )}\n${payLine}\n\n${t("waConfirm")}`
+      `🥤 *NEW ORDER - Sugarcane Juice* 🥤\n\n` +
+        `👤 *Customer Details:*\n` +
+        `Name: ${customerName}\n` +
+        `Phone: ${customerPhone}\n` +
+        `Mode: ${orderMode}\n` +
+        (isDelivery ? `Address: ${address}\n` : "") +
+        `\n🛒 *Order Summary:*\n` +
+        `${itemsText}\n\n` +
+        `💰 *Total Amount:* ${inr(orderTotal)}\n\n` +
+        `💳 *Payment Method:* ${payMethod === "COD" ? "Cash on Delivery" : "Online (UPI)"}\n` +
+        (payMethod === "UPI" ? `🧾 UTR No: ${utrNo}\n` : "") +
+        `\nPlease confirm my order! 🙏`
     );
     return `https://wa.me/${waDigits}?text=${msg}`;
   }

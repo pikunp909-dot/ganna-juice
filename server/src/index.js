@@ -15,6 +15,7 @@ import orderRoutes from "./routes/orders.js";
 import settingsRoutes from "./routes/settings.js";
 import uploadRoutes from "./routes/upload.js";
 import reviewRoutes from "./routes/reviews.js";
+import notificationRoutes from "./routes/notifications.js";
 
 dotenv.config();
 
@@ -41,6 +42,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/settings", settingsRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 // Production — serve the built SPA from web/dist so a single Express
 // process handles both the API and the React frontend.

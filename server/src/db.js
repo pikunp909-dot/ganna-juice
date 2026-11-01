@@ -98,9 +98,17 @@ export function initSchema() {
       createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS Subscriptions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      endpoint TEXT NOT NULL UNIQUE,
+      keysJson TEXT NOT NULL,
+      createdAt TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_orders_status ON Orders(status);
     CREATE INDEX IF NOT EXISTS idx_orderitems_order ON OrderItems(orderId);
     CREATE INDEX IF NOT EXISTS idx_reviews_created ON Reviews(createdAt);
+    CREATE INDEX IF NOT EXISTS idx_subscriptions_endpoint ON Subscriptions(endpoint);
   `);
 
   // Lightweight migrations — add columns to existing tables if missing.
