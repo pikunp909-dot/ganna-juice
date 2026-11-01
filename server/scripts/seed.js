@@ -7,15 +7,15 @@ import bcrypt from "bcryptjs";
 import { initSchema, run, get } from "../src/db.js";
 
 dotenv.config();
-await initSchema();
+initSchema();
 
 const DEFAULT_ADMIN_EMAIL = process.env.ADMIN_EMAIL || "kunal@ganna.in";
 const DEFAULT_ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "kunal123";
 
 // Admin
-if (!(await get("SELECT id FROM AdminUsers WHERE email = ?", [DEFAULT_ADMIN_EMAIL]))) {
+if (!get("SELECT id FROM AdminUsers WHERE email = ?", [DEFAULT_ADMIN_EMAIL])) {
   const hash = await bcrypt.hash(DEFAULT_ADMIN_PASSWORD, 12);
-  await run("INSERT INTO AdminUsers (email, password, role) VALUES (?, ?, 'admin')", [
+  run("INSERT INTO AdminUsers (email, password, role) VALUES (?, ?, 'admin')", [
     DEFAULT_ADMIN_EMAIL,
     hash
   ]);
@@ -25,8 +25,8 @@ if (!(await get("SELECT id FROM AdminUsers WHERE email = ?", [DEFAULT_ADMIN_EMAI
 }
 
 // Settings row
-if (!(await get("SELECT id FROM Settings WHERE id = 1"))) {
-  await run(
+if (!get("SELECT id FROM Settings WHERE id = 1")) {
+  run(
     `INSERT INTO Settings (id, phone, whatsapp, instagram, telegram, locationUrl, upiId, heroImageUrl)
      VALUES (1, '+91 85949 34375', '+91 85949 34375', 'its_kunal088', 'KUNALYT0',
      'https://www.google.com/maps?q=20.2961,85.8245&z=15&output=embed', 'kunal@okaxis', '')`
@@ -35,8 +35,7 @@ if (!(await get("SELECT id FROM Settings WHERE id = 1"))) {
 }
 
 // Sample menu (only if menu is empty)
-const menuRow = await get("SELECT COUNT(*) AS n FROM Menu");
-const menuCount = Number(menuRow?.n || 0);
+const menuCount = get("SELECT COUNT(*) AS n FROM Menu").n;
 if (menuCount === 0) {
   const items = [
     ["Classic Ganna", "Pure, cold pressed cane juice. Nothing else.", 30],
@@ -47,7 +46,7 @@ if (menuCount === 0) {
     ["Family Pack (1L)", "Full litre of fresh juice. The whole crew covered.", 120]
   ];
   for (const [name, description, price] of items) {
-    await run("INSERT INTO Menu (name, description, price, isAvailable) VALUES (?, ?, ?, 1)", [
+    run("INSERT INTO Menu (name, description, price, isAvailable) VALUES (?, ?, ?, 1)", [
       name,
       description,
       price

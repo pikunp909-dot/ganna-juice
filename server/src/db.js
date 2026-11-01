@@ -1,90 +1,51 @@
 /**
- * DB layer — PostgreSQL via node-postgres (pg).
- * Production flow: DATABASE_URL from Supabase/Neon. All helpers are async;
- * routes await them. SQL placeholders are written as `?` and auto-converted
- * to `$1, $2, ...` so existing route code stays portable.
+ * DB layer — uses Node's built-in SQLite (node:sqlite).
+ * Zero native deps; plain SQL so it ports to PostgreSQL in production
+ * by swapping this file for a pg client with the same exported helpers.
  */
-import pg from "pg";
+import { DatabaseSync } from "node:sqlite";
+import { mkdirSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const { Pool } = pg;
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const dataDir = join(__dirname, "..", "data");
+mkdirSync(dataDir, { recursive: true });
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
-  // Fail fast with a clear message instead of silently defaulting to localhost.
-  // Render shows this in the deploy logs immediately.
-  throw new Error(
-    "DATABASE_URL is not set. Add your Supabase/Neon Postgres connection string " +
-      "to the Render Environment Variables. (See README / docs for the Session Pooler URL.)"
-  );
-}
+const db = new DatabaseSync(join(dataDir, "ganna.db"));
+db.exec("PRAGMA foreign_keys = ON;");
+db.exec("PRAGMA journal_mode = WAL;");
 
-// Supabase/Neon both require TLS by default. rejectUnauthorized: false keeps
-// the encrypted connection working with their managed cert chains.
-// Set PGSSLMODE=disable locally (or for certain proxies) to opt out.
-const ssl = process.env.PGSSLMODE === "disable" ? false : { rejectUnauthorized: false };
-
-const pool = new Pool({
-  connectionString,
-  ssl,
-  max: 10,
-  idleTimeoutMillis: 30_000,
-  connectionTimeoutMillis: 10_000
-});
-
-/* Convert `?` placeholders to Postgres `$1, $2, ...`. */
-function toPg(sql) {
-  let i = 0;
-  return sql.replace(/\?/g, () => `$${++i}`);
-}
-
-/* Auto-append RETURNING id for INSERTs so run() can report lastId. */
-function ensureReturning(sql) {
-  if (/^\s*insert\b/i.test(sql) && !/returning/i.test(sql)) {
-    return `${sql} RETURNING id`;
-  }
-  return sql;
-}
-
-/** Run a statement. Returns { changes, lastId }. */
-export async function run(sql, params = []) {
-  const res = await pool.query(toPg(ensureReturning(sql)), params);
-  let lastId = null;
-  if (res.rows && res.rows.length && res.rows[0] && "id" in res.rows[0]) {
-    lastId = Number(res.rows[0].id);
-  }
-  return { changes: res.rowCount ?? 0, lastId };
+/** Run a statement with optional bound params. Returns { changes, lastInsertRowid }. */
+export function run(sql, params = []) {
+  const stmt = db.prepare(sql);
+  const info = stmt.run(...params);
+  return { changes: Number(info.changes), lastId: Number(info.lastInsertRowid) };
 }
 
 /** Fetch all rows. */
-export async function all(sql, params = []) {
-  const res = await pool.query(toPg(sql), params);
-  return res.rows;
+export function all(sql, params = []) {
+  return db.prepare(sql).all(...params);
 }
 
 /** Fetch first row or undefined. */
-export async function get(sql, params = []) {
-  const res = await pool.query(toPg(sql), params);
-  return res.rows[0];
+export function get(sql, params = []) {
+  return db.prepare(sql).get(...params);
 }
 
-/** Raw query (for transactions / advanced use). */
-export function query(sql, params = []) {
-  return pool.query(toPg(sql), params);
-}
-
-/** Create all tables if missing. Idempotent — safe to run on every boot. */
-export async function initSchema() {
-  await pool.query(`
+/** Create all tables if missing. */
+export function initSchema() {
+  db.exec(`
     CREATE TABLE IF NOT EXISTS AdminUsers (
-      id BIGSERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL UNIQUE,
       password TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'admin',
-      createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS Settings (
-      id BIGINT PRIMARY KEY CHECK (id = 1),
+      id INTEGER PRIMARY KEY CHECK (id = 1),
       phone TEXT DEFAULT '',
       whatsapp TEXT DEFAULT '',
       instagram TEXT DEFAULT '',
@@ -95,54 +56,53 @@ export async function initSchema() {
       upiId TEXT DEFAULT '',
       qrCodeUrl TEXT DEFAULT '',
       heroImageUrl TEXT DEFAULT '',
-      updatedAt TIMESTAMPTZ DEFAULT NOW()
+      updatedAt TEXT DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS Menu (
-      id BIGSERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       description TEXT DEFAULT '',
-      price NUMERIC(10,2) NOT NULL,
+      price REAL NOT NULL,
       imageUrl TEXT DEFAULT '',
       isAvailable INTEGER NOT NULL DEFAULT 1,
-      createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS Orders (
-      id BIGSERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       customerName TEXT NOT NULL,
       customerPhone TEXT NOT NULL,
       address TEXT DEFAULT '',
-      totalAmount NUMERIC(10,2) NOT NULL,
+      totalAmount REAL NOT NULL,
       paymentMethod TEXT NOT NULL DEFAULT 'UPI',
       utrNumber TEXT DEFAULT '',
       status TEXT NOT NULL DEFAULT 'Pending',
-      createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS OrderItems (
-      id BIGSERIAL PRIMARY KEY,
-      orderId BIGINT NOT NULL REFERENCES Orders(id) ON DELETE CASCADE,
-      menuItemId BIGINT,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      orderId INTEGER NOT NULL REFERENCES Orders(id) ON DELETE CASCADE,
+      menuItemId INTEGER,
       name TEXT NOT NULL,
       quantity INTEGER NOT NULL,
-      price NUMERIC(10,2) NOT NULL
+      price REAL NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS Reviews (
-      id BIGSERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       customerName TEXT NOT NULL,
       rating INTEGER NOT NULL,
       comment TEXT DEFAULT '',
-      createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE TABLE IF NOT EXISTS Subscriptions (
-      id BIGSERIAL PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       endpoint TEXT NOT NULL UNIQUE,
       keysJson TEXT NOT NULL,
-      type TEXT NOT NULL DEFAULT 'admin',
-      createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
     CREATE INDEX IF NOT EXISTS idx_orders_status ON Orders(status);
@@ -150,6 +110,23 @@ export async function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_reviews_created ON Reviews(createdAt);
     CREATE INDEX IF NOT EXISTS idx_subscriptions_endpoint ON Subscriptions(endpoint);
   `);
+
+  // Lightweight migrations — add columns to existing tables if missing.
+  const settingsCols = db.prepare("PRAGMA table_info(Settings)").all().map((c) => c.name);
+  if (!settingsCols.includes("qrCodeUrl")) {
+    db.exec("ALTER TABLE Settings ADD COLUMN qrCodeUrl TEXT DEFAULT ''");
+  }
+  if (!settingsCols.includes("pincode")) {
+    db.exec("ALTER TABLE Settings ADD COLUMN pincode TEXT DEFAULT ''");
+  }
+  if (!settingsCols.includes("exactLocation")) {
+    db.exec("ALTER TABLE Settings ADD COLUMN exactLocation TEXT DEFAULT ''");
+  }
+
+  const orderCols = db.prepare("PRAGMA table_info(Orders)").all().map((c) => c.name);
+  if (!orderCols.includes("paymentMethod")) {
+    db.exec("ALTER TABLE Orders ADD COLUMN paymentMethod TEXT NOT NULL DEFAULT 'UPI'");
+  }
 }
 
-export default pool;
+export default db;

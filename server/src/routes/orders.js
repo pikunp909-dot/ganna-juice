@@ -11,7 +11,7 @@ const router = Router();
  *         items: [{ menuItemId, quantity }] }
  * Server recomputes totals from the Menu table (no trusting client prices).
  */
-router.post("/", async (req, res) => {
+router.post("/", (req, res) => {
   const { customerName, customerPhone, address = "", mode = "Delivery", items = [], paymentMethod = "UPI" } = req.body || {};
   const method = String(paymentMethod).trim().toUpperCase() === "COD" ? "COD" : "UPI";
 
@@ -25,53 +25,51 @@ router.post("/", async (req, res) => {
   let total = 0;
   const lines = [];
   for (const item of items) {
-    const menuItem = await get("SELECT * FROM Menu WHERE id = ?", [Number(item.menuItemId)]);
+    const menuItem = get("SELECT * FROM Menu WHERE id = ?", [Number(item.menuItemId)]);
     if (!menuItem || !menuItem.isAvailable) {
       return res.status(400).json({ error: `Menu item ${item.menuItemId} unavailable` });
     }
     const qty = Math.max(1, Math.floor(Number(item.quantity) || 1));
-    total += Number(menuItem.price) * qty;
+    total += menuItem.price * qty;
     lines.push({ menuItemId: menuItem.id, name: menuItem.name, quantity: qty, price: menuItem.price });
   }
   total = Math.round(total * 100) / 100;
 
-  const { lastId } = await run(
+  const { lastId } = run(
     "INSERT INTO Orders (customerName, customerPhone, address, totalAmount, paymentMethod, status) VALUES (?, ?, ?, ?, ?, 'Pending')",
     [customerName, customerPhone, address === "" && mode === "Pickup" ? "Pickup" : address, total, method]
   );
 
   const stmt = "INSERT INTO OrderItems (orderId, menuItemId, name, quantity, price) VALUES (?, ?, ?, ?, ?)";
   for (const line of lines) {
-    await run(stmt, [lastId, line.menuItemId, line.name, line.quantity, line.price]);
+    run(stmt, [lastId, line.menuItemId, line.name, line.quantity, line.price]);
   }
 
-  const order = await get("SELECT * FROM Orders WHERE id = ?", [lastId]);
-  order.items = await all("SELECT menuItemId, name, quantity, price FROM OrderItems WHERE orderId = ?", [lastId]);
+  const order = get("SELECT * FROM Orders WHERE id = ?", [lastId]);
+  order.items = all("SELECT menuItemId, name, quantity, price FROM OrderItems WHERE orderId = ?", [lastId]);
 
   // Fire-and-forget owner push — never block/break the order response.
-  // Admin-only: customers subscribed for village alerts must not get order pings.
   notifyAllSubscribers({
     title: "New Order!",
     body: `₹${total} from ${customerName}`,
-    data: { url: "/orders", orderId: lastId },
-    type: "admin"
+    data: { url: "/orders", orderId: lastId }
   }).catch((err) => console.error("Order push error:", err.message));
 
   res.status(201).json({ order });
 });
 
 // Admin — all orders with items.
-router.get("/", requireAdmin, async (_req, res) => {
-  const orders = await all("SELECT * FROM Orders ORDER BY createdAt DESC, id DESC");
+router.get("/", requireAdmin, (_req, res) => {
+  const orders = all("SELECT * FROM Orders ORDER BY createdAt DESC, id DESC");
   for (const o of orders) {
-    o.items = await all("SELECT name, quantity, price FROM OrderItems WHERE orderId = ?", [o.id]);
+    o.items = all("SELECT name, quantity, price FROM OrderItems WHERE orderId = ?", [o.id]);
   }
   res.json({ orders });
 });
 
 // Admin — analytics rollups: today, this month, verified payment split,
 // optional custom date range, and the last 7 days for the sales graph.
-router.get("/stats", requireAdmin, async (req, res) => {
+router.get("/stats", requireAdmin, (req, res) => {
   const now = new Date();
   const y = now.getFullYear();
   const m = now.getMonth();
@@ -83,8 +81,8 @@ router.get("/stats", requireAdmin, async (req, res) => {
   const monthStart = iso(new Date(y, m, 1));
   const monthEnd = iso(new Date(y, m + 1, 1));
 
-  const range = async (start, end) => {
-    const row = await get(
+  const range = (start, end) => {
+    const row = get(
       `SELECT COALESCE(SUM(totalAmount), 0) AS revenue, COUNT(*) AS orders
        FROM Orders
        WHERE status = 'Verified' AND createdAt >= ? AND createdAt < ?`,
@@ -93,8 +91,8 @@ router.get("/stats", requireAdmin, async (req, res) => {
     return { revenue: Number(row?.revenue || 0), orders: Number(row?.orders || 0) };
   };
 
-  const splitBetween = async (start, end) => {
-    const row = await get(
+  const splitBetween = (start, end) => {
+    const row = get(
       `SELECT
          COALESCE(SUM(CASE WHEN paymentMethod = 'UPI' THEN totalAmount ELSE 0 END), 0) AS upiAmount,
          COALESCE(SUM(CASE WHEN paymentMethod = 'COD' THEN totalAmount ELSE 0 END), 0) AS codAmount,
@@ -112,9 +110,9 @@ router.get("/stats", requireAdmin, async (req, res) => {
     };
   };
 
-  const today = await range(todayStart, todayEnd);
-  const month = await range(monthStart, monthEnd);
-  const paymentSplit = await splitBetween("0000-01-01 00:00:00", "9999-12-31 23:59:59");
+  const today = range(todayStart, todayEnd);
+  const month = range(monthStart, monthEnd);
+  const paymentSplit = splitBetween("0000-01-01 00:00:00", "9999-12-31 23:59:59");
 
   // Optional custom range: ?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD
   let rangeStats = null;
@@ -137,13 +135,13 @@ router.get("/stats", requireAdmin, async (req, res) => {
     }
     const startIso = iso(start);
     const endIso = iso(new Date(ey, em - 1, ed + 1));
-    rangeStats = await range(startIso, endIso);
-    rangeSplit = await splitBetween(startIso, endIso);
+    rangeStats = range(startIso, endIso);
+    rangeSplit = splitBetween(startIso, endIso);
   }
 
   // Last 7 days — local calendar days ending today.
   const weekStart = iso(new Date(y, m, d - 6));
-  const weekRows = await all(
+  const weekRows = all(
     `SELECT createdAt, totalAmount FROM Orders
      WHERE status = 'Verified' AND createdAt >= ? AND createdAt < ?`,
     [weekStart, todayEnd]
@@ -179,9 +177,9 @@ router.get("/stats", requireAdmin, async (req, res) => {
 });
 
 // Admin — mark payment verified (UTR checked by owner).
-router.patch("/:id/verify", requireAdmin, async (req, res) => {
+router.patch("/:id/verify", requireAdmin, (req, res) => {
   const id = Number(req.params.id);
-  const order = await get("SELECT * FROM Orders WHERE id = ?", [id]);
+  const order = get("SELECT * FROM Orders WHERE id = ?", [id]);
   if (!order) return res.status(404).json({ error: "Order not found" });
 
   const { utrNumber, status = "Verified" } = req.body || {};
@@ -189,16 +187,16 @@ router.patch("/:id/verify", requireAdmin, async (req, res) => {
   if (!utr) {
     return res.status(400).json({ error: "utrNumber is required to verify payment" });
   }
-  await run("UPDATE Orders SET utrNumber = ?, status = ? WHERE id = ?", [utr, status, id]);
-  res.json({ order: await get("SELECT * FROM Orders WHERE id = ?", [id]) });
+  run("UPDATE Orders SET utrNumber = ?, status = ? WHERE id = ?", [utr, status, id]);
+  res.json({ order: get("SELECT * FROM Orders WHERE id = ?", [id]) });
 });
 
 // Admin — delete an order (spam/cancelled). OrderItems cascade via FK.
-router.delete("/:id", requireAdmin, async (req, res) => {
+router.delete("/:id", requireAdmin, (req, res) => {
   const id = Number(req.params.id);
-  const order = await get("SELECT * FROM Orders WHERE id = ?", [id]);
+  const order = get("SELECT * FROM Orders WHERE id = ?", [id]);
   if (!order) return res.status(404).json({ error: "Order not found" });
-  await run("DELETE FROM Orders WHERE id = ?", [id]);
+  run("DELETE FROM Orders WHERE id = ?", [id]);
   res.json({ ok: true });
 });
 

@@ -29,7 +29,7 @@ router.post("/login", loginLimiter, async (req, res) => {
     return res.status(400).json({ error: "Email and password are required" });
   }
 
-  const admin = await get("SELECT * FROM AdminUsers WHERE email = ?", [email.trim().toLowerCase()]);
+  const admin = get("SELECT * FROM AdminUsers WHERE email = ?", [email.trim().toLowerCase()]);
 
   // Compare against the real hash or a dummy — same cost either way.
   const hash = admin ? admin.password : DUMMY_HASH;
@@ -65,14 +65,14 @@ router.post("/change-password", requireAdmin, async (req, res) => {
     return res.status(400).json({ error: "New password must be at least 8 characters" });
   }
 
-  const admin = await get("SELECT * FROM AdminUsers WHERE id = ?", [req.admin.id]);
+  const admin = get("SELECT * FROM AdminUsers WHERE id = ?", [req.admin.id]);
   const ok = await bcrypt.compare(currentPassword || "", admin.password);
   if (!ok) {
     return res.status(401).json({ error: "Current password is incorrect" });
   }
 
   const hash = await bcrypt.hash(newPassword, 12);
-  await run("UPDATE AdminUsers SET password = ? WHERE id = ?", [hash, admin.id]);
+  run("UPDATE AdminUsers SET password = ? WHERE id = ?", [hash, admin.id]);
   res.json({ ok: true, message: "Password updated" });
 });
 
