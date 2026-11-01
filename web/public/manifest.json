@@ -1,8 +1,8 @@
 {
-  "name": "Kunal Juice Admin",
-  "short_name": "Admin App",
-  "description": "Owner dashboard for Kunal Juice Store",
-  "start_url": "/admin",
+  "name": "Sugarcane Juice",
+  "short_name": "Sugarcane",
+  "description": "Kunal Juice Store — order fresh sugarcane juice",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
@@ -10,13 +10,13 @@
   "theme_color": "#07110a",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "/icons/customer/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "/icons/customer/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

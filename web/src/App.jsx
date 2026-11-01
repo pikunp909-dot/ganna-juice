@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ProtectedRoute } from "./auth";
 import { CartProvider } from "./cart";
 import Login from "./pages/Login";
@@ -10,7 +11,27 @@ import Orders from "./pages/Orders";
 import Settings from "./pages/Settings";
 import AdminReviews from "./pages/AdminReviews";
 
+// The customer site and the admin panel share one index.html. They must
+// install as separate PWAs, so the manifest + iOS touch icon are swapped
+// based on the current route: /admin and /login use the admin manifest,
+// everything else uses the customer manifest.
+function usePwaManifest() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    const isAdmin = pathname.startsWith("/admin") || pathname.startsWith("/login");
+    const manifest = document.querySelector('link[rel="manifest"]');
+    if (manifest) {
+      manifest.href = isAdmin ? "/admin-manifest.json" : "/manifest.json";
+    }
+    const touch = document.querySelector('link[rel="apple-touch-icon"]');
+    if (touch) {
+      touch.href = isAdmin ? "/icons/admin/icon-192.png" : "/icons/customer/icon-192.png";
+    }
+  }, [pathname]);
+}
+
 export default function App() {
+  usePwaManifest();
   return (
     <Routes>
       {/* Public customer site */}
