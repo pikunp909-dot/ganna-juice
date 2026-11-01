@@ -129,8 +129,348 @@ function StatCard({ tone, label, sub, value, icon, delay }) {
   );
 }
 
+/* ---- Period card (Today / This Month) ---- */
+function PeriodCard({ tone, label, icon, revenue, orders, delay }) {
+  const t = STAT_TONES[tone];
+  const animatedRevenue = useCountUp(revenue, { delay: 250 + delay * 120 });
+  const animatedOrders = useCountUp(orders, { delay: 320 + delay * 120 });
+
+  return (
+    <motion.div variants={cardPop}>
+      <div
+        className={`group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass transition-all duration-500 ${t.border}`}
+      >
+        <div className={`absolute inset-0 bg-gradient-to-br ${t.gradient}`} />
+        <div className={`absolute -top-12 -right-12 w-44 h-44 rounded-full blur-3xl ${t.orb} ${t.orbGlow} transition-transform duration-700 group-hover:scale-125`} />
+        <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(255,255,255,0.06),transparent_50%)]" />
+
+        <div className="relative p-6">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted">{label}</p>
+            <span className={`w-10 h-10 rounded-2xl grid place-items-center ${t.icon}`}>
+              {icon}
+            </span>
+          </div>
+
+          <p className={`font-display text-4xl leading-none ${t.value}`}>
+            {inr(animatedRevenue)}
+          </p>
+
+          <div className="mt-3.5 h-1 rounded-full bg-white/5 overflow-hidden">
+            <motion.div
+              className="h-full rounded-full bg-gradient-to-r from-gold via-gold2 to-goldDark"
+              initial={{ width: "0%" }}
+              animate={{ width: "100%" }}
+              transition={{ delay: 0.4 + delay * 0.12, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            />
+          </div>
+
+          <div className="mt-4 flex items-center gap-2">
+            <span className={`text-sm font-bold ${t.value}`}>
+              {Math.round(animatedOrders).toLocaleString("en-IN")}
+            </span>
+            <span className="text-xs text-muted">
+              {Math.round(animatedOrders) === 1 ? "order" : "orders"} · verified
+            </span>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ---- Payment split (UPI vs COD) stacked bar ---- */
+function PaymentSplit({ split }) {
+  const upi = Number(split.upiAmount || 0);
+  const cod = Number(split.codAmount || 0);
+  const total = upi + cod;
+  const upiPct = total > 0 ? Math.round((upi / total) * 100) : 0;
+  const codPct = total > 0 ? 100 - upiPct : 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 32 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.35, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass"
+    >
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+      <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 blur-3xl" />
+
+      <div className="relative p-6 sm:p-7">
+        <div className="flex items-center gap-3 mb-6">
+          <span className="w-10 h-10 rounded-2xl bg-gold/10 border border-gold/25 grid place-items-center text-gold">
+            <SplitIcon className="w-5 h-5" />
+          </span>
+          <div>
+            <h3 className="font-display text-xl text-cream leading-none">Payment Split</h3>
+            <p className="text-xs text-muted mt-1">Verified revenue — online vs cash</p>
+          </div>
+        </div>
+
+        {total > 0 ? (
+          <>
+            {/* stacked bar */}
+            <div className="relative h-4 rounded-full bg-white/5 overflow-hidden flex">
+              <motion.div
+                className="h-full bg-gradient-to-r from-gold via-gold2 to-goldLight"
+                initial={{ width: "0%" }}
+                animate={{ width: `${upiPct}%` }}
+                transition={{ delay: 0.5, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              />
+              <motion.div
+                className="h-full bg-gradient-to-r from-emerald-500 to-mint"
+                initial={{ width: "0%" }}
+                animate={{ width: `${codPct}%` }}
+                transition={{ delay: 0.6, duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+              />
+            </div>
+
+            {/* legend */}
+            <div className="mt-5 grid sm:grid-cols-2 gap-3">
+              <div className="rounded-2xl bg-gold/[0.07] border border-gold/25 px-4 py-3.5">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-gold shadow-glowGoldSoft" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-gold">Online (UPI)</span>
+                </div>
+                <p className="font-display text-2xl text-gold-metal leading-none">{inr(upi)}</p>
+                <p className="text-xs text-muted mt-1.5">
+                  {upiPct}% of revenue · {Number(split.upiOrders || 0)} orders
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-mint/[0.07] border border-mint/25 px-4 py-3.5">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-mint" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-mint">Cash on Delivery</span>
+                </div>
+                <p className="font-display text-2xl text-cream leading-none">{inr(cod)}</p>
+                <p className="text-xs text-muted mt-1.5">
+                  {codPct}% of revenue · {Number(split.codOrders || 0)} orders
+                </p>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center">
+            <p className="text-2xl mb-2">💤</p>
+            <p className="text-sm text-muted">No verified payments yet.</p>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ---- Custom date range ---- */
+function RangeCard() {
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  const [stats, setStats] = useState(null);
+
+  async function apply(e) {
+    e.preventDefault();
+    setErr("");
+    if (!start || !end) {
+      setErr("Select both start and end dates");
+      return;
+    }
+    if (start > end) {
+      setErr("Start date must be before end date");
+      return;
+    }
+    setLoading(true);
+    try {
+      const { stats } = await api.get(`/orders/stats?startDate=${start}&endDate=${end}`);
+      setStats(stats.rangeStats && stats.rangeSplit ? { range: stats.rangeStats, split: stats.rangeSplit } : null);
+      if (!stats.rangeStats) setErr("No verified orders in this range");
+    } catch (err2) {
+      setErr(err2.message || "Failed to load range");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const upi = Number(stats?.split.upiAmount || 0);
+  const cod = Number(stats?.split.codAmount || 0);
+  const total = upi + cod;
+  const upiPct = total > 0 ? Math.round((upi / total) * 100) : 0;
+  const codPct = total > 0 ? 100 - upiPct : 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 32 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass"
+    >
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+      <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 blur-3xl" />
+
+      <div className="relative p-6 sm:p-7">
+        <div className="flex items-center gap-3 mb-6">
+          <span className="w-10 h-10 rounded-2xl bg-gold/10 border border-gold/25 grid place-items-center text-gold">
+            <RangeIcon className="w-5 h-5" />
+          </span>
+          <div>
+            <h3 className="font-display text-xl text-cream leading-none">Custom Date Range</h3>
+            <p className="text-xs text-muted mt-1">Revenue & payment split for any period</p>
+          </div>
+        </div>
+
+        <form onSubmit={apply} className="grid sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+          <label className="block">
+            <span className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">Start date</span>
+            <input
+              type="date"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              className="bg-black/30 border-white/10 text-cream focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)] [color-scheme:dark] w-full"
+            />
+          </label>
+          <label className="block">
+            <span className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">End date</span>
+            <input
+              type="date"
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+              className="bg-black/30 border-white/10 text-cream focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)] [color-scheme:dark] w-full"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-3 text-sm transition hover:brightness-110 disabled:opacity-50 disabled:pointer-events-none shadow-glowGold whitespace-nowrap"
+          >
+            {loading ? <Spinner className="w-4 h-4" /> : "Apply"}
+          </button>
+        </form>
+
+        {err && (
+          <p className="mt-4 text-xs text-red-300 bg-red-500/10 border border-red-500/25 rounded-2xl px-4 py-3">{err}</p>
+        )}
+
+        {stats && (
+          <div className="mt-6">
+            <div className="grid sm:grid-cols-2 gap-3 mb-4">
+              <div className="rounded-2xl bg-gold/[0.07] border border-gold/25 px-4 py-3.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-gold mb-1.5">Revenue</p>
+                <p className="font-display text-3xl text-gold-metal leading-none">{inr(stats.range.revenue)}</p>
+              </div>
+              <div className="rounded-2xl bg-mint/[0.07] border border-mint/25 px-4 py-3.5">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-mint mb-1.5">Orders</p>
+                <p className="font-display text-3xl text-cream leading-none">
+                  {Number(stats.range.orders).toLocaleString("en-IN")}
+                </p>
+              </div>
+            </div>
+
+            {total > 0 ? (
+              <>
+                <div className="relative h-3 rounded-full bg-white/5 overflow-hidden flex">
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-gold via-gold2 to-goldLight"
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${upiPct}%` }}
+                    transition={{ delay: 0.2, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                  <motion.div
+                    className="h-full bg-gradient-to-r from-emerald-500 to-mint"
+                    initial={{ width: "0%" }}
+                    animate={{ width: `${codPct}%` }}
+                    transition={{ delay: 0.3, duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+                  />
+                </div>
+                <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+                  <span className="inline-flex items-center gap-2 text-muted">
+                    <span className="w-2.5 h-2.5 rounded-full bg-gold" /> UPI {inr(upi)} · {upiPct}%
+                  </span>
+                  <span className="inline-flex items-center gap-2 text-muted">
+                    <span className="w-2.5 h-2.5 rounded-full bg-mint" /> COD {inr(cod)} · {codPct}%
+                  </span>
+                </div>
+              </>
+            ) : (
+              <p className="text-xs text-muted/70">No verified payments in this range.</p>
+            )}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ---- Last 7 days bar chart ---- */
+function formatShortDate(isoDate) {
+  if (!isoDate) return "";
+  const d = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return isoDate;
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+}
+
+function SevenDayChart({ days }) {
+  const list = days && days.length > 0 ? days : [];
+  const max = Math.max(...list.map((d) => Number(d.revenue || 0)), 1);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 32 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.45, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass"
+    >
+      <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+      <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 blur-3xl" />
+
+      <div className="relative p-6 sm:p-7">
+        <div className="flex items-center gap-3 mb-6">
+          <span className="w-10 h-10 rounded-2xl bg-gold/10 border border-gold/25 grid place-items-center text-gold">
+            <ChartIcon className="w-5 h-5" />
+          </span>
+          <div>
+            <h3 className="font-display text-xl text-cream leading-none">Last 7 Days Sales</h3>
+            <p className="text-xs text-muted mt-1">Verified revenue per day</p>
+          </div>
+        </div>
+
+        {list.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center">
+            <p className="text-2xl mb-2">📊</p>
+            <p className="text-sm text-muted">No sales data yet.</p>
+          </div>
+        ) : (
+          <div className="flex items-end gap-2 sm:gap-3 h-48">
+            {list.map((d, i) => {
+              const v = Number(d.revenue || 0);
+              const pct = v > 0 ? Math.max((v / max) * 100, 6) : 2;
+              return (
+                <div key={d.date} className="flex-1 flex flex-col items-center justify-end h-full group min-w-0">
+                  <span className="text-[10px] font-semibold text-gold-metal mb-1.5 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                    {inr(v)}
+                  </span>
+                  <motion.div
+                    initial={{ height: 0 }}
+                    animate={{ height: `${pct}%` }}
+                    transition={{ delay: 0.15 + i * 0.06, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                    title={`${d.date}: ${inr(v)} · ${d.orders} order(s)`}
+                    className="w-full max-w-[46px] rounded-t-xl bg-gradient-to-t from-goldDark via-gold to-goldLight shadow-glowGoldSoft group-hover:brightness-110 transition group-hover:scale-[1.02]"
+                  />
+                  <span className="text-[10px] text-muted mt-2 whitespace-nowrap">{formatShortDate(d.date)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
 export default function Analytics() {
   const [orders, setOrders] = useState([]);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -138,10 +478,14 @@ export default function Analytics() {
     setLoading(true);
     setError("");
     try {
-      const { orders } = await api.orders();
+      const [{ orders }, { stats }] = await Promise.all([
+        api.orders(),
+        api.get("/orders/stats")
+      ]);
       setOrders(orders || []);
+      setStats(stats || {});
     } catch (err) {
-      setError(err.message || "Failed to load orders");
+      setError(err.message || "Failed to load analytics");
     } finally {
       setLoading(false);
     }
@@ -178,6 +522,10 @@ export default function Analytics() {
   const pendingOrders = orders.filter((o) => o.status === "Pending").length;
   const recent = orders.slice(0, 5);
 
+  const today = stats?.today || { revenue: 0, orders: 0 };
+  const month = stats?.month || { revenue: 0, orders: 0 };
+  const paymentSplit = stats?.paymentSplit || { upiAmount: 0, codAmount: 0, upiOrders: 0, codOrders: 0 };
+
   return (
     <div>
       {/* page intro */}
@@ -193,6 +541,31 @@ export default function Analytics() {
         </div>
         <h3 className="font-display text-2xl text-cream mt-2">Store performance at a glance</h3>
         <p className="text-sm text-muted mt-1">Live figures from your order book.</p>
+      </motion.div>
+
+      {/* Period cards — today + month */}
+      <motion.div
+        variants={cardStagger}
+        initial="hidden"
+        animate="show"
+        className="grid gap-5 sm:grid-cols-2 mb-10"
+      >
+        <PeriodCard
+          tone="gold"
+          label="Today's Sales"
+          icon={<SunIcon className="w-5 h-5" />}
+          revenue={today.revenue}
+          orders={today.orders}
+          delay={0}
+        />
+        <PeriodCard
+          tone="mint"
+          label="This Month's Sales"
+          icon={<MonthIcon className="w-5 h-5" />}
+          revenue={month.revenue}
+          orders={month.orders}
+          delay={1}
+        />
       </motion.div>
 
       {/* Stat cards */}
@@ -227,6 +600,21 @@ export default function Analytics() {
           icon={<ClockIcon className="w-5 h-5" />}
         />
       </motion.div>
+
+      {/* Payment split */}
+      <div className="mb-10">
+        <PaymentSplit split={paymentSplit} />
+      </div>
+
+      {/* Custom date range */}
+      <div className="mb-10">
+        <RangeCard />
+      </div>
+
+      {/* Last 7 days sales graph */}
+      <div className="mb-10">
+        <SevenDayChart days={stats?.last7Days || []} />
+      </div>
 
       {/* Recent orders */}
       <motion.div
@@ -343,6 +731,51 @@ function ClockIcon(p) {
     <IconBase {...p}>
       <circle cx="12" cy="12" r="9" />
       <path d="M12 7v5l3 3" />
+    </IconBase>
+  );
+}
+
+function SunIcon(p) {
+  return (
+    <IconBase {...p}>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+    </IconBase>
+  );
+}
+
+function MonthIcon(p) {
+  return (
+    <IconBase {...p}>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </IconBase>
+  );
+}
+
+function SplitIcon(p) {
+  return (
+    <IconBase {...p}>
+      <path d="M3 3v18h18" />
+      <path d="M7 15l4-4 4 4 5-6" />
+    </IconBase>
+  );
+}
+
+function RangeIcon(p) {
+  return (
+    <IconBase {...p}>
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18M9 16h2M13 16h2" />
+    </IconBase>
+  );
+}
+
+function ChartIcon(p) {
+  return (
+    <IconBase {...p}>
+      <path d="M3 3v18h18" />
+      <path d="M7 15l3-4 3 2 5-7" />
     </IconBase>
   );
 }

@@ -71,7 +71,7 @@ export default function Login() {
             <span className="text-3xl">🍹</span>
           </div>
           <h1 className="font-display text-4xl text-cream tracking-tight">
-            Ganna <span className="text-gold">Plate</span>
+            Kunal <span className="text-gold">Juice Store</span>
           </h1>
           <p className="mt-2 text-sm text-muted">Owner dashboard — sign in to manage your stall.</p>
         </motion.div>

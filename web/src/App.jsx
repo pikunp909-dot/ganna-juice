@@ -8,6 +8,7 @@ import Analytics from "./pages/Analytics";
 import Menu from "./pages/Menu";
 import Orders from "./pages/Orders";
 import Settings from "./pages/Settings";
+import AdminReviews from "./pages/AdminReviews";
 
 export default function App() {
   return (
@@ -35,6 +36,7 @@ export default function App() {
         <Route index element={<Analytics />} />
         <Route path="menu" element={<Menu />} />
         <Route path="orders" element={<Orders />} />
+        <Route path="reviews" element={<AdminReviews />} />
         <Route path="settings" element={<Settings />} />
       </Route>
 

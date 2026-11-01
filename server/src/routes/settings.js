@@ -4,7 +4,7 @@ import requireAdmin from "../middleware/requireAdmin.js";
 
 const router = Router();
 
-const FIELDS = ["phone", "whatsapp", "instagram", "telegram", "locationUrl", "upiId", "qrCodeUrl", "heroImageUrl"];
+const FIELDS = ["phone", "whatsapp", "instagram", "telegram", "locationUrl", "pincode", "exactLocation", "upiId", "qrCodeUrl", "heroImageUrl"];
 
 // Public subset the customer site needs.
 router.get("/public", (_req, res) => {
@@ -29,13 +29,13 @@ router.put("/", requireAdmin, (req, res) => {
 
   if (s) {
     run(
-      `UPDATE Settings SET phone = ?, whatsapp = ?, instagram = ?, telegram = ?, locationUrl = ?, upiId = ?, qrCodeUrl = ?, heroImageUrl = ?, updatedAt = datetime('now') WHERE id = 1`,
-      [next.phone, next.whatsapp, next.instagram, next.telegram, next.locationUrl, next.upiId, next.qrCodeUrl, next.heroImageUrl]
+      `UPDATE Settings SET phone = ?, whatsapp = ?, instagram = ?, telegram = ?, locationUrl = ?, pincode = ?, exactLocation = ?, upiId = ?, qrCodeUrl = ?, heroImageUrl = ?, updatedAt = datetime('now') WHERE id = 1`,
+      [next.phone, next.whatsapp, next.instagram, next.telegram, next.locationUrl, next.pincode, next.exactLocation, next.upiId, next.qrCodeUrl, next.heroImageUrl]
     );
   } else {
     run(
-      `INSERT INTO Settings (id, phone, whatsapp, instagram, telegram, locationUrl, upiId, qrCodeUrl, heroImageUrl) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [next.phone, next.whatsapp, next.instagram, next.telegram, next.locationUrl, next.upiId, next.qrCodeUrl, next.heroImageUrl]
+      `INSERT INTO Settings (id, phone, whatsapp, instagram, telegram, locationUrl, pincode, exactLocation, upiId, qrCodeUrl, heroImageUrl) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [next.phone, next.whatsapp, next.instagram, next.telegram, next.locationUrl, next.pincode, next.exactLocation, next.upiId, next.qrCodeUrl, next.heroImageUrl]
     );
   }
 

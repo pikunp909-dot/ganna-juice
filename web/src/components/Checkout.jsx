@@ -32,8 +32,9 @@ const stepVariants = {
   }
 };
 
-export default function Checkout({ open, lines, total, settings, clear, onClose }) {
+export default function Checkout({ open, lines, total, settings: propSettings, clear, onClose }) {
   const { t } = useLanguage();
+  const [liveSettings, setLiveSettings] = useState(propSettings);
   const [step, setStep] = useState("form"); // form | payment | success
   const [mode, setMode] = useState("Pickup");
   const [paymentMethod, setPaymentMethod] = useState("UPI"); // UPI | COD
@@ -58,11 +59,16 @@ export default function Checkout({ open, lines, total, settings, clear, onClose 
       setMode("Pickup");
       setPaymentMethod("UPI");
       setFinalizing(false);
+
+      // pull fresh public settings so admin edits (UPI / QR) show immediately
+      api.publicSettings()
+        .then((s) => setLiveSettings({ ...propSettings, ...s }))
+        .catch(() => {});
     }
   }, [open]);
 
-  const upiId = settings.upiId || "kunal@okaxis";
-  const waDigits = String(settings.whatsapp || "").replace(/\D/g, "");
+  const upiId = liveSettings.upiId || "kunal@okaxis";
+  const waDigits = String(liveSettings.whatsapp || "").replace(/\D/g, "");
 
   /* ---- validation ---- */
 
@@ -202,7 +208,7 @@ export default function Checkout({ open, lines, total, settings, clear, onClose 
                   <motion.div key="payment" variants={stepVariants} initial="initial" animate="animate" exit="exit">
                     <PaymentStep
                       total={total}
-                      settings={settings}
+                      settings={liveSettings}
                       upiId={upiId}
                       paymentMethod={paymentMethod}
                       setPaymentMethod={setPaymentMethod}
@@ -452,7 +458,7 @@ function PaymentStep({
     }
   }
 
-  const upiPayload = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent("Ganna Plate")}&am=${total}&cu=INR&tn=${encodeURIComponent("Ganna Plate")}`;
+  const upiPayload = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent("Kunal Juice Store")}&am=${total}&cu=INR&tn=${encodeURIComponent("Kunal Juice Store")}`;
 
   const methodOptions = [
     { key: "UPI", icon: "📱", title: t("payOnline"), sub: t("payOnlineSub") },
@@ -520,7 +526,7 @@ function PaymentStep({
                     🍹
                   </span>
                   <div>
-                    <p className="font-display text-lg text-cream leading-none">Ganna Plate</p>
+                    <p className="font-display text-lg text-cream leading-none">Kunal Juice Store</p>
                     <p className="text-[11px] text-muted mt-1 uppercase tracking-wider">{t("upiReceipt")}</p>
                   </div>
                 </div>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { api } from "../api";
 import { useCart } from "../cart";
@@ -15,6 +15,8 @@ const FALLBACK_SETTINGS = {
   instagram: "",
   telegram: "",
   locationUrl: "",
+  pincode: "",
+  exactLocation: "",
   upiId: ""
 };
 
@@ -73,6 +75,7 @@ export default function Home() {
       <Hero heroImageUrl={settings.heroImageUrl} />
       <TrustBadges />
       <MenuSection items={items} loading={loading} error={error} onRetry={() => window.location.reload()} />
+      <ReviewsSection exactLocation={settings.exactLocation} />
       <Footer settings={settings} />
 
       {/* floating whatsapp — hidden while the cart bar is up */}
@@ -213,7 +216,7 @@ function Nav({ onMenu, onContact }) {
             🍹
           </span>
           <span className="font-display text-xl text-cream">
-            Ganna <span className="text-gold-metal">Plate</span>
+            Kunal <span className="text-gold-metal">Juice Store</span>
           </span>
         </button>
         <nav className="flex items-center gap-1 text-sm font-semibold text-muted">
@@ -286,7 +289,7 @@ function Hero({ heroImageUrl }) {
           transition={{ delay: 0.2, duration: 0.8 }}
           className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-[0.35em] text-gold-metal mb-7 glass-card px-5 py-2 rounded-full"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" /> Ganna Juice Stall
+          <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" /> Kunal Juice Store
         </motion.p>
 
         <h1 className="font-display font-semibold text-6xl sm:text-8xl leading-[0.95] tracking-tight">
@@ -631,6 +634,278 @@ function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout })
   );
 }
 
+/* ================= Reviews ================= */
+
+const REVIEW_STARS = [1, 2, 3, 4, 5];
+
+function formatReviewDate(iso) {
+  if (!iso) return "";
+  const d = new Date(String(iso).replace(" ", "T") + "Z");
+  if (Number.isNaN(d.getTime())) return String(iso);
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function StarRating({ value, interactive = false, onChange, size = "text-2xl" }) {
+  return (
+    <div className="flex items-center gap-0.5">
+      {REVIEW_STARS.map((n) => (
+        <button
+          key={n}
+          type="button"
+          disabled={!interactive}
+          onClick={() => onChange?.(n)}
+          aria-label={`${n} star`}
+          className={`${size} leading-none transition-transform duration-150 ${
+            interactive ? "cursor-pointer hover:scale-125 active:scale-95" : "cursor-default"
+          } ${n <= value ? "opacity-100" : "opacity-20 grayscale"}`}
+        >
+          ⭐
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ReviewsSection({ exactLocation }) {
+  const { t } = useLanguage();
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [form, setForm] = useState({ name: "", rating: 0, comment: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [toast, setToast] = useState("");
+
+  const loadReviews = useCallback(async () => {
+    setLoading(true);
+    setLoadError("");
+    try {
+      const { reviews } = await api.get("/reviews");
+      setReviews(reviews || []);
+    } catch (err) {
+      setLoadError(err.message || "Failed to load reviews");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadReviews();
+  }, [loadReviews]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const tmo = setTimeout(() => setToast(""), 3200);
+    return () => clearTimeout(tmo);
+  }, [toast]);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setFormError("");
+    if (!form.name.trim()) {
+      setFormError(t("reviewErrName"));
+      return;
+    }
+    if (!REVIEW_STARS.includes(form.rating)) {
+      setFormError(t("reviewErrRating"));
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.post("/reviews", {
+        customerName: form.name.trim(),
+        rating: form.rating,
+        comment: form.comment.trim()
+      });
+      setForm({ name: "", rating: 0, comment: "" });
+      await loadReviews();
+      setToast(t("reviewThanks"));
+    } catch (err) {
+      setFormError(err.message || "Submit failed");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <section id="reviews" className="relative px-4 sm:px-6 py-24 overflow-hidden">
+      {/* ambient glow */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-gold/8 blur-[120px]" />
+        <div className="absolute bottom-0 -right-32 w-96 h-96 rounded-full bg-mint/6 blur-[120px]" />
+      </div>
+
+      <div className="relative max-w-7xl mx-auto">
+        {/* header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-14"
+        >
+          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-gold-metal mb-4">{t("reviewsEyebrow")}</p>
+          <h2 className="font-display font-semibold text-4xl sm:text-6xl text-cream">{t("reviewsTitle")}</h2>
+          <p className="text-muted mt-4 max-w-lg mx-auto">{t("reviewsSub")}</p>
+          {exactLocation && (
+            <a
+              href={exactLocation}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-7 inline-flex items-center gap-2 bg-gold-metal text-forest font-bold rounded-full px-7 py-3 text-sm transition hover:brightness-110 shadow-glowGold"
+            >
+              📍 {t("rateOnMaps")}
+            </a>
+          )}
+        </motion.div>
+
+        <div className="grid lg:grid-cols-5 gap-6 items-start">
+          {/* reviews feed */}
+          <div className="lg:col-span-3 space-y-4">
+            {loading ? (
+              <div className="space-y-4">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    className="glass-card rounded-3xl p-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.15 }}
+                  >
+                    <div className="animate-pulse space-y-3">
+                      <div className="h-4 w-24 rounded-full bg-white/10" />
+                      <div className="h-4 w-40 rounded-full bg-white/10" />
+                      <div className="h-3 w-full rounded-full bg-white/5" />
+                      <div className="h-3 w-2/3 rounded-full bg-white/5" />
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            ) : loadError ? (
+              <div className="glass-card rounded-3xl p-10 text-center">
+                <p className="text-3xl mb-3">⛔</p>
+                <p className="text-muted text-sm">{loadError}</p>
+              </div>
+            ) : reviews.length === 0 ? (
+              <div className="glass-card rounded-3xl p-12 text-center">
+                <p className="text-4xl mb-4">⭐</p>
+                <p className="text-muted text-sm">{t("reviewEmpty")}</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reviews.map((r, i) => (
+                  <motion.div
+                    key={r.id}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-40px" }}
+                    transition={{ delay: i * 0.05, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                    className="glass-card rounded-3xl p-6 shadow-glass hover:shadow-glowGoldSoft transition-shadow"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="w-10 h-10 rounded-2xl bg-gold/10 border border-gold/25 grid place-items-center text-base font-bold text-gold-metal">
+                          {(r.customerName || "?").charAt(0).toUpperCase()}
+                        </span>
+                        <div>
+                          <p className="font-semibold text-cream">{r.customerName}</p>
+                          <StarRating value={r.rating} size="text-sm" />
+                        </div>
+                      </div>
+                      <span className="text-xs text-muted/60 whitespace-nowrap">{formatReviewDate(r.createdAt)}</span>
+                    </div>
+                    {r.comment && (
+                      <p className="text-sm text-muted mt-4 leading-relaxed">{r.comment}</p>
+                    )}
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* write a review */}
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-2 relative rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass overflow-hidden"
+          >
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+            <div className="pointer-events-none absolute -top-20 -right-16 w-56 h-56 rounded-full bg-gold/10 blur-3xl" />
+            <form onSubmit={handleSubmit} className="relative p-6 sm:p-7">
+              <h3 className="font-display text-xl text-cream">{t("writeReviewTitle")}</h3>
+
+              <label className="block mt-5">
+                <span className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">{t("reviewNameLabel")}</span>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder={t("reviewNamePlaceholder")}
+                  className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+                />
+              </label>
+
+              <div className="mt-5">
+                <span className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">{t("reviewRatingLabel")}</span>
+                <div className="inline-flex items-center gap-1 p-3 rounded-2xl border border-white/10 bg-black/30">
+                  <StarRating value={form.rating} interactive onChange={(n) => setForm({ ...form, rating: n })} />
+                </div>
+              </div>
+
+              <label className="block mt-5">
+                <span className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">{t("reviewCommentLabel")}</span>
+                <textarea
+                  rows={4}
+                  value={form.comment}
+                  onChange={(e) => setForm({ ...form, comment: e.target.value })}
+                  placeholder={t("reviewCommentPlaceholder")}
+                  className="resize-none bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+                />
+              </label>
+
+              {formError && (
+                <p className="mt-4 text-xs text-red-300 bg-red-500/10 border border-red-500/25 rounded-2xl px-4 py-3">{formError}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="mt-5 w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm transition hover:brightness-110 disabled:opacity-50 disabled:pointer-events-none shadow-glowGold"
+              >
+                {submitting ? (
+                  <>
+                    <Spinner className="w-4 h-4" /> {t("reviewSending")}
+                  </>
+                ) : (
+                  t("reviewSubmit")
+                )}
+              </button>
+            </form>
+          </motion.div>
+        </div>
+      </div>
+
+      {/* toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            className="fixed bottom-6 right-6 z-[60] flex items-center gap-3 bg-gradient-to-r from-mint to-emerald-400 text-forest font-bold text-sm px-5 py-3.5 rounded-2xl shadow-card"
+            initial={{ opacity: 0, y: 24, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.97 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <span className="text-lg">✓</span>
+            {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+}
+
 /* ================= Footer / Contact ================= */
 
 function Footer({ settings }) {
@@ -650,12 +925,19 @@ function Footer({ settings }) {
               🍹
             </span>
             <span className="font-display text-2xl text-cream">
-              Ganna <span className="text-gold-metal">Plate</span>
+              Kunal <span className="text-gold-metal">Juice Store</span>
             </span>
           </div>
           <p className="text-muted text-sm max-w-sm">
             {t("footerSub")}
           </p>
+
+          {settings.pincode && (
+            <p className="mt-3 flex items-center gap-2 text-sm text-muted">
+              <span className="text-base">📍</span>
+              {settings.pincode}
+            </p>
+          )}
 
           <div className="mt-6 flex flex-wrap gap-3">
             {links.map((l) => (
@@ -683,7 +965,7 @@ function Footer({ settings }) {
         {settings.locationUrl && (
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3">{t("findUs")}</p>
-            <div className="rounded-3xl overflow-hidden border border-white/10 glass-card">
+            <div className="relative rounded-3xl overflow-hidden border border-white/10 glass-card">
               <iframe
                 src={settings.locationUrl}
                 title="Stall location"
@@ -692,6 +974,19 @@ function Footer({ settings }) {
                 referrerPolicy="no-referrer-when-downgrade"
                 allowFullScreen
               />
+              {settings.exactLocation && (
+                <a
+                  href={settings.exactLocation}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Open in Google Maps"
+                  className="absolute inset-0 z-10 block cursor-pointer"
+                >
+                  <span className="absolute bottom-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 bg-black/50 backdrop-blur-md text-cream text-[11px] font-bold px-3 py-1.5 rounded-full border border-white/15 shadow-glass whitespace-nowrap">
+                    📍 {t("openInMaps")}
+                  </span>
+                </a>
+              )}
             </div>
           </div>
         )}
@@ -699,7 +994,7 @@ function Footer({ settings }) {
 
       <div className="border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-2 text-xs text-muted/60">
-          <span>© {new Date().getFullYear()} Ganna Plate.</span>
+          <span>© {new Date().getFullYear()} Kunal Juice Store.</span>
           <span>{t("footerMade")}</span>
         </div>
       </div>

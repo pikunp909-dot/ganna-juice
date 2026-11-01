@@ -7,6 +7,7 @@ const NAV = [
   { to: "/admin", label: "Analytics", end: true, Icon: ChartIcon },
   { to: "/admin/menu", label: "Menu", Icon: MenuIcon },
   { to: "/admin/orders", label: "Orders", Icon: ReceiptIcon },
+  { to: "/admin/reviews", label: "Reviews", Icon: StarIcon },
   { to: "/admin/settings", label: "Settings", Icon: GearIcon }
 ];
 
@@ -14,6 +15,7 @@ const TITLES = {
   "/admin": "Analytics",
   "/admin/menu": "Menu",
   "/admin/orders": "Orders",
+  "/admin/reviews": "Reviews",
   "/admin/settings": "Settings"
 };
 
@@ -193,7 +195,7 @@ export default function DashboardLayout() {
                 <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse shrink-0" />
                 <h2 className="font-display text-xl text-cream leading-none truncate">{title}</h2>
               </div>
-              <p className="text-xs text-muted mt-1.5 hidden sm:block">Ganna Juice Stall</p>
+              <p className="text-xs text-muted mt-1.5 hidden sm:block">Kunal Juice Store</p>
             </div>
           </div>
 
@@ -234,7 +236,7 @@ function BrandBlock({ compact }) {
       </div>
       <div>
         <p className="font-display text-lg text-cream leading-tight">
-          Ganna <span className="text-gold-metal">Plate</span>
+          Kunal <span className="text-gold-metal">Juice Store</span>
         </p>
         <p className="text-[11px] text-muted uppercase tracking-wider">Owner console</p>
       </div>
@@ -282,6 +284,14 @@ function ReceiptIcon(p) {
     <IconBase {...p}>
       <path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2V3z" />
       <path d="M9 8h6M9 12h6" />
+    </IconBase>
+  );
+}
+
+function StarIcon(p) {
+  return (
+    <IconBase {...p}>
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
     </IconBase>
   );
 }

@@ -9,6 +9,8 @@ const emptySettings = {
   instagram: "",
   telegram: "",
   locationUrl: "",
+  pincode: "",
+  exactLocation: "",
   upiId: "",
   qrCodeUrl: "",
   heroImageUrl: ""
@@ -33,6 +35,8 @@ export default function Settings() {
         instagram: settings.instagram || "",
         telegram: settings.telegram || "",
         locationUrl: settings.locationUrl || "",
+        pincode: settings.pincode || "",
+        exactLocation: settings.exactLocation || "",
         upiId: settings.upiId || "",
         qrCodeUrl: settings.qrCodeUrl || "",
         heroImageUrl: settings.heroImageUrl || ""
@@ -73,11 +77,13 @@ export default function Settings() {
         instagram: form.instagram.trim(),
         telegram: form.telegram.trim(),
         locationUrl: form.locationUrl.trim(),
+        pincode: form.pincode.trim(),
+        exactLocation: form.exactLocation.trim(),
         upiId: form.upiId.trim(),
         qrCodeUrl: form.qrCodeUrl.trim(),
         heroImageUrl: form.heroImageUrl.trim()
       });
-      setToast("Settings saved");
+      setToast("Settings Saved! Refresh customer page to see changes");
     } catch (err) {
       setSaveError(err.message || "Save failed");
     } finally {
@@ -196,6 +202,30 @@ export default function Settings() {
                 <span className="text-muted">output=embed</span>).
               </p>
             </div>
+            <SleekField label="Shop Pincode">
+              <input
+                type="text"
+                inputMode="numeric"
+                value={form.pincode}
+                onChange={(e) => set("pincode", e.target.value)}
+                placeholder="e.g. 110001"
+                className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+              />
+            </SleekField>
+            <div className="sm:col-span-2">
+              <SleekField label="Google Maps Link (exact location)">
+                <input
+                  type="url"
+                  value={form.exactLocation}
+                  onChange={(e) => set("exactLocation", e.target.value)}
+                  placeholder="https://maps.app.goo.gl/…"
+                  className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+                />
+              </SleekField>
+              <p className="-mt-3 mb-0 text-xs text-muted/70 pl-1">
+                Use the Google Maps share link. Customers tap the footer map to open this exact location.
+              </p>
+            </div>
           </div>
 
           {/* ---- Group: UPI (glowing gold highlight) ---- */}
@@ -267,7 +297,7 @@ export default function Settings() {
           {/* ---- Save ---- */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-white/10">
             <p className="text-xs text-muted/70">
-              Changes apply instantly to the customer site.
+              Customers will see changes after refreshing the homepage.
             </p>
             <button
               type="submit"

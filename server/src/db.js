@@ -51,6 +51,8 @@ export function initSchema() {
       instagram TEXT DEFAULT '',
       telegram TEXT DEFAULT '',
       locationUrl TEXT DEFAULT '',
+      pincode TEXT DEFAULT '',
+      exactLocation TEXT DEFAULT '',
       upiId TEXT DEFAULT '',
       qrCodeUrl TEXT DEFAULT '',
       heroImageUrl TEXT DEFAULT '',
@@ -88,14 +90,29 @@ export function initSchema() {
       price REAL NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS Reviews (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customerName TEXT NOT NULL,
+      rating INTEGER NOT NULL,
+      comment TEXT DEFAULT '',
+      createdAt TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_orders_status ON Orders(status);
     CREATE INDEX IF NOT EXISTS idx_orderitems_order ON OrderItems(orderId);
+    CREATE INDEX IF NOT EXISTS idx_reviews_created ON Reviews(createdAt);
   `);
 
   // Lightweight migrations — add columns to existing tables if missing.
   const settingsCols = db.prepare("PRAGMA table_info(Settings)").all().map((c) => c.name);
   if (!settingsCols.includes("qrCodeUrl")) {
     db.exec("ALTER TABLE Settings ADD COLUMN qrCodeUrl TEXT DEFAULT ''");
+  }
+  if (!settingsCols.includes("pincode")) {
+    db.exec("ALTER TABLE Settings ADD COLUMN pincode TEXT DEFAULT ''");
+  }
+  if (!settingsCols.includes("exactLocation")) {
+    db.exec("ALTER TABLE Settings ADD COLUMN exactLocation TEXT DEFAULT ''");
   }
 
   const orderCols = db.prepare("PRAGMA table_info(Orders)").all().map((c) => c.name);

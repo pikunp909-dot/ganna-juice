@@ -75,9 +75,28 @@ export const messages = {
 
     // footer
     findUs: "Find us here",
+    openInMaps: "Open in Google Maps",
     footerSub:
       "Crushed live, golden cold, pure ganna. Your neighbourhood stall, now one tap away.",
     footerMade: "Cold pressed with ♥ in Bhubaneswar.",
+
+    // reviews
+    reviewsEyebrow: "Reviews",
+    reviewsTitle: "What customers say",
+    reviewsSub: "Real words from the stall, one tap away.",
+    rateOnMaps: "Rate us on Google Maps",
+    writeReviewTitle: "Write a review",
+    reviewNameLabel: "Your name",
+    reviewNamePlaceholder: "e.g. Rahul",
+    reviewRatingLabel: "Your rating",
+    reviewCommentLabel: "Your comment",
+    reviewCommentPlaceholder: "How was the juice?",
+    reviewSubmit: "Submit review",
+    reviewSending: "Submitting…",
+    reviewThanks: "Thanks! Your review is live.",
+    reviewEmpty: "No reviews yet — be the first!",
+    reviewErrName: "Please enter your name",
+    reviewErrRating: "Please select a star rating",
 
     // step 1 details
     deliveryAddress: "Delivery address",
@@ -124,7 +143,7 @@ export const messages = {
       "Thank you! Your order has been sent to the stall. We will confirm once the payment is verified.",
 
     // whatsapp receipt template
-    waHeader: "Namaste! My order {ref} on Ganna Plate",
+    waHeader: "Namaste! My order {ref} on Kunal Juice Store",
     waTotal: "Total: {total}",
     waConfirm: "Please confirm 🙏",
     waPayCod: "Payment: Cash on Delivery",
@@ -204,9 +223,28 @@ export const messages = {
 
     // footer
     findUs: "ଆମକୁ ଏଠାରେ ଖୋଜନ୍ତୁ",
+    openInMaps: "ଗୁଗୁଲ ମ୍ୟାପରେ ଖୋଲନ୍ତୁ",
     footerSub:
       "ତାଜା ଚିପା, ସୁନା ଥଣ୍ଡା, ଶୁଦ୍ଧ ଗନ୍ନା। ଆପଣଙ୍କ ପଡ଼ୋଶୀ ଦୋକାନ, ବର୍ତ୍ତମାନ ଗୋଟିଏ ଟାପରେ।",
     footerMade: "ଭୁବନେଶ୍ୱରରେ ♥ ସହିତ ଥଣ୍ଡା ଚାପା।",
+
+    // reviews
+    reviewsEyebrow: "ସମୀକ୍ଷା",
+    reviewsTitle: "ଗ୍ରାହକ କ'ଣ କୁହନ୍ତି",
+    reviewsSub: "ଷ୍ଟଲର ଅସଲି କଥା, ଗୋଟିଏ ଟାପରେ।",
+    rateOnMaps: "ଗୁଗୁଲ ମ୍ୟାପରେ ରେଟିଂ ଦିଅନ୍ତୁ",
+    writeReviewTitle: "ଏକ ସମୀକ୍ଷା ଲେଖନ୍ତୁ",
+    reviewNameLabel: "ଆପଣଙ୍କ ନାମ",
+    reviewNamePlaceholder: "ଉଦାହରଣ: ରାହୁଲ",
+    reviewRatingLabel: "ଆପଣଙ୍କ ରେଟିଂ",
+    reviewCommentLabel: "ଆପଣଙ୍କ ମତାମତ",
+    reviewCommentPlaceholder: "ଜୁସ୍ କେମିତି ଥିଲା?",
+    reviewSubmit: "ସମୀକ୍ଷା ଦାଖଲ କରନ୍ତୁ",
+    reviewSending: "ଦାଖଲ ହେଉଛି…",
+    reviewThanks: "ଧନ୍ୟବାଦ! ଆପଣଙ୍କ ସମୀକ୍ଷା ଲାଇଭ ହୋଇଗଲା।",
+    reviewEmpty: "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ସମୀକ୍ଷା ନାହିଁ — ପ୍ରଥମ ବ୍ୟକ୍ତି ହୁଅନ୍ତୁ!",
+    reviewErrName: "ଦୟାକରି ଆପଣଙ୍କ ନାମ ଦିଅନ୍ତୁ",
+    reviewErrRating: "ଦୟାକରି ଏକ ଷ୍ଟାର ରେଟିଂ ବାଛନ୍ତୁ",
 
     // step 1 details
     deliveryAddress: "ଡେଲିଭେରି ଠିକଣା",
