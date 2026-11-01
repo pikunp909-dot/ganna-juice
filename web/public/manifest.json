@@ -1,6 +1,6 @@
 {
-  "name": "Kunal's Sugarcane Juice",
-  "short_name": "Kunal Juice",
+  "name": "Kunal Juice Admin",
+  "short_name": "Admin App",
   "description": "Owner dashboard for Kunal Juice Store",
   "start_url": "/admin",
   "scope": "/",

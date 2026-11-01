@@ -369,8 +369,8 @@ export default function DashboardLayout() {
 function BrandBlock({ compact }) {
   return (
     <div className={`relative flex items-center gap-3 ${compact ? "" : "px-5 pt-6 pb-4 border-b border-white/10"}`}>
-      <div className="w-11 h-11 rounded-2xl bg-gold-metal shadow-glowGold grid place-items-center shrink-0">
-        <span className="text-xl">🍹</span>
+      <div className="w-11 h-11 rounded-2xl bg-gold-metal shadow-glowGold grid place-items-center shrink-0 text-forest">
+        <ChartIcon className="w-6 h-6" />
       </div>
       <div>
         <p className="font-display text-lg text-cream leading-tight">

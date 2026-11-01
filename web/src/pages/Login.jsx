@@ -13,6 +13,23 @@ const fadeUp = {
   })
 };
 
+function BarChartIcon({ className = "w-5 h-5" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M3 3v18h18" />
+      <path d="M7 15l4-5 4 3 5-7" />
+    </svg>
+  );
+}
+
 export default function Login() {
   const { admin, login } = useAuth();
   const navigate = useNavigate();
@@ -67,8 +84,8 @@ export default function Login() {
       >
         {/* brand */}
         <motion.div variants={fadeUp} initial="hidden" animate="show" custom={0} className="text-center mb-9">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-gradient-to-br from-gold to-gold2 shadow-lg shadow-gold/30 grid place-items-center">
-            <span className="text-3xl">🍹</span>
+          <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-gradient-to-br from-gold to-gold2 shadow-lg shadow-gold/30 grid place-items-center text-forest">
+            <BarChartIcon className="w-9 h-9" />
           </div>
           <h1 className="font-display text-4xl text-cream tracking-tight">
             Sugarcane <span className="text-gold">Juice</span>
