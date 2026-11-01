@@ -195,7 +195,7 @@ export default function DashboardLayout() {
                 <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse shrink-0" />
                 <h2 className="font-display text-xl text-cream leading-none truncate">{title}</h2>
               </div>
-              <p className="text-xs text-muted mt-1.5 hidden sm:block">Kunal Juice Store</p>
+              <p className="text-xs text-muted mt-1.5 hidden sm:block">Sugarcane Juice</p>
             </div>
           </div>
 
@@ -236,7 +236,7 @@ function BrandBlock({ compact }) {
       </div>
       <div>
         <p className="font-display text-lg text-cream leading-tight">
-          Kunal <span className="text-gold-metal">Juice Store</span>
+          Sugarcane <span className="text-gold-metal">Juice</span>
         </p>
         <p className="text-[11px] text-muted uppercase tracking-wider">Owner console</p>
       </div>

@@ -143,7 +143,7 @@ export const messages = {
       "Thank you! Your order has been sent to the stall. We will confirm once the payment is verified.",
 
     // whatsapp receipt template
-    waHeader: "Namaste! My order {ref} on Kunal Juice Store",
+    waHeader: "Namaste! My order {ref} on Sugarcane Juice",
     waTotal: "Total: {total}",
     waConfirm: "Please confirm 🙏",
     waPayCod: "Payment: Cash on Delivery",

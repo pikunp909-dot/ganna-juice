@@ -216,7 +216,7 @@ function Nav({ onMenu, onContact }) {
             🍹
           </span>
           <span className="font-display text-xl text-cream">
-            Kunal <span className="text-gold-metal">Juice Store</span>
+            Sugarcane <span className="text-gold-metal">Juice</span>
           </span>
         </button>
         <nav className="flex items-center gap-1 text-sm font-semibold text-muted">
@@ -289,7 +289,7 @@ function Hero({ heroImageUrl }) {
           transition={{ delay: 0.2, duration: 0.8 }}
           className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-[0.35em] text-gold-metal mb-7 glass-card px-5 py-2 rounded-full"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" /> Kunal Juice Store
+          <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" /> Sugarcane Juice
         </motion.p>
 
         <h1 className="font-display font-semibold text-6xl sm:text-8xl leading-[0.95] tracking-tight">
@@ -925,7 +925,7 @@ function Footer({ settings }) {
               🍹
             </span>
             <span className="font-display text-2xl text-cream">
-              Kunal <span className="text-gold-metal">Juice Store</span>
+              Sugarcane <span className="text-gold-metal">Juice</span>
             </span>
           </div>
           <p className="text-muted text-sm max-w-sm">
@@ -994,7 +994,7 @@ function Footer({ settings }) {
 
       <div className="border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-2 text-xs text-muted/60">
-          <span>© {new Date().getFullYear()} Kunal Juice Store.</span>
+          <span>© {new Date().getFullYear()} Sugarcane Juice.</span>
           <span>{t("footerMade")}</span>
         </div>
       </div>

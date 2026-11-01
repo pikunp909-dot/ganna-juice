@@ -458,7 +458,7 @@ function PaymentStep({
     }
   }
 
-  const upiPayload = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent("Kunal Juice Store")}&am=${total}&cu=INR&tn=${encodeURIComponent("Kunal Juice Store")}`;
+  const upiPayload = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent("Sugarcane Juice")}&am=${total}&cu=INR&tn=${encodeURIComponent("Sugarcane Juice")}`;
 
   const methodOptions = [
     { key: "UPI", icon: "📱", title: t("payOnline"), sub: t("payOnlineSub") },
@@ -526,7 +526,7 @@ function PaymentStep({
                     🍹
                   </span>
                   <div>
-                    <p className="font-display text-lg text-cream leading-none">Kunal Juice Store</p>
+                    <p className="font-display text-lg text-cream leading-none">Sugarcane Juice</p>
                     <p className="text-[11px] text-muted mt-1 uppercase tracking-wider">{t("upiReceipt")}</p>
                   </div>
                 </div>
