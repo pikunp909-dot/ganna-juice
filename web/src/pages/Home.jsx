@@ -1,0 +1,708 @@
+import { useEffect, useState, useRef } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { api } from "../api";
+import { useCart } from "../cart";
+import { useLanguage } from "../language";
+import Checkout from "../components/Checkout";
+import { EmptyState, Spinner } from "../components/ui";
+
+const inr = (n) =>
+  "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+const FALLBACK_SETTINGS = {
+  phone: "",
+  whatsapp: "",
+  instagram: "",
+  telegram: "",
+  locationUrl: "",
+  upiId: ""
+};
+
+/* default hero image (golden juice pouring close-up — owner can override via Settings) */
+const DEFAULT_HERO_IMAGE =
+  "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=1600&q=80";
+
+const waLink = (phone) => {
+  const digits = String(phone || "").replace(/\D/g, "");
+  return digits ? `https://wa.me/${digits}` : "#";
+};
+
+const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+
+export default function Home() {
+  const [settings, setSettings] = useState(FALLBACK_SETTINGS);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const { lines, count, total, setQty, remove, clear } = useCart();
+  const { t } = useLanguage();
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [{ items }, { settings }] = await Promise.all([
+          api.menu(),
+          api.publicSettings()
+        ]);
+        setItems((items || []).filter((i) => i.isAvailable));
+        setSettings({ ...FALLBACK_SETTINGS, ...(settings || {}) });
+      } catch (err) {
+        setError(err.message || "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!note) return;
+    const t = setTimeout(() => setNote(""), 2600);
+    return () => clearTimeout(t);
+  }, [note]);
+
+  return (
+    <div className="min-h-screen bg-forest text-cream relative">
+      {/* global film grain */}
+      <div className="noise fixed inset-0 z-[5] pointer-events-none opacity-[0.05] mix-blend-overlay" />
+
+      <Nav onMenu={() => scrollTo("menu")} onContact={() => scrollTo("contact")} />
+
+      <Hero heroImageUrl={settings.heroImageUrl} />
+      <TrustBadges />
+      <MenuSection items={items} loading={loading} error={error} onRetry={() => window.location.reload()} />
+      <Footer settings={settings} />
+
+      {/* floating whatsapp — hidden while the cart bar is up */}
+      {count === 0 && settings.whatsapp && (
+        <a
+          href={waLink(settings.whatsapp)}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Chat on WhatsApp"
+          className="fixed bottom-5 right-5 z-40 w-14 h-14 rounded-full bg-gold-metal text-forest grid place-items-center text-2xl shadow-glowGold border border-white/20 hover:brightness-110 transition"
+        >
+          💬
+        </a>
+      )}
+
+      {/* floating cart bar */}
+      <AnimatePresence>
+        {count > 0 && (
+          <motion.div
+            className="fixed bottom-4 inset-x-0 z-40 flex justify-center px-4"
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 320, damping: 28 }}
+          >
+            <button
+              onClick={() => setDrawerOpen(true)}
+              className="w-full max-w-md flex items-center justify-between gap-3 bg-gold-metal text-forest rounded-2xl shadow-glowGold px-5 py-4 font-bold hover:brightness-110 transition"
+            >
+              <span className="flex items-center gap-3">
+                <span className="w-7 h-7 grid place-items-center rounded-full bg-forest text-gold text-sm shadow-inner">
+                  {count}
+                </span>
+                <span>{t("viewCart")}</span>
+              </span>
+              <span className="font-display text-lg">{inr(total)}</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* cart drawer */}
+      <CartDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        lines={lines}
+        total={total}
+        setQty={setQty}
+        remove={remove}
+        onCheckout={() => {
+          setDrawerOpen(false);
+          setCheckoutOpen(true);
+        }}
+      />
+
+      {/* checkout modal */}
+      <Checkout
+        open={checkoutOpen}
+        lines={lines}
+        total={total}
+        settings={settings}
+        clear={clear}
+        onClose={() => setCheckoutOpen(false)}
+      />
+
+      {/* toast */}
+      <AnimatePresence>
+        {note && (
+          <motion.div
+            className="fixed bottom-24 inset-x-0 z-50 flex justify-center px-4 pointer-events-none"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+          >
+            <span className="glass-card text-cream text-sm font-semibold px-5 py-3 rounded-2xl shadow-glass">
+              {note}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+/* ================= Letter-by-letter reveal ================= */
+
+const glyph = {
+  hidden: { opacity: 0, y: 34, filter: "blur(10px)" },
+  show: (i) => ({
+    opacity: 1,
+    y: 0,
+    filter: "blur(0px)",
+    transition: { delay: i, duration: 0.7, ease: [0.22, 1, 0.36, 1] }
+  })
+};
+
+function AnimatedWords({ text, className, start = 0, goldWords = [] }) {
+  let delay = start;
+  return (
+    <span className={className}>
+      {text.split(" ").map((word, wi) => (
+        <span key={wi} className="inline-block whitespace-nowrap">
+          {word.split("").map((ch, ci) => {
+            const d = delay;
+            delay += 0.035;
+            return (
+              <motion.span
+                key={ci}
+                className={`inline-block ${goldWords.includes(wi) ? "text-gold-metal" : ""}`}
+                variants={glyph}
+                initial="hidden"
+                animate="show"
+                custom={d}
+              >
+                {ch}
+              </motion.span>
+            );
+          })}
+          {"\u00A0"}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+/* ================= Nav ================= */
+
+function Nav({ onMenu, onContact }) {
+  const { lang, setLang } = useLanguage();
+  const targetLang = lang === "en" ? "or" : "en";
+  const targetLabel = lang === "en" ? "ଓଡ଼ିଆ" : "EN";
+
+  return (
+    <header className="fixed top-0 inset-x-0 z-30 border-b border-white/5 bg-forest/60 backdrop-blur-xl">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <button onClick={() => scrollTo("top")} className="flex items-center gap-2.5">
+          <span className="w-9 h-9 rounded-xl bg-gold-metal grid place-items-center text-lg shadow-glowGoldSoft">
+            🍹
+          </span>
+          <span className="font-display text-xl text-cream">
+            Ganna <span className="text-gold-metal">Plate</span>
+          </span>
+        </button>
+        <nav className="flex items-center gap-1 text-sm font-semibold text-muted">
+          <button onClick={onMenu} className="px-3 py-2 rounded-full hover:text-cream hover:bg-white/5 transition">
+            {t("menuShort")}
+          </button>
+          <button onClick={onContact} className="px-3 py-2 rounded-full hover:text-cream hover:bg-white/5 transition">
+            {t("contact")}
+          </button>
+
+          {/* language toggle — glassmorphic */}
+          <button
+            onClick={() => setLang(targetLang)}
+            aria-label={`Switch language to ${targetLabel}`}
+            className="relative ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl text-xs font-bold text-cream hover:border-gold/50 hover:text-gold transition shadow-glass overflow-hidden"
+          >
+            <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(245,158,11,0.12),transparent_50%)]" />
+            <span className="relative text-sm leading-none">🌐</span>
+            <span className="relative tracking-wide">{targetLabel}</span>
+          </button>
+        </nav>
+      </div>
+    </header>
+  );
+}
+
+/* ================= Hero (cinematic) ================= */
+
+function Hero({ heroImageUrl }) {
+  const ref = useRef(null);
+  const { t } = useLanguage();
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
+
+  const orbY = useTransform(scrollYProgress, [0, 1], [0, -200]);
+  const ringY = useTransform(scrollYProgress, [0, 1], [0, -90]);
+  const textY = useTransform(scrollYProgress, [0, 0.5], [0, -70]);
+  const fade = useTransform(scrollYProgress, [0, 0.7], [1, 0.15]);
+
+  return (
+    <section id="top" ref={ref} className="relative min-h-screen flex items-center overflow-hidden">
+      {/* layered ambient orbs with drift */}
+      <div className="pointer-events-none absolute inset-0">
+        <motion.div style={{ y: orbY }} className="absolute -top-32 -left-32 w-[36rem] h-[36rem] rounded-full bg-gold/15 blur-[130px] animate-orbDrift" />
+        <motion.div style={{ y: orbY }} className="absolute bottom-0 right-0 w-[30rem] h-[30rem] rounded-full bg-mint/10 blur-[130px]" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full bg-forest3/50 blur-[90px]" />
+      </div>
+
+      {/* background image + cinematic vignette */}
+      <img
+        src={heroImageUrl || DEFAULT_HERO_IMAGE}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+      />
+      <div className="absolute inset-0 bg-forest/60" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,13,8,0.45)_60%,rgba(5,13,8,0.94)_100%)]" />
+
+      {/* rotating glass ring (parallax) */}
+      <motion.div style={{ y: ringY }} className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
+        <div className="w-[600px] h-[600px] rounded-full border border-gold/20 animate-spinSlow relative shadow-[0_0_120px_-30px_rgba(245,158,11,0.25)]">
+          <div className="absolute inset-8 rounded-full border border-dashed border-gold/10" />
+          <span className="absolute -top-2 left-1/2 w-2.5 h-2.5 rounded-full bg-gold shadow-glowGoldSoft" />
+          <span className="absolute bottom-10 right-16 w-1.5 h-1.5 rounded-full bg-gold/60" />
+        </div>
+      </motion.div>
+
+      <motion.div style={{ y: textY, opacity: fade }} className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 pt-28 pb-24 text-center">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.8 }}
+          className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-[0.35em] text-gold-metal mb-7 glass-card px-5 py-2 rounded-full"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" /> Ganna Juice Stall
+        </motion.p>
+
+        <h1 className="font-display font-semibold text-6xl sm:text-8xl leading-[0.95] tracking-tight">
+          <AnimatedWords text={t("heroLine1")} className="block text-cream" start={0.3} />
+          <AnimatedWords text={t("heroLine2")} className="block" start={0.75} goldWords={[1]} />
+          <AnimatedWords text={t("heroLine3")} className="block text-gold-metal" start={1.2} />
+        </h1>
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.7, duration: 0.8 }}
+          className="mt-7 text-muted max-w-xl mx-auto text-base sm:text-lg"
+        >
+          {t("heroSub")}
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.9, duration: 0.8 }}
+          className="mt-11 flex flex-wrap items-center justify-center gap-3.5"
+        >
+          <button
+            onClick={() => scrollTo("menu")}
+            className="inline-flex items-center gap-2 bg-gold-metal text-forest font-bold rounded-full px-9 py-4 text-sm transition hover:brightness-110 shadow-glowGold"
+          >
+            {t("orderNow")}
+          </button>
+          <button
+            onClick={() => scrollTo("menu")}
+            className="inline-flex items-center gap-2 glass-card text-cream rounded-full px-9 py-4 text-sm font-bold transition hover:border-gold/50"
+          >
+            {t("viewMenu")}
+          </button>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 2.4, duration: 0.8 }}
+          className="mt-16 flex justify-center"
+        >
+          <button onClick={() => scrollTo("menu")} className="text-muted/60 hover:text-gold transition" aria-label="Scroll to menu">
+            <motion.span
+              className="block text-xl"
+              animate={{ y: [0, 8, 0] }}
+              transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
+            >
+              ↓
+            </motion.span>
+          </button>
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+}
+
+/* ================= Trust ================= */
+
+function TrustBadges() {
+  const { t } = useLanguage();
+  const TRUST = [
+    { icon: "🌿", title: t("trustNatural"), sub: t("trustNaturalSub") },
+    { icon: "0g", title: t("trustSugar"), sub: t("trustSugarSub") },
+    { icon: "❄️", title: t("trustCold"), sub: t("trustColdSub") }
+  ];
+
+  return (
+    <section className="relative -mt-4 pb-2 px-4 sm:px-6">
+      <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {TRUST.map((item, i) => (
+          <motion.div
+            key={item.title}
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ delay: i * 0.1, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="glass-card rounded-3xl p-6 text-center shadow-glass hover:shadow-glowGoldSoft transition-shadow"
+          >
+            <div className="w-12 h-12 mx-auto mb-3 rounded-2xl bg-gold/10 border border-gold/25 grid place-items-center text-2xl shadow-glowGoldSoft">
+              {item.icon}
+            </div>
+            <p className="font-display text-lg text-cream">{item.title}</p>
+            <p className="text-xs text-muted mt-1">{item.sub}</p>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ================= Menu ================= */
+
+function MenuSection({ items, loading, error, onRetry }) {
+  const { t } = useLanguage();
+
+  return (
+    <section id="menu" className="relative px-4 sm:px-6 py-24">
+      <div className="max-w-7xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-14"
+        >
+          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-gold-metal mb-4">{t("menuEyebrow")}</p>
+          <h2 className="font-display font-semibold text-4xl sm:text-6xl text-cream">{t("menu")}</h2>
+          <p className="text-muted mt-4 max-w-lg mx-auto">
+            {t("menuSub")}
+          </p>
+        </motion.div>
+
+        {loading ? (
+          <div className="grid place-items-center py-24">
+            <Spinner className="w-10 h-10" />
+          </div>
+        ) : error ? (
+          <div className="max-w-md mx-auto text-center glass-card rounded-3xl p-10 shadow-glass">
+            <p className="text-3xl mb-3">⛔</p>
+            <p className="text-muted text-sm mb-6">{error}</p>
+            <button
+              onClick={onRetry}
+              className="bg-gold-metal text-forest font-bold rounded-full px-6 py-2.5 text-sm hover:brightness-110 shadow-glowGoldSoft transition"
+            >
+              {t("retry")}
+            </button>
+          </div>
+        ) : items.length === 0 ? (
+          <div className="glass-card rounded-3xl shadow-glass">
+            <EmptyState icon="🍹" title={t("menuEmptyTitle")} sub={t("menuEmptySub")} />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {items.map((item, i) => (
+              <MenuItemCard key={item.id} item={item} index={i} />
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MenuItemCard({ item, index }) {
+  const { add } = useCart();
+  const { t } = useLanguage();
+  const [added, setAdded] = useState(false);
+
+  function handleAdd() {
+    add(item);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1400);
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 32 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-40px" }}
+      transition={{ delay: (index % 3) * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="group glass-card rounded-[28px] overflow-hidden shadow-glass hover:shadow-glowGold hover:-translate-y-2 transition-all duration-500 glow-ring"
+    >
+      {/* image */}
+      <div className="relative h-44 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-forest3 via-forest2 to-forestD" />
+        {item.imageUrl ? (
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -inset-y-10 inset-x-0 animate-floaty">
+              <img
+                src={item.imageUrl}
+                alt={item.name}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.08]"
+              />
+            </div>
+          </div>
+        ) : (
+          <span className="relative grid place-items-center h-full text-6xl drop-shadow-[0_8px_20px_rgba(245,158,11,0.35)]">🍹</span>
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0b1a10]/70 to-transparent" />
+        <span className="absolute top-3.5 right-3.5 bg-black/40 backdrop-blur-md text-[11px] font-bold uppercase tracking-wider text-cream px-3 py-1 rounded-full border border-white/15 shadow-glass">
+          {t("fresh")}
+        </span>
+      </div>
+
+      {/* body */}
+      <div className="p-6">
+        <h3 className="font-display text-xl text-cream group-hover:text-gold transition-colors">{item.name}</h3>
+        <p className="text-sm text-muted mt-1.5 line-clamp-2 min-h-[2.5rem]">
+          {item.description || t("itemDescFallback")}
+        </p>
+
+        <div className="mt-5 flex items-center justify-between">
+          <span className="font-display text-2xl text-gold-metal">{inr(item.price)}</span>
+
+          {/* circular glowing add button */}
+          <motion.button
+            onClick={handleAdd}
+            whileTap={{ scale: 0.88 }}
+            aria-label={added ? `Added ${item.name}` : `Add ${item.name} to cart`}
+            className={`relative w-12 h-12 grid place-items-center rounded-full text-xl font-bold text-forest transition-all duration-300 ${
+              added
+                ? "bg-mint text-forest shadow-glowMint"
+                : "bg-gold-metal shadow-glowGold group-hover:animate-pulseGlow hover:brightness-110"
+            }`}
+          >
+            <AnimatePresence mode="wait" initial={false}>
+              {added ? (
+                <motion.span
+                  key="added"
+                  initial={{ scale: 0.4, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.4, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  ✓
+                </motion.span>
+              ) : (
+                <motion.span
+                  key="add"
+                  initial={{ scale: 0.6, opacity: 0, rotate: -90 }}
+                  animate={{ scale: 1, opacity: 1, rotate: 0 }}
+                  exit={{ scale: 0.6, opacity: 0, rotate: 90 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                >
+                  +
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.button>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+/* ================= Cart Drawer (frosted bottom sheet / side panel) ================= */
+
+function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout }) {
+  const { t } = useLanguage();
+
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+          />
+          <motion.aside
+            className="fixed z-50 w-full md:max-w-md bg-forest2/85 backdrop-blur-2xl border-l border-white/10 flex flex-col shadow-glass md:inset-y-0 md:right-0 rounded-t-[28px] md:rounded-none bottom-0 max-h-[85vh] md:max-h-none"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", stiffness: 300, damping: 32 }}
+          >
+            <div className="md:hidden pt-3 flex justify-center">
+              <span className="w-12 h-1.5 rounded-full bg-white/15" />
+            </div>
+            <div className="flex items-center justify-between px-6 h-16 border-b border-white/5">
+              <h3 className="font-display text-xl text-cream">{t("yourCart")}</h3>
+              <button
+                onClick={onClose}
+                className="w-9 h-9 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:bg-white/10"
+                aria-label="Close cart"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-6 py-5">
+              {lines.length === 0 ? (
+                <EmptyState icon="🧺" title={t("cartEmpty")} sub={t("cartEmptySub")} />
+              ) : (
+                <div className="space-y-4">
+                  {lines.map((l) => (
+                    <div key={l.item.id} className="glass-card rounded-2xl p-3 flex gap-4 items-center">
+                      <div className="w-14 h-14 shrink-0 rounded-2xl bg-forest3 grid place-items-center text-2xl border border-white/10 overflow-hidden">
+                        {l.item.imageUrl ? (
+                          <img src={l.item.imageUrl} alt={l.item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          "🍹"
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-cream truncate">{l.item.name}</p>
+                        <p className="text-sm text-gold-metal">{inr(l.item.price)}</p>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        <button
+                          onClick={() => setQty(l.item.id, l.qty - 1)}
+                          className="w-8 h-8 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:border-gold/40"
+                          aria-label="Decrease quantity"
+                        >
+                          −
+                        </button>
+                        <span className="w-6 text-center font-bold">{l.qty}</span>
+                        <button
+                          onClick={() => setQty(l.item.id, l.qty + 1)}
+                          className="w-8 h-8 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:border-gold/40"
+                          aria-label="Increase quantity"
+                        >
+                          +
+                        </button>
+                        <button
+                          onClick={() => remove(l.item.id)}
+                          className="w-8 h-8 grid place-items-center rounded-full text-muted/60 hover:text-red-300"
+                          aria-label={`Remove ${l.item.name}`}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="px-6 py-5 border-t border-white/5 bg-forest/40">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-muted text-sm">{t("subtotal")}</span>
+                <span className="font-display text-2xl text-gold-metal">{inr(total)}</span>
+              </div>
+              <button
+                onClick={onCheckout}
+                disabled={lines.length === 0}
+                className="w-full bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm transition hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none shadow-glowGold"
+              >
+                {t("proceedCheckout")}
+              </button>
+              <p className="text-center text-xs text-muted/60 mt-3">
+                {t("drawerHint")}
+              </p>
+            </div>
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* ================= Footer / Contact ================= */
+
+function Footer({ settings }) {
+  const { t } = useLanguage();
+  const links = [
+    settings.whatsapp && { label: "WhatsApp", href: waLink(settings.whatsapp), icon: "💬" },
+    settings.instagram && { label: "Instagram", href: settings.instagram.startsWith("http") ? settings.instagram : `https://instagram.com/${settings.instagram}`, icon: "📸" },
+    settings.telegram && { label: "Telegram", href: settings.telegram.startsWith("http") ? settings.telegram : `https://t.me/${settings.telegram}`, icon: "✈️" }
+  ].filter(Boolean);
+
+  return (
+    <footer id="contact" className="border-t border-white/5 bg-forest2/40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 grid gap-10 md:grid-cols-2">
+        <div>
+          <div className="flex items-center gap-2.5 mb-4">
+            <span className="w-10 h-10 rounded-xl bg-gold-metal grid place-items-center text-xl shadow-glowGoldSoft">
+              🍹
+            </span>
+            <span className="font-display text-2xl text-cream">
+              Ganna <span className="text-gold-metal">Plate</span>
+            </span>
+          </div>
+          <p className="text-muted text-sm max-w-sm">
+            {t("footerSub")}
+          </p>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            {links.map((l) => (
+              <a
+                key={l.label}
+                href={l.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-2 glass-card text-cream text-sm font-semibold rounded-full px-5 py-2.5 transition hover:border-gold/50 hover:text-gold hover:shadow-glowGoldSoft"
+              >
+                <span>{l.icon}</span> {l.label}
+              </a>
+            ))}
+            {settings.phone && (
+              <a
+                href={`tel:${settings.phone.replace(/\s/g, "")}`}
+                className="inline-flex items-center gap-2 glass-card text-cream text-sm font-semibold rounded-full px-5 py-2.5 transition hover:border-gold/50 hover:text-gold hover:shadow-glowGoldSoft"
+              >
+                <span>📞</span> {settings.phone}
+              </a>
+            )}
+          </div>
+        </div>
+
+        {settings.locationUrl && (
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted mb-3">{t("findUs")}</p>
+            <div className="rounded-3xl overflow-hidden border border-white/10 glass-card">
+              <iframe
+                src={settings.locationUrl}
+                title="Stall location"
+                className="w-full h-64"
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-2 text-xs text-muted/60">
+          <span>© {new Date().getFullYear()} Ganna Plate.</span>
+          <span>{t("footerMade")}</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
