@@ -10,17 +10,25 @@ const { Pool } = pg;
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
-  console.warn("⚠ DATABASE_URL is not set — API will fail on first query.");
+  // Fail fast with a clear message instead of silently defaulting to localhost.
+  // Render shows this in the deploy logs immediately.
+  throw new Error(
+    "DATABASE_URL is not set. Add your Supabase/Neon Postgres connection string " +
+      "to the Render Environment Variables. (See README / docs for the Session Pooler URL.)"
+  );
 }
 
+// Supabase/Neon both require TLS by default. rejectUnauthorized: false keeps
+// the encrypted connection working with their managed cert chains.
+// Set PGSSLMODE=disable locally (or for certain proxies) to opt out.
+const ssl = process.env.PGSSLMODE === "disable" ? false : { rejectUnauthorized: false };
+
 const pool = new Pool({
-  connectionString: connectionString || "postgres://localhost:5432/ganna",
-  ssl:
-    process.env.PGSSLMODE === "disable"
-      ? false
-      : { rejectUnauthorized: false }, // Supabase/Neon want SSL by default
+  connectionString,
+  ssl,
   max: 10,
-  idleTimeoutMillis: 30_000
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 10_000
 });
 
 /* Convert `?` placeholders to Postgres `$1, $2, ...`. */
