@@ -19,6 +19,10 @@ import notificationRoutes from "./routes/notifications.js";
 
 dotenv.config();
 
+// Production env (see .env.example):
+//   DATABASE_URL=postgres://... (Supabase/Neon)
+//   CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
+
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET === "change-me-to-a-long-random-string") {
   console.warn("⚠ JWT_SECRET is weak/default. Set a strong random value in .env before going live.");
 }
@@ -26,7 +30,7 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET === "change-me-to-a-long-r
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
 
-initSchema();
+await initSchema();
 
 const origins = (process.env.CORS_ORIGINS || "http://localhost:5173").split(",").map((s) => s.trim());
 app.use(cors({ origin: origins, credentials: true }));

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
 import { api } from "../api";
@@ -66,6 +66,18 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
         .catch(() => {});
     }
   }, [open]);
+
+  // Auto-open WhatsApp ~1s after the order lands on the success screen.
+  // The manual button stays as a fallback when the browser blocks the popup.
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (step !== "success" || !order || autoOpenedRef.current) return;
+    autoOpenedRef.current = true;
+    const t = setTimeout(() => {
+      window.open(waLink(), "_blank");
+    }, 1000);
+    return () => clearTimeout(t);
+  }, [step, order]);
 
   const upiId = liveSettings.upiId || "kunal@okaxis";
   const waDigits = String(liveSettings.whatsapp || "").replace(/\D/g, "");
@@ -151,6 +163,9 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
         `💰 *Total Amount:* ${inr(orderTotal)}\n\n` +
         `💳 *Payment Method:* ${payMethod === "COD" ? "Cash on Delivery" : "Online (UPI)"}\n` +
         (payMethod === "UPI" ? `🧾 UTR No: ${utrNo}\n` : "") +
+        (payMethod === "UPI"
+          ? `💳 *Pay Online Here:* upi://pay?pa=${upiId}&pn=SugarcaneJuice&am=${orderTotal}&cu=INR\n`
+          : "") +
         `\nPlease confirm my order! 🙏`
     );
     return `https://wa.me/${waDigits}?text=${msg}`;

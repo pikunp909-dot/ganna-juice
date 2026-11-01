@@ -51,13 +51,21 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const url = event.notification.data?.url || "/admin/orders";
+  // Broadcasts carry data.url = "/" (customer homepage); order pings carry
+  // "/orders" (admin). Falls back to the admin orders page.
+  let url = event.notification.data?.url || "/admin/orders";
+  if (!url.startsWith("/")) url = "/" + url;
+
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
       for (const client of clientList) {
         if ("focus" in client) {
-          client.navigate(url);
-          return client.focus();
+          try {
+            client.navigate(url);
+            return client.focus();
+          } catch {
+            // fall through to openWindow
+          }
         }
       }
       return self.clients.openWindow(url);

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api";
 import { Card, Badge, Button, Spinner, EmptyState } from "../components/ui";
 
@@ -403,6 +403,96 @@ function RangeCard() {
 }
 
 /* ---- Last 7 days bar chart ---- */
+function BroadcastCard() {
+  const [message, setMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  async function send() {
+    const text = message.trim();
+    if (!text || sending) return;
+    setSending(true);
+    try {
+      const res = await api.post("/notifications/broadcast", { message: text });
+      setMessage("");
+      setToast({
+        type: "success",
+        text: `Broadcast sent to ${res.sent} customer${res.sent === 1 ? "" : "s"}!`
+      });
+    } catch (err) {
+      setToast({ type: "error", text: err.message || "Broadcast failed" });
+    } finally {
+      setSending(false);
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.35, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass">
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+        <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 blur-3xl" />
+
+        <div className="relative p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-10 h-10 rounded-2xl bg-gold/10 border border-gold/25 grid place-items-center text-gold">
+              <BellIcon className="w-5 h-5" />
+            </span>
+            <div>
+              <h3 className="font-display text-xl text-cream leading-none">Broadcast Alert to Customers</h3>
+              <p className="text-xs text-muted mt-1">Tell everyone where the stall is right now</p>
+            </div>
+          </div>
+
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={3}
+            maxLength={280}
+            placeholder='e.g., "We are currently in Balasore! Fresh juice ready."'
+            className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-cream placeholder:text-muted/70 resize-none outline-none focus:border-gold/50 transition"
+          />
+          <div className="mt-2 flex items-center justify-between gap-4">
+            <span className="text-[11px] text-muted">{message.length}/280</span>
+            <Button variant="primary" onClick={send} disabled={!message.trim() || sending} loading={sending}>
+              {sending ? "Sending…" : "Send Broadcast"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {toast && (
+          <div className="fixed bottom-5 inset-x-0 z-[60] flex justify-center pointer-events-none">
+            <motion.div
+              key={toast.text}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              className={`pointer-events-auto px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl border ${
+                toast.type === "success"
+                  ? "bg-forest2 text-mint border-mint/40"
+                  : "bg-red-950 text-red-200 border-red-500/40"
+              }`}
+            >
+              {toast.text}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 function formatShortDate(isoDate) {
   if (!isoDate) return "";
   const d = new Date(`${isoDate}T00:00:00`);
@@ -616,6 +706,11 @@ export default function Analytics() {
         <SevenDayChart days={stats?.last7Days || []} />
       </div>
 
+      {/* Owner broadcast */}
+      <div className="mb-10">
+        <BroadcastCard />
+      </div>
+
       {/* Recent orders */}
       <motion.div
         initial={{ opacity: 0, y: 32 }}
@@ -776,6 +871,15 @@ function ChartIcon(p) {
     <IconBase {...p}>
       <path d="M3 3v18h18" />
       <path d="M7 15l3-4 3 2 5-7" />
+    </IconBase>
+  );
+}
+
+function BellIcon(p) {
+  return (
+    <IconBase {...p}>
+      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+      <path d="M13.73 21a2 2 0 0 1-3.46 0" />
     </IconBase>
   );
 }

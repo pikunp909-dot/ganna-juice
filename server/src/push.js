@@ -17,11 +17,14 @@ webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 export { VAPID_PUBLIC_KEY };
 
 /**
- * Send a push notification to every stored subscription.
+ * Send a push notification to stored subscriptions. Pass `type` to target
+ * only 'admin' or 'customer' rows; omit it to send to all.
  * Dead subscriptions (404/410) are pruned automatically.
  */
-export async function notifyAllSubscribers({ title, body, data = {} }) {
-  const subs = all("SELECT id, endpoint, keysJson FROM Subscriptions");
+export async function notifyAllSubscribers({ title, body, data = {}, type }) {
+  const subs = type
+    ? await all("SELECT id, endpoint, keysJson FROM Subscriptions WHERE type = ?", [type])
+    : await all("SELECT id, endpoint, keysJson FROM Subscriptions");
   const payload = JSON.stringify({ title, body, data });
 
   const results = await Promise.all(
@@ -39,7 +42,7 @@ export async function notifyAllSubscribers({ title, body, data = {} }) {
       } catch (err) {
         // 404/410 — subscription no longer valid, drop it.
         if (err.statusCode === 404 || err.statusCode === 410) {
-          run("DELETE FROM Subscriptions WHERE id = ?", [row.id]);
+          await run("DELETE FROM Subscriptions WHERE id = ?", [row.id]);
           return { ok: false, reason: "removed" };
         }
         return { ok: false, reason: `push-error:${err.statusCode || "unknown"}` };

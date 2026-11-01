@@ -1,22 +1,27 @@
 import { Router } from "express";
 import multer from "multer";
-import { mkdirSync } from "node:fs";
-import { join, extname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { dirname } from "node:path";
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
 import requireAdmin from "../middleware/requireAdmin.js";
 
 const router = Router();
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const uploadDir = join(__dirname, "..", "..", "uploads");
-mkdirSync(uploadDir, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, file, cb) => {
-    const ts = Date.now();
-    const ext = extname(file.originalname || "").toLowerCase() || ".jpg";
-    cb(null, `${ts}-${Math.round(Math.random() * 1e6)}${ext}`);
+// Cloudinary config — set these in server/.env:
+//   CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "ganna",
+    allowed_formats: ["jpg", "jpeg", "png", "webp", "gif"],
+    public_id: (_req, file) =>
+      `${Date.now()}-${Math.round(Math.random() * 1e6)}`,
+    transformation: [{ width: 1200, crop: "limit", quality: "auto", fetch_format: "auto" }]
   }
 });
 
@@ -29,10 +34,12 @@ const upload = multer({
   }
 });
 
-// POST /api/upload — single image, returns public URL (served from /uploads).
+// POST /api/upload — single image, returns the secure Cloudinary URL.
 router.post("/", requireAdmin, upload.single("image"), (req, res) => {
-  if (!req.file) return res.status(400).json({ error: "No image file received" });
-  res.status(201).json({ url: `/uploads/${req.file.filename}` });
+  if (!req.file || !req.file.path) {
+    return res.status(400).json({ error: "No image file received" });
+  }
+  res.status(201).json({ url: req.file.path });
 });
 
 router.use((err, _req, res, _next) => {

@@ -31,6 +31,17 @@ const waLink = (phone) => {
 
 const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
 
+// Converts a base64url VAPID key (from the API) into the Uint8Array
+// that pushManager.subscribe expects.
+function urlBase64ToUint8Array(base64) {
+  const padding = "=".repeat((4 - (base64.length % 4)) % 4);
+  const b64 = (base64 + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(b64);
+  const bytes = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i);
+  return bytes;
+}
+
 export default function Home() {
   const [settings, setSettings] = useState(FALLBACK_SETTINGS);
   const [items, setItems] = useState([]);
@@ -208,6 +219,73 @@ function Nav({ onMenu, onContact }) {
   const targetLang = lang === "en" ? "or" : "en";
   const targetLabel = lang === "en" ? "ଓଡ଼ିଆ" : "EN";
 
+  // Village-alert subscription state: idle | loading | on | denied
+  const [subState, setSubState] = useState("idle");
+
+  useEffect(() => {
+    if (!("Notification" in window)) {
+      setSubState("denied");
+      return;
+    }
+    if (Notification.permission === "granted") setSubState("on");
+  }, []);
+
+  // PWA install prompt (beforeinstallprompt)
+  const [installEvt, setInstallEvt] = useState(null);
+  const [standalone, setStandalone] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches
+  );
+
+  useEffect(() => {
+    function onPrompt(e) {
+      e.preventDefault();
+      setInstallEvt(e);
+    }
+    function onInstalled() {
+      setStandalone(true);
+      setInstallEvt(null);
+    }
+    window.addEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onPrompt);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  async function installApp() {
+    if (!installEvt) {
+      alert("To install, open this site in Chrome/Safari and tap 'Add to Home Screen'.");
+      return;
+    }
+    installEvt.prompt();
+    await installEvt.userChoice;
+    setInstallEvt(null);
+  }
+
+  async function enableAlerts() {
+    if (!("Notification" in window)) return;
+    setSubState("loading");
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") {
+        setSubState("denied");
+        return;
+      }
+      const reg = await navigator.serviceWorker.ready;
+      const { publicKey } = await api.get("/notifications/vapid");
+      const subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
+      });
+      await api.post("/notifications/subscribe-customer", subscription.toJSON());
+      setSubState("on");
+    } catch {
+      // Permission granted but subscription failed — keep the button visible.
+      setSubState("idle");
+    }
+  }
+
   return (
     <header className="fixed top-0 inset-x-0 z-30 border-b border-white/5 bg-forest/60 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
@@ -226,6 +304,48 @@ function Nav({ onMenu, onContact }) {
           <button onClick={onContact} className="px-3 py-2 rounded-full hover:text-cream hover:bg-white/5 transition">
             {t("contact")}
           </button>
+
+          {/* install app — glassmorphic */}
+          {!standalone && (
+            <button
+              onClick={installApp}
+              aria-label="Install app"
+              className="relative ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl text-xs font-bold text-cream hover:border-gold/50 hover:text-gold transition shadow-glass overflow-hidden"
+            >
+              <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(245,158,11,0.12),transparent_50%)]" />
+              <span className="relative text-sm leading-none">📲</span>
+              <span className="relative tracking-wide">Install App</span>
+            </button>
+          )}
+
+          {/* village alerts — glassmorphic */}
+          {(subState === "idle" || subState === "loading") && (
+            <button
+              onClick={enableAlerts}
+              disabled={subState === "loading"}
+              aria-label="Get village alerts"
+              className="relative ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl text-xs font-bold text-cream hover:border-gold/50 hover:text-gold transition shadow-glass overflow-hidden disabled:opacity-60 disabled:pointer-events-none"
+            >
+              <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(245,158,11,0.12),transparent_50%)]" />
+              {subState === "loading" ? (
+                <Spinner className="relative w-4 h-4" />
+              ) : (
+                <span className="relative text-sm leading-none">🔔</span>
+              )}
+              <span className="relative tracking-wide">
+                {subState === "loading" ? "Enabling…" : "Get Alerts"}
+              </span>
+            </button>
+          )}
+          {subState === "on" && (
+            <span
+              className="relative ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gold/40 bg-gold/10 text-xs font-bold text-gold shadow-glass"
+              title="Alerts enabled — we'll ping you when the stall moves"
+            >
+              <span className="relative text-sm leading-none">🔔</span>
+              <span className="relative tracking-wide">Alerts On</span>
+            </span>
+          )}
 
           {/* language toggle — glassmorphic */}
           <button

@@ -55,6 +55,39 @@ export default function DashboardLayout() {
     setToast({ type, message, key: Date.now() });
   }
 
+  // PWA install prompt (beforeinstallprompt)
+  const [installEvt, setInstallEvt] = useState(null);
+  const [standalone, setStandalone] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(display-mode: standalone)").matches
+  );
+
+  useEffect(() => {
+    function onPrompt(e) {
+      e.preventDefault();
+      setInstallEvt(e);
+    }
+    function onInstalled() {
+      setStandalone(true);
+      setInstallEvt(null);
+    }
+    window.addEventListener("beforeinstallprompt", onPrompt);
+    window.addEventListener("appinstalled", onInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", onPrompt);
+      window.removeEventListener("appinstalled", onInstalled);
+    };
+  }, []);
+
+  async function installApp() {
+    if (!installEvt) {
+      alert("To install, open this site in Chrome/Safari and tap 'Add to Home Screen'.");
+      return;
+    }
+    installEvt.prompt();
+    await installEvt.userChoice;
+    setInstallEvt(null);
+  }
+
   async function enableNotifications() {
     if (!("Notification" in window)) {
       showToast("error", "This browser doesn't support notifications");
@@ -257,6 +290,16 @@ export default function DashboardLayout() {
           </div>
 
           <div className="relative flex items-center gap-4">
+            {!standalone && (
+              <button
+                onClick={installApp}
+                title="Install app"
+                className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-sm font-bold text-cream px-4 py-2.5 transition hover:border-gold/50 hover:text-gold hover:shadow-glowGoldSoft"
+              >
+                <span className="text-base leading-none">📲</span>
+                <span className="hidden sm:inline">Install Admin App</span>
+              </button>
+            )}
             {notifPermission === "default" && (
               <button
                 onClick={enableNotifications}
