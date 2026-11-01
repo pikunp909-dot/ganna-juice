@@ -52,7 +52,8 @@ router.post("/", (req, res) => {
   notifyAllSubscribers({
     title: "New Order!",
     body: `₹${total} from ${customerName}`,
-    data: { url: "/orders", orderId: lastId }
+    data: { url: "/orders", orderId: lastId },
+    type: "admin"
   }).catch((err) => console.error("Order push error:", err.message));
 
   res.status(201).json({ order });

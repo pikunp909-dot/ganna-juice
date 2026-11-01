@@ -17,11 +17,14 @@ webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 export { VAPID_PUBLIC_KEY };
 
 /**
- * Send a push notification to every stored subscription.
+ * Send a push notification to stored subscriptions. Pass `type` to target
+ * only 'admin' or 'customer' rows; omit it to send to all.
  * Dead subscriptions (404/410) are pruned automatically.
  */
-export async function notifyAllSubscribers({ title, body, data = {} }) {
-  const subs = all("SELECT id, endpoint, keysJson FROM Subscriptions");
+export async function notifyAllSubscribers({ title, body, data = {}, type }) {
+  const subs = type
+    ? all("SELECT id, endpoint, keysJson FROM Subscriptions WHERE type = ?", [type])
+    : all("SELECT id, endpoint, keysJson FROM Subscriptions");
   const payload = JSON.stringify({ title, body, data });
 
   const results = await Promise.all(

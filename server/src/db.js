@@ -1,7 +1,6 @@
 /**
- * DB layer — uses Node's built-in SQLite (node:sqlite).
- * Zero native deps; plain SQL so it ports to PostgreSQL in production
- * by swapping this file for a pg client with the same exported helpers.
+ * DB layer — Node's built-in SQLite (node:sqlite).
+ * Zero native deps, fully synchronous. No external database required.
  */
 import { DatabaseSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
@@ -102,6 +101,7 @@ export function initSchema() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       endpoint TEXT NOT NULL UNIQUE,
       keysJson TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'admin',
       createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -126,6 +126,13 @@ export function initSchema() {
   const orderCols = db.prepare("PRAGMA table_info(Orders)").all().map((c) => c.name);
   if (!orderCols.includes("paymentMethod")) {
     db.exec("ALTER TABLE Orders ADD COLUMN paymentMethod TEXT NOT NULL DEFAULT 'UPI'");
+  }
+
+  // Subscribe type: 'admin' (owner) vs 'customer' (village alerts).
+  // Older DBs have no column — default every existing row to admin.
+  const subCols = db.prepare("PRAGMA table_info(Subscriptions)").all().map((c) => c.name);
+  if (!subCols.includes("type")) {
+    db.exec("ALTER TABLE Subscriptions ADD COLUMN type TEXT NOT NULL DEFAULT 'admin'");
   }
 }
 
