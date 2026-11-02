@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api";
+import { useAuth } from "../auth";
 import { Card, Button, Spinner } from "../components/ui";
 
 const emptySettings = {
@@ -26,8 +27,10 @@ export default function Settings() {
   const [saveError, setSaveError] = useState("");
   const [toast, setToast] = useState("");
 
-  // security — change password
-  const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
+  // security — account & password
+  const { refresh } = useAuth();
+  const [profileEmail, setProfileEmail] = useState("");
+  const [pw, setPw] = useState({ email: "", current: "", next: "", confirm: "" });
   const [pwSaving, setPwSaving] = useState(false);
   const [pwError, setPwError] = useState("");
 
@@ -35,7 +38,10 @@ export default function Settings() {
     setLoading(true);
     setLoadError("");
     try {
-      const { settings } = await api.settings();
+      const [{ settings }, { admin }] = await Promise.all([
+        api.settings(),
+        api.me()
+      ]);
       setForm({
         phone: settings.phone || "",
         whatsapp: settings.whatsapp || "",
@@ -50,6 +56,8 @@ export default function Settings() {
         deliveryCharge: settings.deliveryCharge ?? 20,
         freeDeliveryAbove: settings.freeDeliveryAbove ?? 300
       });
+      setProfileEmail(admin?.email || "");
+      setPw((prev) => ({ ...prev, email: admin?.email || "" }));
     } catch (err) {
       setLoadError(err.message || "Failed to load settings");
     } finally {
@@ -70,24 +78,51 @@ export default function Settings() {
   async function changePassword(e) {
     e.preventDefault();
     setPwError("");
-    if (pw.next.length < 8) {
-      setPwError("New password must be at least 8 characters");
+
+    const email = pw.email.trim();
+    const emailChanged = Boolean(email) && email.toLowerCase() !== profileEmail.toLowerCase();
+
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setPwError("Enter a valid email address");
       return;
     }
-    if (pw.next !== pw.confirm) {
-      setPwError("New passwords do not match");
+    if (emailChanged && !pw.current) {
+      setPwError("Current password is required to change the email");
       return;
     }
+    if (pw.next) {
+      if (pw.next.length < 8) {
+        setPwError("New password must be at least 8 characters");
+        return;
+      }
+      if (pw.next !== pw.confirm) {
+        setPwError("New passwords do not match");
+        return;
+      }
+    }
+    if (!emailChanged && !pw.next) {
+      setPwError("Change your email or enter a new password first");
+      return;
+    }
+
     setPwSaving(true);
     try {
-      await api.post("/auth/change-password", {
-        currentPassword: pw.current,
-        newPassword: pw.next
-      });
-      setToast("Password updated successfully");
-      setPw({ current: "", next: "", confirm: "" });
+      const body = { currentPassword: pw.current };
+      if (emailChanged) body.email = email;
+      if (pw.next) body.newPassword = pw.next;
+      await api.post("/auth/change-password", body);
+      if (emailChanged) {
+        setProfileEmail(email);
+        try {
+          await refresh();
+        } catch {
+          /* non-fatal — header updates on next load */
+        }
+      }
+      setToast("Profile updated successfully");
+      setPw({ email: emailChanged ? email : pw.email, current: "", next: "", confirm: "" });
     } catch (err) {
-      setPwError(err.message || "Could not update password");
+      setPwError(err.message || "Could not update profile");
     } finally {
       setPwSaving(false);
     }
@@ -391,7 +426,7 @@ export default function Settings() {
         <div className="pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full bg-gold/8 blur-3xl" />
 
         <form onSubmit={changePassword} className="relative p-6 sm:p-8">
-          <SectionTitle icon="🔒" title="Security — Change Password" sub="Keep your admin account safe" />
+          <SectionTitle icon="🔒" title="Security — Account & Password" sub="Manage your login email and password" />
 
           {pwError && (
             <motion.div
@@ -404,6 +439,16 @@ export default function Settings() {
           )}
 
           <div className="grid gap-y-5 mb-8">
+            <SleekField label="Email Address">
+              <input
+                type="email"
+                value={pw.email}
+                onChange={(e) => setPw({ ...pw, email: e.target.value })}
+                placeholder="you@example.com"
+                autoComplete="email"
+                className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+              />
+            </SleekField>
             <SleekField label="Current Password">
               <input
                 type="password"
@@ -447,7 +492,7 @@ export default function Settings() {
                   <Spinner className="w-4 h-4" /> Updating…
                 </>
               ) : (
-                <>Update Password</>
+                <>Update Profile</>
               )}
             </button>
           </div>

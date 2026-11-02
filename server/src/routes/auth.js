@@ -57,11 +57,24 @@ router.get("/me", requireAdmin, (req, res) => {
   res.json({ admin: req.admin });
 });
 
-// Change password — protected. Old password required.
+// Change password / update profile — protected. Current password required.
+// Accepts an optional new email (validated + uniqueness-checked) alongside
+// an optional new password. Either one can be supplied alone.
 router.post("/change-password", requireAdmin, async (req, res) => {
-  const { currentPassword, newPassword } = req.body || {};
+  const { currentPassword, newPassword, email } = req.body || {};
 
-  if (typeof newPassword !== "string" || newPassword.length < 8) {
+  const emailStr = typeof email === "string" ? email.trim().toLowerCase() : "";
+  const pwStr = typeof newPassword === "string" ? newPassword : "";
+
+  if (!emailStr && !pwStr) {
+    return res.status(400).json({ error: "Nothing to update — provide an email and/or a new password" });
+  }
+
+  if (emailStr && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr)) {
+    return res.status(400).json({ error: "Enter a valid email address" });
+  }
+
+  if (pwStr && pwStr.length < 8) {
     return res.status(400).json({ error: "New password must be at least 8 characters" });
   }
 
@@ -71,9 +84,21 @@ router.post("/change-password", requireAdmin, async (req, res) => {
     return res.status(401).json({ error: "Current password is incorrect" });
   }
 
-  const hash = await bcrypt.hash(newPassword, 12);
-  await run("UPDATE AdminUsers SET password = ? WHERE id = ?", [hash, admin.id]);
-  res.json({ ok: true, message: "Password updated" });
+  if (emailStr && emailStr !== admin.email) {
+    const existing = await get("SELECT id FROM AdminUsers WHERE email = ?", [emailStr]);
+    if (existing) {
+      return res.status(409).json({ error: "That email is already in use" });
+    }
+    await run("UPDATE AdminUsers SET email = ? WHERE id = ?", [emailStr, admin.id]);
+  }
+
+  if (pwStr) {
+    const hash = await bcrypt.hash(pwStr, 12);
+    await run("UPDATE AdminUsers SET password = ? WHERE id = ?", [hash, admin.id]);
+  }
+
+  const updated = await get("SELECT id, email, role FROM AdminUsers WHERE id = ?", [admin.id]);
+  res.json({ ok: true, admin: updated, message: "Profile updated" });
 });
 
 // Logout is client-side (token discarded); nothing to revoke server-side.

@@ -37,8 +37,15 @@ export function AuthProvider({ children }) {
     setAdmin(null);
   }, []);
 
+  // Re-fetch the current admin from the API (e.g. after an email change).
+  const refresh = useCallback(async () => {
+    const { admin } = await api.me();
+    setAdmin(admin);
+    return admin;
+  }, []);
+
   return (
-    <AuthCtx.Provider value={{ admin, ready, login, logout }}>
+    <AuthCtx.Provider value={{ admin, ready, login, logout, refresh }}>
       {children}
     </AuthCtx.Provider>
   );

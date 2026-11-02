@@ -129,6 +129,10 @@ export default function DashboardLayout() {
   const [orderAlert, setOrderAlert] = useState(null);
   const seenPendingIdsRef = useRef(null); // null = not seeded yet
 
+  // latest pending orders for the header bell dropdown
+  const [bellOpen, setBellOpen] = useState(false);
+  const [pendingOrders, setPendingOrders] = useState([]);
+
   useEffect(() => {
     let alive = true;
 
@@ -137,6 +141,14 @@ export default function DashboardLayout() {
         const { orders } = await api.orders();
         if (!alive) return;
         const pending = (orders || []).filter((o) => o.status === "Pending");
+        // keep the bell's list fresh without re-rendering when nothing changed
+        setPendingOrders((prev) => {
+          const next = pending.slice(0, 5);
+          const same =
+            prev.length === next.length &&
+            prev.every((p, i) => p.id === next[i].id && p.status === next[i].status);
+          return same ? prev : next;
+        });
         const seen = seenPendingIdsRef.current;
         if (seen !== null) {
           const fresh = pending.find((o) => !seen.has(String(o.id)));
@@ -354,6 +366,67 @@ export default function DashboardLayout() {
               </button>
             )}
             <LanguageDropdown />
+
+            {/* Pending orders bell */}
+            <div className="relative">
+              <button
+                onClick={() => setBellOpen((v) => !v)}
+                className="relative inline-flex items-center justify-center w-10 h-10 rounded-2xl border border-white/10 bg-white/[0.04] text-cream transition hover:border-gold/50 hover:text-gold hover:shadow-glowGoldSoft"
+                aria-label="Pending orders"
+              >
+                <BellIcon className="w-5 h-5" />
+                {pendingOrders.length > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[10px] font-bold grid place-items-center shadow-lg">
+                    {pendingOrders.length}
+                  </span>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {bellOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setBellOpen(false)} />
+                    <motion.div
+                      className="absolute right-0 top-12 z-50 w-80 overflow-hidden rounded-3xl border border-white/10 bg-forest2/95 backdrop-blur-2xl shadow-card"
+                      initial={{ opacity: 0, y: -8, scale: 0.97 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -6, scale: 0.97 }}
+                      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between">
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted">Pending Orders</p>
+                        <span className="text-[10px] font-bold text-gold">{pendingOrders.length} waiting</span>
+                      </div>
+                      <div className="max-h-[22rem] overflow-y-auto">
+                        {pendingOrders.length === 0 ? (
+                          <div className="px-5 py-10 text-center">
+                            <p className="text-2xl mb-2">🎉</p>
+                            <p className="text-sm text-muted">No pending orders</p>
+                          </div>
+                        ) : (
+                          pendingOrders.map((o) => (
+                            <button
+                              key={o.id}
+                              onClick={() => {
+                                setBellOpen(false);
+                                navigate("/admin/orders");
+                              }}
+                              className="w-full text-left px-5 py-3.5 flex items-center justify-between gap-3 border-b border-white/5 last:border-b-0 hover:bg-white/[0.04] transition-colors"
+                            >
+                              <span className="text-sm font-semibold text-cream">Order #{o.id}</span>
+                              <span className="text-sm font-bold text-gold2 tabular-nums">
+                                ₹{Number(o.totalAmount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                              </span>
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+
             <div className="hidden md:flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-gold-metal grid place-items-center text-sm font-bold text-forest shadow-glowGoldSoft">
                 {admin?.email?.charAt(0)?.toUpperCase() || "O"}

@@ -202,12 +202,9 @@ export default function Menu() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item, i) => (
-                  <motion.tr
+                {items.map((item) => (
+                  <tr
                     key={item.id}
-                    initial={{ opacity: 0, x: -16 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.08 + i * 0.05, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     className="group transition-all duration-300 hover:bg-gold/[0.045] hover:shadow-[inset_0_0_32px_-16px_rgba(245,158,11,0.35)]"
                   >
                     <td className="relative px-6 py-4 w-16">
@@ -216,6 +213,7 @@ export default function Menu() {
                         <img
                           src={item.imageUrl}
                           alt={item.name}
+                          loading="lazy"
                           className="w-12 h-12 rounded-xl object-cover border border-white/10 shadow-glass"
                         />
                       ) : (
@@ -257,17 +255,15 @@ export default function Menu() {
                               <Spinner className="w-3.5 h-3.5" />
                             </span>
                           ) : (
-                            <motion.span
+                            <span
                               className={`absolute top-[2px] left-[2px] w-6 h-6 rounded-full grid place-items-center text-[9px] font-black transition-all duration-300 ${
                                 item.isAvailable
                                   ? "translate-x-5 bg-gold-metal text-forest shadow-glowGoldSoft"
                                   : "translate-x-0 bg-white/40 text-transparent"
                               }`}
-                              layout
-                              transition={{ type: "spring", stiffness: 500, damping: 30 }}
                             >
                               ✓
-                            </motion.span>
+                            </span>
                           )}
                         </button>
 
@@ -285,7 +281,7 @@ export default function Menu() {
                         </button>
                       </div>
                     </td>
-                  </motion.tr>
+                  </tr>
                 ))}
               </tbody>
             </table>
@@ -293,13 +289,8 @@ export default function Menu() {
 
           {/* ===== Mobile cards (glass panels) ===== */}
           <div className="md:hidden grid gap-5">
-            {items.map((item, i) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 24 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.05 + i * 0.05, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              >
+            {items.map((item) => (
+              <div key={item.id}>
                 <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass">
                   <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
                   <div className="pointer-events-none absolute -top-16 -right-12 w-44 h-44 rounded-full bg-gold/8 blur-3xl" />
@@ -311,6 +302,7 @@ export default function Menu() {
                         <img
                           src={item.imageUrl}
                           alt={item.name}
+                          loading="lazy"
                           className="w-14 h-14 rounded-2xl object-cover border border-white/10 shadow-glass shrink-0"
                         />
                       ) : (
@@ -358,17 +350,15 @@ export default function Menu() {
                             <Spinner className="w-3.5 h-3.5" />
                           </span>
                         ) : (
-                          <motion.span
+                          <span
                             className={`absolute top-[2px] left-[2px] w-6 h-6 rounded-full grid place-items-center text-[9px] font-black transition-all duration-300 ${
                               item.isAvailable
                                 ? "translate-x-5 bg-gold-metal text-forest shadow-glowGoldSoft"
                                 : "translate-x-0 bg-white/40 text-transparent"
                             }`}
-                            layout
-                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
                           >
                             ✓
-                          </motion.span>
+                          </span>
                         )}
                       </button>
 
@@ -388,7 +378,7 @@ export default function Menu() {
                     </div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
           </>
@@ -545,6 +535,7 @@ function MenuImageUpload({ value, onChange, label = "Image" }) {
           <img
             src={value}
             alt="Uploaded"
+            loading="lazy"
             className="relative w-16 h-16 rounded-xl object-cover border border-white/10 shadow-glass"
           />
           <div className="relative flex flex-col gap-2">
