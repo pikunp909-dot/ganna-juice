@@ -13,7 +13,9 @@ const emptySettings = {
   exactLocation: "",
   upiId: "",
   qrCodeUrl: "",
-  heroImageUrl: ""
+  heroImageUrl: "",
+  deliveryCharge: "",
+  freeDeliveryAbove: ""
 };
 
 export default function Settings() {
@@ -44,7 +46,9 @@ export default function Settings() {
         exactLocation: settings.exactLocation || "",
         upiId: settings.upiId || "",
         qrCodeUrl: settings.qrCodeUrl || "",
-        heroImageUrl: settings.heroImageUrl || ""
+        heroImageUrl: settings.heroImageUrl || "",
+        deliveryCharge: settings.deliveryCharge ?? 20,
+        freeDeliveryAbove: settings.freeDeliveryAbove ?? 300
       });
     } catch (err) {
       setLoadError(err.message || "Failed to load settings");
@@ -112,7 +116,9 @@ export default function Settings() {
         exactLocation: form.exactLocation.trim(),
         upiId: form.upiId.trim(),
         qrCodeUrl: form.qrCodeUrl.trim(),
-        heroImageUrl: form.heroImageUrl.trim()
+        heroImageUrl: form.heroImageUrl.trim(),
+        deliveryCharge: Number(form.deliveryCharge) || 0,
+        freeDeliveryAbove: Number(form.freeDeliveryAbove) || 0
       });
       setToast("Settings Saved! Refresh customer page to see changes");
     } catch (err) {
@@ -257,6 +263,31 @@ export default function Settings() {
                 Use the Google Maps share link. Customers tap the footer map to open this exact location.
               </p>
             </div>
+          </div>
+
+          {/* ---- Group: Delivery Charges ---- */}
+          <SectionTitle icon="🛵" title="Delivery Charges" sub="Flat fee per delivery order, waived above the free threshold" />
+          <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5 mb-8">
+            <SleekField label="Delivery Charge (₹)">
+              <input
+                type="number"
+                min="0"
+                value={form.deliveryCharge}
+                onChange={(e) => set("deliveryCharge", e.target.value)}
+                placeholder="20"
+                className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+              />
+            </SleekField>
+            <SleekField label="Free Delivery Above (₹)">
+              <input
+                type="number"
+                min="0"
+                value={form.freeDeliveryAbove}
+                onChange={(e) => set("freeDeliveryAbove", e.target.value)}
+                placeholder="300"
+                className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+              />
+            </SleekField>
           </div>
 
           {/* ---- Group: UPI (glowing gold highlight) ---- */}

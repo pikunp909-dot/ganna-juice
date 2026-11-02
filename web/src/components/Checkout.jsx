@@ -86,6 +86,13 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
   const upiId = liveSettings.upiId || "kunal@okaxis";
   const waDigits = String(liveSettings.whatsapp || "").replace(/\D/g, "");
 
+  // Delivery charge — flat fee for delivery, waived above the free threshold.
+  const deliveryCharge = Number(liveSettings.deliveryCharge ?? 20);
+  const freeDeliveryAbove = Number(liveSettings.freeDeliveryAbove ?? 300);
+  const deliveryFee =
+    mode === "Delivery" && total < freeDeliveryAbove ? deliveryCharge : 0;
+  const payable = total + deliveryFee;
+
   /* ---- validation ---- */
 
   function validateForm() {
@@ -120,6 +127,7 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
         address: mode === "Delivery" ? form.address.trim() : "",
         mode,
         paymentMethod,
+        totalAmount: payable,
         items: lines.map((l) => ({ menuItemId: l.item.id, quantity: l.qty }))
       });
       setOrder(res.order);
@@ -258,6 +266,8 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
                       }}
                       lines={lines}
                       total={total}
+                      deliveryFee={deliveryFee}
+                      payable={payable}
                     />
                   </motion.div>
                 )}
@@ -265,7 +275,7 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
                 {step === "payment" && (
                   <motion.div key="payment" variants={stepVariants} initial="initial" animate="animate" exit="exit">
                     <PaymentStep
-                      total={total}
+                      total={payable}
                       settings={liveSettings}
                       upiId={upiId}
                       paymentMethod={paymentMethod}
@@ -402,7 +412,7 @@ function StepProgress({ current }) {
 
 /* ================= Step 1 — Details ================= */
 
-function DetailsStep({ mode, setMode, form, setForm, errors, onNext, lines, total }) {
+function DetailsStep({ mode, setMode, form, setForm, errors, onNext, lines, total, deliveryFee, payable }) {
   const { t } = useLanguage();
 
   return (
@@ -422,6 +432,28 @@ function DetailsStep({ mode, setMode, form, setForm, errors, onNext, lines, tota
         </div>
         <span className="font-display text-xl text-gold-metal">{inr(total)}</span>
       </div>
+
+      {/* delivery fee breakdown */}
+      {mode === "Delivery" && (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 space-y-2 text-sm">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted">Subtotal</span>
+            <span className="text-cream font-semibold">{inr(total)}</span>
+          </div>
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-muted">Delivery Fee</span>
+            {deliveryFee > 0 ? (
+              <span className="text-cream font-semibold">{inr(deliveryFee)}</span>
+            ) : (
+              <span className="text-mint font-bold">FREE</span>
+            )}
+          </div>
+          <div className="flex items-center justify-between gap-3 pt-2 border-t border-white/10">
+            <span className="text-muted font-semibold">Total Payable</span>
+            <span className="font-display text-xl text-gold-metal">{inr(payable)}</span>
+          </div>
+        </div>
+      )}
 
       {/* order mode toggle */}
       <div className="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-white/5 border border-white/10">

@@ -649,6 +649,7 @@ function SevenDayChart({ days }) {
 export default function Analytics() {
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(null);
+  const [visits, setVisits] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -656,12 +657,14 @@ export default function Analytics() {
     setLoading(true);
     setError("");
     try {
-      const [{ orders }, { stats }] = await Promise.all([
+      const [{ orders }, { stats }, visitsData] = await Promise.all([
         api.orders(),
-        api.get("/orders/stats")
+        api.get("/orders/stats"),
+        api.visits().catch(() => null)
       ]);
       setOrders(orders || []);
       setStats(stats || {});
+      setVisits(visitsData || { today: 0, total: 0 });
     } catch (err) {
       setError(err.message || "Failed to load analytics");
     } finally {
@@ -804,6 +807,31 @@ export default function Analytics() {
           value={pendingOrders}
           delay={2}
           icon={<ClockIcon className="w-5 h-5" />}
+        />
+      </motion.div>
+
+      {/* Website visits */}
+      <motion.div
+        variants={cardStagger}
+        initial="hidden"
+        animate="show"
+        className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 mb-10"
+      >
+        <StatCard
+          tone="mint"
+          label="Website Visits Today"
+          sub="Unique visitors today"
+          value={visits?.today ?? 0}
+          delay={0}
+          icon={<UsersIcon className="w-5 h-5" />}
+        />
+        <StatCard
+          tone="amber"
+          label="Total Visits"
+          sub="All-time visits"
+          value={visits?.total ?? 0}
+          delay={1}
+          icon={<UsersIcon className="w-5 h-5" />}
         />
       </motion.div>
 
@@ -1011,6 +1039,16 @@ function MonthIcon(p) {
     <IconBase {...p}>
       <rect x="3" y="4" width="18" height="18" rx="2" />
       <path d="M16 2v4M8 2v4M3 10h18" />
+    </IconBase>
+  );
+}
+
+function UsersIcon(p) {
+  return (
+    <IconBase {...p}>
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
     </IconBase>
   );
 }

@@ -47,6 +47,7 @@ export const api = {
 
   // orders (admin)
   orders: () => request("GET", "/orders"),
+  customers: () => request("GET", "/orders/customers-list"),
   deleteOrder: (id) => request("DELETE", `/orders/${id}`),
   updateOrderStatus: (id, status) => request("PATCH", `/orders/${id}/status`, { status }),
 
@@ -57,6 +58,10 @@ export const api = {
   settings: () => request("GET", "/settings"),
   updateSettings: (s) => request("PUT", "/settings", s),
   publicSettings: () => request("GET", "/settings/public"),
+
+  // analytics
+  visits: () => request("GET", "/analytics/visits"),
+  trackVisit: () => request("POST", "/analytics/track-visit"),
 
   // uploads
   upload: (file) => {

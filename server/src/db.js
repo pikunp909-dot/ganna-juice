@@ -111,6 +111,8 @@ export async function initSchema() {
       upiId TEXT DEFAULT '',
       qrCodeUrl TEXT DEFAULT '',
       heroImageUrl TEXT DEFAULT '',
+      deliveryCharge INTEGER DEFAULT 20,
+      freeDeliveryAbove INTEGER DEFAULT 300,
       updatedAt TEXT DEFAULT (datetime('now'))
     );
 
@@ -168,6 +170,11 @@ export async function initSchema() {
       updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS Analytics (
+      date TEXT PRIMARY KEY,
+      visits INTEGER NOT NULL DEFAULT 0
+    );
+
     CREATE INDEX IF NOT EXISTS idx_orders_status ON Orders(status);
     CREATE INDEX IF NOT EXISTS idx_orderitems_order ON OrderItems(orderId);
     CREATE INDEX IF NOT EXISTS idx_reviews_created ON Reviews(createdAt);
@@ -198,6 +205,12 @@ export async function initSchema() {
   }
   if (!settingsCols.includes("exactLocation")) {
     await exec("ALTER TABLE Settings ADD COLUMN exactLocation TEXT DEFAULT ''");
+  }
+  if (!settingsCols.includes("deliveryCharge")) {
+    await exec("ALTER TABLE Settings ADD COLUMN deliveryCharge INTEGER DEFAULT 20");
+  }
+  if (!settingsCols.includes("freeDeliveryAbove")) {
+    await exec("ALTER TABLE Settings ADD COLUMN freeDeliveryAbove INTEGER DEFAULT 300");
   }
 
   const orderCols = await tableCols("Orders");

@@ -4,7 +4,8 @@ import requireAdmin from "../middleware/requireAdmin.js";
 
 const router = Router();
 
-const FIELDS = ["phone", "whatsapp", "instagram", "telegram", "locationUrl", "pincode", "exactLocation", "upiId", "qrCodeUrl", "heroImageUrl"];
+const FIELDS = ["phone", "whatsapp", "instagram", "telegram", "locationUrl", "pincode", "exactLocation", "upiId", "qrCodeUrl", "heroImageUrl", "deliveryCharge", "freeDeliveryAbove"];
+const NUMERIC_FIELDS = ["deliveryCharge", "freeDeliveryAbove"];
 
 // Public subset the customer site needs.
 router.get("/public", async (_req, res) => {
@@ -12,6 +13,7 @@ router.get("/public", async (_req, res) => {
   const pick = {};
   for (const f of FIELDS) pick[f] = s[f] || "";
   pick.heroImageUrl = s.heroImageUrl || "";
+  for (const f of NUMERIC_FIELDS) pick[f] = Number(s[f] ?? 0);
   res.json({ settings: pick });
 });
 
@@ -26,16 +28,21 @@ router.put("/", requireAdmin, async (req, res) => {
 
   const next = {};
   for (const f of FIELDS) next[f] = body[f] !== undefined ? String(body[f]) : s?.[f] ?? "";
+  for (const f of NUMERIC_FIELDS) {
+    next[f] = body[f] !== undefined
+      ? Math.max(0, Math.floor(Number(body[f]) || 0))
+      : Number(s?.[f] ?? 0);
+  }
 
   if (s) {
     await run(
-      `UPDATE Settings SET phone = ?, whatsapp = ?, instagram = ?, telegram = ?, locationUrl = ?, pincode = ?, exactLocation = ?, upiId = ?, qrCodeUrl = ?, heroImageUrl = ?, updatedAt = datetime('now') WHERE id = 1`,
-      [next.phone, next.whatsapp, next.instagram, next.telegram, next.locationUrl, next.pincode, next.exactLocation, next.upiId, next.qrCodeUrl, next.heroImageUrl]
+      `UPDATE Settings SET phone = ?, whatsapp = ?, instagram = ?, telegram = ?, locationUrl = ?, pincode = ?, exactLocation = ?, upiId = ?, qrCodeUrl = ?, heroImageUrl = ?, deliveryCharge = ?, freeDeliveryAbove = ?, updatedAt = datetime('now') WHERE id = 1`,
+      [next.phone, next.whatsapp, next.instagram, next.telegram, next.locationUrl, next.pincode, next.exactLocation, next.upiId, next.qrCodeUrl, next.heroImageUrl, next.deliveryCharge, next.freeDeliveryAbove]
     );
   } else {
     await run(
-      `INSERT INTO Settings (id, phone, whatsapp, instagram, telegram, locationUrl, pincode, exactLocation, upiId, qrCodeUrl, heroImageUrl) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [next.phone, next.whatsapp, next.instagram, next.telegram, next.locationUrl, next.pincode, next.exactLocation, next.upiId, next.qrCodeUrl, next.heroImageUrl]
+      `INSERT INTO Settings (id, phone, whatsapp, instagram, telegram, locationUrl, pincode, exactLocation, upiId, qrCodeUrl, heroImageUrl, deliveryCharge, freeDeliveryAbove) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [next.phone, next.whatsapp, next.instagram, next.telegram, next.locationUrl, next.pincode, next.exactLocation, next.upiId, next.qrCodeUrl, next.heroImageUrl, next.deliveryCharge, next.freeDeliveryAbove]
     );
   }
 

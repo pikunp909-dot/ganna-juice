@@ -17,6 +17,7 @@ import uploadRoutes from "./routes/upload.js";
 import reviewRoutes from "./routes/reviews.js";
 import notificationRoutes from "./routes/notifications.js";
 import loyaltyRoutes from "./routes/loyalty.js";
+import analyticsRoutes from "./routes/analytics.js";
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use("/api/upload", uploadRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/loyalty", loyaltyRoutes);
+app.use("/api/analytics", analyticsRoutes);
 
 // Production — serve the built SPA from web/dist so a single Express
 // process handles both the API and the React frontend.

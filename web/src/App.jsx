@@ -8,6 +8,7 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import Analytics from "./pages/Analytics";
 import Menu from "./pages/Menu";
 import Orders from "./pages/Orders";
+import Customers from "./pages/Customers";
 import Settings from "./pages/Settings";
 import AdminReviews from "./pages/AdminReviews";
 
@@ -57,6 +58,7 @@ export default function App() {
         <Route index element={<Analytics />} />
         <Route path="menu" element={<Menu />} />
         <Route path="orders" element={<Orders />} />
+        <Route path="customers" element={<Customers />} />
         <Route path="reviews" element={<AdminReviews />} />
         <Route path="settings" element={<Settings />} />
       </Route>

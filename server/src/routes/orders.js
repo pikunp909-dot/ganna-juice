@@ -41,6 +41,15 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "Minimum order value is ₹150" });
   }
 
+  // Delivery charge — flat fee waived above the free-delivery threshold.
+  const s = await get("SELECT * FROM Settings WHERE id = 1");
+  const deliveryCharge = Number(s?.deliveryCharge ?? 20);
+  const freeDeliveryAbove = Number(s?.freeDeliveryAbove ?? 300);
+  if (mode === "Delivery" && total < freeDeliveryAbove) {
+    total += deliveryCharge;
+    total = Math.round(total * 100) / 100;
+  }
+
   const { lastId } = await run(
     "INSERT INTO Orders (customerName, customerPhone, address, totalAmount, paymentMethod, status) VALUES (?, ?, ?, ?, ?, 'Pending')",
     [customerName, customerPhone, address === "" && mode === "Pickup" ? "Pickup" : address, total, method]
@@ -211,6 +220,25 @@ router.get("/stats", requireAdmin, async (req, res) => {
       last7Days
     }
   });
+});
+
+// Admin — CRM: unique customers grouped by phone with loyalty stamps.
+// Name is the most recent one on file; stamps join against the Loyalty
+// table (one row per phone).
+router.get("/customers-list", requireAdmin, async (_req, res) => {
+  const customers = await all(
+    `SELECT
+       o.customerPhone AS phone,
+       MAX(o.customerName) AS name,
+       COUNT(*) AS orderCount,
+       ROUND(SUM(o.totalAmount), 2) AS totalSpent,
+       COALESCE(MAX(l.stamps), 0) AS stamps
+     FROM Orders o
+     LEFT JOIN Loyalty l ON l.phone = o.customerPhone
+     GROUP BY o.customerPhone
+     ORDER BY orderCount DESC, totalSpent DESC`
+  );
+  res.json({ customers });
 });
 
 // Admin — mark payment verified (UTR checked by owner).

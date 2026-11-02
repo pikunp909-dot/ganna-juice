@@ -75,6 +75,20 @@ export default function Home() {
     })();
   }, []);
 
+  // Visitor counter — one hit per browser per day (localStorage dedupe),
+  // never blocking the page render. Failures are swallowed silently.
+  useEffect(() => {
+    const KEY = "ganna_last_visit_date";
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+      if (localStorage.getItem(KEY) === today) return;
+      localStorage.setItem(KEY, today);
+      api.trackVisit().catch(() => {});
+    } catch {
+      /* storage unavailable — skip tracking */
+    }
+  }, []);
+
   useEffect(() => {
     if (!note) return;
     const t = setTimeout(() => setNote(""), 2600);
