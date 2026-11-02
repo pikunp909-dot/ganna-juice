@@ -441,25 +441,25 @@ function Nav({ onMenu, onContact, isOpen, openTime, closeTime }) {
   return (
     <header className="fixed top-0 inset-x-0 z-30 border-b border-white/5 bg-forest/60 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-        <button onClick={() => scrollTo("top")} className="flex items-center gap-2.5">
+        <button onClick={() => scrollTo("top")} className="flex items-center gap-2 shrink-0">
           <span className="w-9 h-9 rounded-xl bg-gold-metal grid place-items-center text-lg shadow-glowGoldSoft">
             🍹
           </span>
-          <span className="font-display text-xl text-cream">
+          <span className="font-display text-xl text-cream hidden sm:inline">
             Sugarcane <span className="text-gold-metal">Juice</span>
           </span>
         </button>
-        <nav className="flex items-center gap-1 text-sm font-semibold text-muted">
-          <button onClick={onMenu} className="px-3 py-2 rounded-full hover:text-cream hover:bg-white/5 transition">
+        <nav className="flex items-center justify-end gap-1 sm:gap-1.5 ml-auto min-w-0 text-sm font-semibold text-muted">
+          <button onClick={onMenu} className="hidden sm:inline-flex px-2.5 sm:px-3 py-2 rounded-full hover:text-cream hover:bg-white/5 transition whitespace-nowrap">
             {t("menuShort")}
           </button>
-          <button onClick={onContact} className="px-3 py-2 rounded-full hover:text-cream hover:bg-white/5 transition">
+          <button onClick={onContact} className="hidden sm:inline-flex px-2.5 sm:px-3 py-2 rounded-full hover:text-cream hover:bg-white/5 transition whitespace-nowrap">
             {t("contact")}
           </button>
 
           {/* shop open/closed pill */}
           <span
-            className={`ml-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-bold shadow-glass ${
+            className={`inline-flex items-center gap-1.5 px-2.5 sm:px-3.5 py-2 rounded-full border text-[11px] sm:text-xs font-bold shadow-glass whitespace-nowrap ${
               isOpen
                 ? "border-mint/40 bg-mint/10 text-mint"
                 : "border-red-500/40 bg-red-500/10 text-red-300"
@@ -467,11 +467,18 @@ function Nav({ onMenu, onContact, isOpen, openTime, closeTime }) {
             title={isOpen ? `${t("shopOpen")} ${formatHour12(openTime)} - ${formatHour12(closeTime)}` : t("shopClosed")}
           >
             <span className={`w-2 h-2 rounded-full ${isOpen ? "bg-mint animate-pulse" : "bg-red-400"}`} />
-            {isOpen
-              ? t("shopStatusOpen")
-                  .replace("{open}", formatHour12(openTime))
-                  .replace("{close}", formatHour12(closeTime))
-              : t("shopStatusClosed")}
+            <span className="hidden sm:inline">
+              {isOpen
+                ? t("shopStatusOpen")
+                    .replace("{open}", formatHour12(openTime))
+                    .replace("{close}", formatHour12(closeTime))
+                : t("shopStatusClosed")
+                    .replace("{open}", formatHour12(openTime))
+                    .replace("{close}", formatHour12(closeTime))}
+            </span>
+            <span className="sm:hidden">
+              {isOpen ? t("shopStatusOpenShort") : t("shopStatusClosedShort")}
+            </span>
           </span>
 
           {/* install app — glassmorphic */}
@@ -479,11 +486,11 @@ function Nav({ onMenu, onContact, isOpen, openTime, closeTime }) {
             <button
               onClick={installApp}
               aria-label="Install app"
-              className="relative ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl text-xs font-bold text-cream hover:border-gold/50 hover:text-gold transition shadow-glass overflow-hidden"
+              className="relative inline-flex items-center justify-center gap-2 px-2.5 sm:px-4 py-2 rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl text-xs font-bold text-cream hover:border-gold/50 hover:text-gold transition shadow-glass overflow-hidden whitespace-nowrap"
             >
               <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(245,158,11,0.12),transparent_50%)]" />
               <span className="relative text-sm leading-none">📲</span>
-              <span className="relative tracking-wide">Install App</span>
+              <span className="relative tracking-wide hidden sm:inline">Install App</span>
             </button>
           )}
 
@@ -496,7 +503,7 @@ function Nav({ onMenu, onContact, isOpen, openTime, closeTime }) {
               onClick={enableAlerts}
               disabled={subState === "loading"}
               aria-label="Get village alerts"
-              className="relative ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl text-xs font-bold text-cream hover:border-gold/50 hover:text-gold transition shadow-glass overflow-hidden disabled:opacity-60 disabled:pointer-events-none"
+              className="relative hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl text-xs font-bold text-cream hover:border-gold/50 hover:text-gold transition shadow-glass overflow-hidden disabled:opacity-60 disabled:pointer-events-none"
             >
               <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(245,158,11,0.12),transparent_50%)]" />
               {subState === "loading" ? (
@@ -511,7 +518,7 @@ function Nav({ onMenu, onContact, isOpen, openTime, closeTime }) {
           )}
           {subState === "on" && (
             <span
-              className="relative ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gold/40 bg-gold/10 text-xs font-bold text-gold shadow-glass"
+              className="relative hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gold/40 bg-gold/10 text-xs font-bold text-gold shadow-glass"
               title="Alerts enabled — we'll ping you when the stall moves"
             >
               <span className="relative text-sm leading-none">🔔</span>
@@ -742,7 +749,9 @@ function MenuSection({ items, loading, error, onRetry, isOpen, openTime }) {
             animate={{ opacity: 1, y: 0 }}
             className="max-w-xl mx-auto text-center rounded-2xl border border-red-500/30 bg-red-500/[0.08] text-red-200 text-sm font-semibold px-5 py-3.5 mb-10"
           >
-            {t("shopClosedBanner").replace("{openTime}", formatHour12(openTime))}
+            {t("shopClosedBanner")
+              .replace("{openTime}", formatHour12(openTime))
+              .replace("{closeTime}", formatHour12(closeTime))}
           </motion.div>
         )}
 
@@ -966,7 +975,9 @@ function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout, i
               )}
               {!isOpen && (
                 <p className="text-xs font-semibold text-red-300 bg-red-500/10 border border-red-500/25 rounded-xl px-3.5 py-2.5 mb-3 text-center">
-                  {t("shopClosedBanner").replace("{openTime}", formatHour12(openTime))}
+                  {t("shopClosedBanner")
+                    .replace("{openTime}", formatHour12(openTime))
+                    .replace("{closeTime}", formatHour12(closeTime))}
                 </p>
               )}
               <button
@@ -1044,6 +1055,22 @@ function TrackOrder() {
     }
     window.addEventListener("ganna:track-order", onTrackRequest);
     return () => window.removeEventListener("ganna:track-order", onTrackRequest);
+  }, [trackById]);
+
+  // Deep link: ?track=00024 (from the WhatsApp receipt) opens tracking
+  // pre-filled — used by trackById, then the query is cleaned so a
+  // refresh doesn't re-trigger.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const raw = (params.get("track") || "").trim();
+    if (!raw) return;
+    const id = raw.replace(/\D/g, "");
+    if (!id) return;
+    setInput(raw);
+    document.getElementById("track")?.scrollIntoView({ behavior: "smooth" });
+    trackById(id);
+    const cleanUrl = window.location.pathname + window.location.hash;
+    window.history.replaceState({}, "", cleanUrl);
   }, [trackById]);
 
   function handleTrack(e) {
@@ -1125,7 +1152,7 @@ function TrackOrder() {
               <div className="flex items-center justify-between gap-3 flex-wrap mb-8">
                 <div>
                   <p className="text-xs text-muted uppercase tracking-wider font-bold">{t("orderLabel")}</p>
-                  <p className="font-display text-2xl text-gold2">#{order.id}</p>
+                  <p className="font-display text-2xl text-gold2">#{String(order.id).padStart(5, "0")}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-muted uppercase tracking-wider font-bold">{t("trackTotal")}</p>

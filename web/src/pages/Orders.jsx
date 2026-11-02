@@ -7,16 +7,18 @@ import { Card, Badge, Button, EmptyState, Spinner } from "../components/ui";
 const inr = (n) =>
   "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
+const fmtOrderId = (id) => String(id).padStart(5, "0");
+
 const DELIVERY_STEPS = ["Pending", "Preparing", "Out for Delivery", "Delivered"];
 
 // WhatsApp status updates — auto-opened to the customer on status change.
 const WHATSAPP_STATUS_MESSAGES = {
   Preparing: (name, id) =>
-    `Hello ${name}! Your order #${id} is being prepared. Fresh juice coming up! 🥤`,
+    `Hello ${name}! Your order #${fmtOrderId(id)} is being prepared. Fresh juice coming up! 🥤`,
   "Out for Delivery": (name, id) =>
-    `Hello ${name}! Your order #${id} is out for delivery and will reach you shortly. 🛵`,
+    `Hello ${name}! Your order #${fmtOrderId(id)} is out for delivery and will reach you shortly. 🛵`,
   Delivered: (name, id) =>
-    `Hello ${name}! Your order #${id} has been delivered. Hope you enjoyed it! Please review us on Google 🙏`
+    `Hello ${name}! Your order #${fmtOrderId(id)} has been delivered. Hope you enjoyed it! Please review us on Google 🙏`
 };
 
 function TrashIcon({ className = "w-4 h-4" }) {
@@ -183,7 +185,7 @@ export default function Orders() {
       await api.deleteOrder(deleteTarget.id);
       setOrders((prev) => prev.filter((o) => o.id !== deleteTarget.id));
       setDeleteTarget(null);
-      setToast(`Order #${deleteTarget.id} deleted`);
+      setToast(`Order #${fmtOrderId(deleteTarget.id)} deleted`);
     } catch (err) {
       setDeleteError(err.message || "Delete failed");
     } finally {
@@ -198,7 +200,7 @@ export default function Orders() {
     try {
       await api.patch(`/orders/${verifyTarget.id}/verify`, { utrNumber: utr.trim() });
       setVerifyTarget(null);
-      setToast(`Payment verified for order #${verifyTarget.id}`);
+      setToast(`Payment verified for order #${fmtOrderId(verifyTarget.id)}`);
       await load();
     } catch (err) {
       setVerifyError(err.message || "Verification failed");
@@ -223,7 +225,7 @@ export default function Orders() {
         setToast("WhatsApp notification ready for customer");
         window.open(link, "_blank");
       } else {
-        setToast(`Order #${order.id} → ${next}`);
+        setToast(`Order #${fmtOrderId(order.id)} → ${next}`);
       }
     } catch (err) {
       setToast(err.message || "Failed to update status");
@@ -333,7 +335,7 @@ export default function Orders() {
                     >
                       <td className="relative px-6 py-4 font-semibold text-gold2">
                         <span className="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-r-full bg-gradient-to-b from-goldLight via-gold to-goldDark opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-glowGoldSoft" />
-                        #{o.id}
+                        #{fmtOrderId(o.id)}
                       </td>
                       <td className="px-6 py-4 text-muted whitespace-nowrap">{formatDate(o.createdAt)}</td>
                       <td className="px-6 py-4">
@@ -364,7 +366,7 @@ export default function Orders() {
                           <button
                             onClick={() => setDeleteTarget(o)}
                             className="w-8 h-8 grid place-items-center rounded-full bg-red-500/10 border border-red-500/20 text-red-300 hover:bg-red-500/20 hover:shadow-[0_0_18px_-6px_rgba(239,68,68,0.6)] transition"
-                            aria-label={t("deleteOrder").replace("{id}", o.id)}
+                            aria-label={t("deleteOrder").replace("{id}", fmtOrderId(o.id))}
                             title={t("deleteOrder")}
                           >
                             <TrashIcon className="w-4 h-4" />
@@ -393,7 +395,7 @@ export default function Orders() {
 
                   <div className="relative p-5">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="font-display text-xl text-gold2">#{o.id}</span>
+                      <span className="font-display text-xl text-gold2">#{fmtOrderId(o.id)}</span>
                       <div className="flex items-center gap-2">
                         <Badge tone={o.status === "Verified" ? "green" : "gold"}>{o.status}</Badge>
                         <button
@@ -470,7 +472,7 @@ export default function Orders() {
             <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-4 mb-5 text-sm">
               <div className="flex justify-between mb-1.5">
                 <span className="text-muted">{t("orderId")}</span>
-                <span className="font-semibold text-gold2">#{verifyTarget.id}</span>
+                <span className="font-semibold text-gold2">#{fmtOrderId(verifyTarget.id)}</span>
               </div>
               <div className="flex justify-between mb-1.5">
                 <span className="text-muted">{t("customer")}</span>
@@ -517,7 +519,7 @@ export default function Orders() {
           <>
             <p className="text-sm text-muted mb-6">
               {t("confirmDelete")
-                .replace("{id}", `#${deleteTarget.id}`)
+                .replace("{id}", `#${fmtOrderId(deleteTarget.id)}`)
                 .replace("{name}", deleteTarget.customerName)
                 .replace("{amount}", inr(deleteTarget.totalAmount))}
             </p>

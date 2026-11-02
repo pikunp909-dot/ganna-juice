@@ -193,7 +193,10 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
         (payMethod === "UPI"
           ? `💳 *Pay Online Here:* upi://pay?pa=${upiId}&pn=SugarcaneJuice&am=${orderTotal}&cu=INR\n`
           : "") +
-        `\nPlease confirm my order! 🙏`
+        `\nPlease confirm my order! 🙏` +
+        (o
+          ? `\n${t("waTrackLink").replace("{url}", `https://ganna-juice.onrender.com/?track=${String(o.id).padStart(5, "0")}`)}`
+          : "")
     );
     return `https://wa.me/${waDigits}?text=${msg}`;
   }
@@ -230,7 +233,7 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
                 <h3 className="font-display text-2xl text-cream">{t("checkout")}</h3>
                 <p className="text-xs text-muted mt-0.5">
                   {order
-                    ? `${t("orderLabel")} #${order.id}`
+                    ? `${t("orderLabel")} #${String(order.id).padStart(5, "0")}`
                     : paymentMethod === "COD"
                     ? t("cashOnDelivery")
                     : t("secureUpi")}
@@ -880,28 +883,36 @@ function PaymentStep({
 
 function StampCard({ phone }) {
   const [stamps, setStamps] = useState(null);
+  const [scratchCards, setScratchCards] = useState(0);
+  const [lastWon, setLastWon] = useState(null);
 
   useEffect(() => {
     let live = true;
     if (!phone) {
       setStamps(0);
+      setScratchCards(0);
       return;
     }
     api
       .get(`/loyalty/${phone}`)
       .then((d) => {
-        if (live) setStamps(typeof d.stamps === "number" ? d.stamps : 0);
+        if (!live) return;
+        setStamps(typeof d.stamps === "number" ? d.stamps : 0);
+        setScratchCards(typeof d.scratchCards === "number" ? d.scratchCards : 0);
       })
       .catch(() => {
-        if (live) setStamps(0);
+        if (live) {
+          setStamps(0);
+          setScratchCards(0);
+        }
       });
     return () => {
       live = false;
     };
   }, [phone]);
 
-  const filled = stamps === null ? 0 : stamps % 5;
-  const remaining = Math.max(0, 5 - filled);
+  const filled = stamps === null ? 0 : stamps;
+  const remaining = Math.max(0, 10 - filled);
 
   return (
     <div className="mt-5 rounded-[24px] border border-gold/25 bg-gradient-to-br from-gold/[0.12] via-white/[0.03] to-transparent p-5 backdrop-blur-xl">
@@ -910,14 +921,14 @@ function StampCard({ phone }) {
         <span className="text-[10px] uppercase tracking-wider text-gold font-semibold">Loyalty</span>
       </div>
 
-      <div className="flex items-center justify-between gap-2 mb-4">
-        {Array.from({ length: 5 }).map((_, i) => (
+      <div className="flex items-center justify-between gap-1.5 mb-4">
+        {Array.from({ length: 10 }).map((_, i) => (
           <motion.div
             key={i}
             initial={{ scale: 0.6, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            transition={{ delay: 0.3 + i * 0.07, type: "spring", stiffness: 320, damping: 18 }}
-            className={`relative w-11 h-11 rounded-full grid place-items-center text-lg shadow-glass ${
+            transition={{ delay: 0.3 + i * 0.05, type: "spring", stiffness: 320, damping: 18 }}
+            className={`relative w-8 h-8 sm:w-11 sm:h-11 rounded-full grid place-items-center text-base sm:text-lg shadow-glass ${
               i < filled
                 ? "bg-gradient-to-br from-goldLight via-gold to-goldDark shadow-glowGold"
                 : "bg-white/[0.06] border border-white/15"
@@ -930,15 +941,93 @@ function StampCard({ phone }) {
 
       {stamps === null ? (
         <p className="text-xs text-muted">Checking your stamps…</p>
-      ) : remaining === 0 ? (
-        <p className="text-sm font-bold text-gold">
-          You've unlocked a FREE juice! Redeem it at the counter 🎉
-        </p>
       ) : (
-        <p className="text-sm text-cream">
-          You have <span className="font-bold text-gold">{filled}</span> of 5 stamps.
-          Buy <span className="font-bold text-gold">{remaining}</span> more juices to get 1 FREE!
-        </p>
+        <>
+          <p className="text-sm text-cream">
+            You have <span className="font-bold text-gold">{filled}</span> of 10 stamps.{" "}
+            {remaining > 0 && (
+              <>
+                Buy <span className="font-bold text-gold">{remaining}</span> more to unlock a Scratch Card!
+              </>
+            )}
+          </p>
+
+          {scratchCards > 0 ? (
+            <ScratchCard
+              phone={phone}
+              count={scratchCards}
+              onScratched={(d) => {
+                setScratchCards(typeof d.scratchCards === "number" ? d.scratchCards : 0);
+                if (typeof d.prize === "number") setLastWon(d.prize);
+              }}
+            />
+          ) : lastWon !== null ? (
+            <div className="mt-4 rounded-2xl border border-gold/40 bg-gradient-to-br from-gold/[0.18] via-gold/[0.06] to-transparent p-4 text-center">
+              <p className="font-display text-3xl text-gold-metal">+{lastWon} 🍹</p>
+              <p className="text-xs text-cream mt-1">
+                You won {lastWon} free glass{lastWon > 1 ? "es" : ""}! Show this at the counter.
+              </p>
+            </div>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
+
+function ScratchCard({ phone, count, onScratched }) {
+  const [phase, setPhase] = useState("ready"); // ready | scratching | revealed | error
+  const [prize, setPrize] = useState(null);
+  const [err, setErr] = useState("");
+
+  async function handleScratch() {
+    if (phase === "scratching") return;
+    setPhase("scratching");
+    setErr("");
+    try {
+      const data = await api.post(`/loyalty/scratch/${phone}`);
+      setPrize(typeof data.prize === "number" ? data.prize : 1);
+      setPhase("revealed");
+      if (typeof onScratched === "function") onScratched(data);
+    } catch (e) {
+      setErr(e.message || "Could not scratch this card.");
+      setPhase("error");
+    }
+  }
+
+  return (
+    <div className="mt-4 rounded-2xl border border-gold/40 bg-gradient-to-br from-gold/[0.18] via-gold/[0.06] to-transparent p-4 text-center">
+      <p className="text-[10px] uppercase tracking-wider text-gold font-semibold mb-3">Scratch Card</p>
+      {phase === "revealed" ? (
+        <>
+          <p className="font-display text-3xl text-gold-metal">+{prize} 🍹</p>
+          <p className="text-xs text-cream mt-1">
+            You won {prize} free glass{prize > 1 ? "es" : ""}! Show this at the counter.
+          </p>
+        </>
+      ) : phase === "error" ? (
+        <>
+          <p className="text-sm text-red-300">{err}</p>
+          <button
+            onClick={handleScratch}
+            className="mt-3 inline-flex items-center gap-2 bg-gold-metal text-forest font-bold rounded-full px-5 py-2 text-xs transition hover:brightness-110 shadow-glowGoldSoft"
+          >
+            Try again
+          </button>
+        </>
+      ) : (
+        <>
+          <button
+            onClick={handleScratch}
+            disabled={phase === "scratching"}
+            className="inline-flex items-center gap-2 bg-gold-metal text-forest font-bold rounded-full px-6 py-3 text-sm transition hover:brightness-110 shadow-glowGold disabled:opacity-60"
+          >
+            {phase === "scratching" ? "Scratching…" : "Scratch here ✨"}
+          </button>
+          <p className="text-xs text-muted mt-2">
+            {count} card{count > 1 ? "s" : ""} available
+          </p>
+        </>
       )}
     </div>
   );
@@ -997,8 +1086,8 @@ function SuccessStep({ order, paymentMethod, waLink, onClose, onTrackLive }) {
       <div className="mt-6 glass-card rounded-2xl px-5 py-4">
         <div className="flex items-center justify-between text-sm">
           <span className="text-muted">{t("orderLabel")}</span>
-          <span className="font-bold text-cream">
-            {order ? `#${order.id}` : "—"}
+          <span className="font-display text-xl font-bold text-gold-metal">
+            {order ? `#${String(order.id).padStart(5, "0")}` : "—"}
           </span>
         </div>
         <div className="flex items-center justify-between text-sm mt-2">
