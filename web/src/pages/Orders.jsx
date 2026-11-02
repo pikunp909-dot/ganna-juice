@@ -83,7 +83,9 @@ function summarizeItems(items, t) {
   if (!items || items.length === 0) return "—";
   const head = items.slice(0, 2).map((i) => `${i.name} ×${i.quantity}`).join(", ");
   const rest = items.length - 2;
-  return rest > 0 ? head + " " + t("more").replace("{n}", rest) : head;
+  if (rest <= 0) return head;
+  // t can be missing from older call sites — never let this throw.
+  return t ? head + " " + t("more").replace("{n}", rest) : `${head} +${rest} more`;
 }
 
 function DeliveryStepper({ order, busy, onUpdate }) {
@@ -339,7 +341,7 @@ export default function Orders() {
                         <p className="text-xs text-muted">{o.customerPhone}</p>
                       </td>
                       <td className="px-6 py-4 text-muted max-w-[220px]">
-                        <p className="line-clamp-2">{summarizeItems(o.items)}</p>
+                        <p className="line-clamp-2">{summarizeItems(o.items, t)}</p>
                       </td>
                       <td className="px-6 py-4 text-right font-semibold text-cream">{inr(o.totalAmount)}</td>
                       <td className="px-6 py-4 text-muted">{o.utrNumber || "—"}</td>

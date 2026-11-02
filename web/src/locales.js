@@ -36,6 +36,14 @@ export const messages = {
     subtotal: "Subtotal",
     proceedCheckout: "Proceed to Checkout",
     drawerHint: "Payment via UPI QR — arrives in the next step.",
+    shopOpen: "Open",
+    shopClosed: "Closed",
+    shopStatusOpen: "Open ({open} - {close})",
+    shopStatusClosed: "Closed",
+    shopClosedBanner: "We are currently closed. Orders will open at {openTime}.",
+    shopTimingsTitle: "Shop Timings",
+    openTimeLabel: "Open Time",
+    closeTimeLabel: "Close Time",
 
     // trust badges
     trustNatural: "100% Natural",
@@ -455,6 +463,14 @@ export const messages = {
     subtotal: "कुल राशि",
     proceedCheckout: "चेकआउट पर जाएँ",
     drawerHint: "भुगतान UPI QR से — अगले स्टेप में।",
+    shopOpen: "खुला",
+    shopClosed: "बंद",
+    shopStatusOpen: "खुला ({open} - {close})",
+    shopStatusClosed: "बंद",
+    shopClosedBanner: "हम अभी बंद हैं। ऑर्डर {openTime} पर शुरू होंगे।",
+    shopTimingsTitle: "दुकान का समय",
+    openTimeLabel: "खुलने का समय",
+    closeTimeLabel: "बंद होने का समय",
 
     // trust badges
     trustNatural: "100% नेचुरल",
@@ -874,6 +890,14 @@ export const messages = {
     subtotal: "ସବ୍ଟୋଟାଲ",
     proceedCheckout: "ଚେକ୍ଆଉଟକୁ ଯାଅ",
     drawerHint: "ପେମେଣ୍ଟ UPI QR ରେ — ପରବର୍ତ୍ତୀ ପଦକ୍ଷେପରେ।",
+    shopOpen: "ଖୋଲା",
+    shopClosed: "ବନ୍ଦ",
+    shopStatusOpen: "ଖୋଲା ({open} - {close})",
+    shopStatusClosed: "ବନ୍ଦ",
+    shopClosedBanner: "ଆମେ ଏବେ ବନ୍ଦ। ଅର୍ଡର {openTime} ରେ ଆରମ୍ଭ ହେବ।",
+    shopTimingsTitle: "ଦୋକାନ ସମୟ",
+    openTimeLabel: "ଖୋଲିବା ସମୟ",
+    closeTimeLabel: "ବନ୍ଦ ହେବା ସମୟ",
 
     // trust badges
     trustNatural: "୧୦୦% ପ୍ରାକୃତିକ",

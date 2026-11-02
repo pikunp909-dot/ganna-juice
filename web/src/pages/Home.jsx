@@ -22,7 +22,9 @@ const FALLBACK_SETTINGS = {
   locationUrl: "",
   pincode: "",
   exactLocation: "",
-  upiId: ""
+  upiId: "",
+  openTime: "09:00",
+  closeTime: "21:00"
 };
 
 /* default hero image — kept as the verified fallback; Unsplash sugarcane-field
@@ -36,6 +38,14 @@ const waLink = (phone) => {
 };
 
 const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+
+const formatHour12 = (hhmm) => {
+  const [h, m] = String(hhmm || "").split(":").map((n) => parseInt(n, 10));
+  if (Number.isNaN(h)) return hhmm || "";
+  const period = h >= 12 ? "PM" : "AM";
+  const hr = h % 12 || 12;
+  return `${hr}:${String(m ?? 0).padStart(2, "0")} ${period}`;
+};
 
 // Converts a base64url VAPID key (from the API) into the Uint8Array
 // that pushManager.subscribe expects.
@@ -61,6 +71,20 @@ export default function Home() {
   const { t } = useLanguage();
 
   const ownerName = settings.ownerName || "Kunal";
+
+  // Shop-hours gate — re-evaluated every minute so the badge stays honest.
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const iv = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(iv);
+  }, []);
+  const nowHM =
+    String(now.getHours()).padStart(2, "0") +
+    ":" +
+    String(now.getMinutes()).padStart(2, "0");
+  const openTime = settings.openTime || "09:00";
+  const closeTime = settings.closeTime || "21:00";
+  const isOpen = nowHM >= openTime && nowHM <= closeTime;
 
   useEffect(() => {
     (async () => {
@@ -127,11 +151,24 @@ export default function Home() {
       {/* global film grain */}
       <div className="noise fixed inset-0 z-[5] pointer-events-none opacity-[0.05] mix-blend-overlay" />
 
-      <Nav onMenu={() => scrollTo("menu")} onContact={() => scrollTo("contact")} />
+      <Nav
+        onMenu={() => scrollTo("menu")}
+        onContact={() => scrollTo("contact")}
+        isOpen={isOpen}
+        openTime={openTime}
+        closeTime={closeTime}
+      />
 
       <Hero heroImageUrl={settings.heroImageUrl} />
       <TrustBadges />
-      <MenuSection items={items} loading={loading} error={error} onRetry={() => window.location.reload()} />
+      <MenuSection
+        items={items}
+        loading={loading}
+        error={error}
+        onRetry={() => window.location.reload()}
+        isOpen={isOpen}
+        openTime={openTime}
+      />
       <TrackOrder />
       <ReviewsSection exactLocation={settings.exactLocation} />
       <ReferSection />
@@ -234,6 +271,8 @@ export default function Home() {
         total={total}
         setQty={setQty}
         remove={remove}
+        isOpen={isOpen}
+        openTime={openTime}
         onCheckout={() => {
           setDrawerOpen(false);
           setCheckoutOpen(true);
@@ -331,7 +370,7 @@ function AnimatedWords({ text, className, start = 0, goldWords = [] }) {
 
 /* ================= Nav ================= */
 
-function Nav({ onMenu, onContact }) {
+function Nav({ onMenu, onContact, isOpen, openTime, closeTime }) {
   const { t } = useLanguage();
 
   // Village-alert subscription state: idle | loading | on | denied
@@ -419,6 +458,23 @@ function Nav({ onMenu, onContact }) {
           <button onClick={onContact} className="px-3 py-2 rounded-full hover:text-cream hover:bg-white/5 transition">
             {t("contact")}
           </button>
+
+          {/* shop open/closed pill */}
+          <span
+            className={`ml-2 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full border text-xs font-bold shadow-glass ${
+              isOpen
+                ? "border-mint/40 bg-mint/10 text-mint"
+                : "border-red-500/40 bg-red-500/10 text-red-300"
+            }`}
+            title={isOpen ? `${t("shopOpen")} ${formatHour12(openTime)} - ${formatHour12(closeTime)}` : t("shopClosed")}
+          >
+            <span className={`w-2 h-2 rounded-full ${isOpen ? "bg-mint animate-pulse" : "bg-red-400"}`} />
+            {isOpen
+              ? t("shopStatusOpen")
+                  .replace("{open}", formatHour12(openTime))
+                  .replace("{close}", formatHour12(closeTime))
+              : t("shopStatusClosed")}
+          </span>
 
           {/* install app — glassmorphic */}
           {!standalone && (
@@ -682,6 +738,16 @@ function MenuSection({ items, loading, error, onRetry }) {
           </p>
         </motion.div>
 
+        {!isOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="max-w-xl mx-auto text-center rounded-2xl border border-red-500/30 bg-red-500/[0.08] text-red-200 text-sm font-semibold px-5 py-3.5 mb-10"
+          >
+            {t("shopClosedBanner").replace("{openTime}", formatHour12(openTime))}
+          </motion.div>
+        )}
+
         {loading ? (
           <div className="grid place-items-center py-24">
             <Spinner className="w-10 h-10" />
@@ -807,7 +873,7 @@ function MenuItemCard({ item, index }) {
 
 /* ================= Cart Drawer (frosted bottom sheet / side panel) ================= */
 
-function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout }) {
+function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout, isOpen, openTime }) {
   const { t } = useLanguage();
 
   return (
@@ -900,9 +966,14 @@ function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout })
                   Add ₹{(MIN_ORDER_VALUE - total).toLocaleString("en-IN", { maximumFractionDigits: 2 })} more to checkout. (Min order ₹150)
                 </p>
               )}
+              {!isOpen && (
+                <p className="text-xs font-semibold text-red-300 bg-red-500/10 border border-red-500/25 rounded-xl px-3.5 py-2.5 mb-3 text-center">
+                  {t("shopClosedBanner").replace("{openTime}", formatHour12(openTime))}
+                </p>
+              )}
               <button
                 onClick={onCheckout}
-                disabled={lines.length === 0 || total < MIN_ORDER_VALUE}
+                disabled={lines.length === 0 || total < MIN_ORDER_VALUE || !isOpen}
                 className="w-full bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm transition hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none shadow-glowGold"
               >
                 {t("proceedCheckout")}
@@ -1092,7 +1163,7 @@ function TrackOrder() {
 
               {/* items */}
               <div className="mt-8 bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-2 text-sm">
-                {order.items.map((it) => (
+                {(order.items || []).map((it) => (
                   <div key={it.name} className="flex justify-between gap-3">
                     <span className="text-cream">
                       {it.name} <span className="text-muted">×{it.quantity}</span>

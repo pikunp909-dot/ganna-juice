@@ -4,7 +4,7 @@ import requireAdmin from "../middleware/requireAdmin.js";
 
 const router = Router();
 
-const FIELDS = ["phone", "whatsapp", "instagram", "telegram", "locationUrl", "pincode", "exactLocation", "upiId", "qrCodeUrl", "heroImageUrl", "ownerName", "deliveryCharge", "freeDeliveryAbove"];
+const FIELDS = ["phone", "whatsapp", "instagram", "telegram", "locationUrl", "pincode", "exactLocation", "upiId", "qrCodeUrl", "heroImageUrl", "ownerName", "deliveryCharge", "freeDeliveryAbove", "openTime", "closeTime"];
 const NUMERIC_FIELDS = ["deliveryCharge", "freeDeliveryAbove"];
 
 // Public subset the customer site needs.
@@ -36,13 +36,13 @@ router.put("/", requireAdmin, async (req, res) => {
 
   if (s) {
     await run(
-      `UPDATE Settings SET phone = ?, whatsapp = ?, instagram = ?, telegram = ?, locationUrl = ?, pincode = ?, exactLocation = ?, upiId = ?, qrCodeUrl = ?, heroImageUrl = ?, ownerName = ?, deliveryCharge = ?, freeDeliveryAbove = ?, updatedAt = datetime('now') WHERE id = 1`,
-      [next.phone, next.whatsapp, next.instagram, next.telegram, next.locationUrl, next.pincode, next.exactLocation, next.upiId, next.qrCodeUrl, next.heroImageUrl, next.ownerName, next.deliveryCharge, next.freeDeliveryAbove]
+      `UPDATE Settings SET phone = ?, whatsapp = ?, instagram = ?, telegram = ?, locationUrl = ?, pincode = ?, exactLocation = ?, upiId = ?, qrCodeUrl = ?, heroImageUrl = ?, ownerName = ?, deliveryCharge = ?, freeDeliveryAbove = ?, openTime = ?, closeTime = ?, updatedAt = datetime('now') WHERE id = 1`,
+      [next.phone, next.whatsapp, next.instagram, next.telegram, next.locationUrl, next.pincode, next.exactLocation, next.upiId, next.qrCodeUrl, next.heroImageUrl, next.ownerName, next.deliveryCharge, next.freeDeliveryAbove, next.openTime, next.closeTime]
     );
   } else {
     await run(
-      `INSERT INTO Settings (id, phone, whatsapp, instagram, telegram, locationUrl, pincode, exactLocation, upiId, qrCodeUrl, heroImageUrl, ownerName, deliveryCharge, freeDeliveryAbove) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [next.phone, next.whatsapp, next.instagram, next.telegram, next.locationUrl, next.pincode, next.exactLocation, next.upiId, next.qrCodeUrl, next.heroImageUrl, next.ownerName, next.deliveryCharge, next.freeDeliveryAbove]
+      `INSERT INTO Settings (id, phone, whatsapp, instagram, telegram, locationUrl, pincode, exactLocation, upiId, qrCodeUrl, heroImageUrl, ownerName, deliveryCharge, freeDeliveryAbove, openTime, closeTime) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [next.phone, next.whatsapp, next.instagram, next.telegram, next.locationUrl, next.pincode, next.exactLocation, next.upiId, next.qrCodeUrl, next.heroImageUrl, next.ownerName, next.deliveryCharge, next.freeDeliveryAbove, next.openTime, next.closeTime]
     );
   }
 

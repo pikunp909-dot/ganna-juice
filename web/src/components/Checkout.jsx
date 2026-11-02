@@ -128,7 +128,7 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
         mode,
         paymentMethod,
         totalAmount: payable,
-        items: lines.map((l) => ({ menuItemId: l.item.id, quantity: l.qty }))
+        items: (lines || []).map((l) => ({ menuItemId: l.item.id, quantity: l.qty }))
       });
       setOrder(res.order);
       setFinalizing(false);

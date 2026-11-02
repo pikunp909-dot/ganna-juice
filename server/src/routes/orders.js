@@ -41,6 +41,22 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ error: "Minimum order value is ₹150" });
   }
 
+  // Shop hours — reject orders outside the open window. Times are HH:mm
+  // 24-hour, standard day (no overnight wrap). Server-local clock.
+  const shop = await get("SELECT openTime, closeTime FROM Settings WHERE id = 1");
+  const openTime = String(shop?.openTime || "09:00");
+  const closeTime = String(shop?.closeTime || "21:00");
+  const now = new Date();
+  const nowHM =
+    String(now.getHours()).padStart(2, "0") +
+    ":" +
+    String(now.getMinutes()).padStart(2, "0");
+  if (nowHM < openTime || nowHM > closeTime) {
+    return res.status(400).json({
+      error: `Shop is closed. We are open from ${openTime} to ${closeTime}.`
+    });
+  }
+
   // Delivery charge — flat fee waived above the free-delivery threshold.
   const s = await get("SELECT * FROM Settings WHERE id = 1");
   const deliveryCharge = Number(s?.deliveryCharge ?? 20);
@@ -127,6 +143,21 @@ router.get("/", requireAdmin, async (_req, res) => {
     o.items = await all("SELECT menuItemId, name, quantity, price FROM OrderItems WHERE orderId = ?", [o.id]);
   }
   res.json({ orders });
+});
+
+// Admin — wipe every order + order item so the owner starts fresh.
+// OrderItems cascade via FK, but we delete explicitly so both backends
+// (local SQLite and Turso) behave identically. Irreversible — the
+// frontend confirms before calling.
+router.post("/clear-all", requireAdmin, async (_req, res) => {
+  try {
+    await run("DELETE FROM OrderItems");
+    const { changes } = await run("DELETE FROM Orders");
+    res.json({ ok: true, deleted: changes });
+  } catch (err) {
+    console.error("Clear all orders failed:", err.message);
+    res.status(500).json({ error: "Failed to clear orders" });
+  }
 });
 
 // Admin — analytics rollups: today, this month, verified payment split,

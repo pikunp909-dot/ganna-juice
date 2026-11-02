@@ -114,6 +114,8 @@ export async function initSchema() {
       ownerName TEXT DEFAULT 'Kunal',
       deliveryCharge INTEGER DEFAULT 20,
       freeDeliveryAbove INTEGER DEFAULT 300,
+      openTime TEXT DEFAULT '09:00',
+      closeTime TEXT DEFAULT '21:00',
       updatedAt TEXT DEFAULT (datetime('now'))
     );
 
@@ -218,6 +220,12 @@ export async function initSchema() {
   }
   if (!settingsCols.includes("ownerName")) {
     await exec("ALTER TABLE Settings ADD COLUMN ownerName TEXT DEFAULT 'Kunal'");
+  }
+  if (!settingsCols.includes("openTime")) {
+    await exec("ALTER TABLE Settings ADD COLUMN openTime TEXT DEFAULT '09:00'");
+  }
+  if (!settingsCols.includes("closeTime")) {
+    await exec("ALTER TABLE Settings ADD COLUMN closeTime TEXT DEFAULT '21:00'");
   }
 
   const menuCols = await tableCols("Menu");

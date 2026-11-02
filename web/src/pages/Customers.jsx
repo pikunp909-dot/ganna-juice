@@ -118,11 +118,11 @@ export default function Customers() {
                     </td>
                     <td className="px-6 py-4 text-center">
                       <span className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full border ${
-                        Number(c.stamps) > 0
+                        Number(c.stamps || 0) > 0
                           ? "bg-mint/15 text-mint border-mint/30"
                           : "bg-white/5 text-muted border-white/10"
                       }`}>
-                        🎫 {c.stamps}
+                        🎫 {c.stamps ?? 0}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -179,7 +179,7 @@ export default function Customers() {
               <div className="relative grid grid-cols-3 gap-2 mb-4">
                 <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-3 text-center">
                   <p className="text-[10px] uppercase tracking-wider text-muted font-bold">{t("totalOrders")}</p>
-                  <p className="text-lg text-cream font-bold mt-1">{c.orderCount}</p>
+                  <p className="text-lg text-cream font-bold mt-1">{c.orderCount ?? 0}</p>
                 </div>
                 <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-3 text-center col-span-1">
                   <p className="text-[10px] uppercase tracking-wider text-muted font-bold">{t("spent")}</p>
@@ -187,7 +187,7 @@ export default function Customers() {
                 </div>
                 <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-3 text-center">
                   <p className="text-[10px] uppercase tracking-wider text-muted font-bold">{t("stamps")}</p>
-                  <p className="text-lg text-mint font-bold mt-1">🎫 {c.stamps}</p>
+                  <p className="text-lg text-mint font-bold mt-1">🎫 {c.stamps ?? 0}</p>
                 </div>
               </div>
               <a

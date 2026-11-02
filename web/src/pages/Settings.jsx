@@ -18,7 +18,9 @@ const emptySettings = {
   heroImageUrl: "",
   ownerName: "",
   deliveryCharge: "",
-  freeDeliveryAbove: ""
+  freeDeliveryAbove: "",
+  openTime: "09:00",
+  closeTime: "21:00"
 };
 
 export default function Settings() {
@@ -29,6 +31,7 @@ export default function Settings() {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
   const [toast, setToast] = useState("");
+  const [clearing, setClearing] = useState(false);
 
   // security — account & password
   const { refresh } = useAuth();
@@ -58,7 +61,9 @@ export default function Settings() {
         heroImageUrl: settings.heroImageUrl || "",
         ownerName: settings.ownerName || "",
         deliveryCharge: settings.deliveryCharge ?? 20,
-        freeDeliveryAbove: settings.freeDeliveryAbove ?? 300
+        freeDeliveryAbove: settings.freeDeliveryAbove ?? 300,
+        openTime: settings.openTime || "09:00",
+        closeTime: settings.closeTime || "21:00"
       });
       setProfileEmail(admin?.email || "");
       setPw((prev) => ({ ...prev, email: admin?.email || "" }));
@@ -158,13 +163,28 @@ export default function Settings() {
         heroImageUrl: form.heroImageUrl.trim(),
         ownerName: form.ownerName.trim(),
         deliveryCharge: Number(form.deliveryCharge) || 0,
-        freeDeliveryAbove: Number(form.freeDeliveryAbove) || 0
+        freeDeliveryAbove: Number(form.freeDeliveryAbove) || 0,
+        openTime: form.openTime || "09:00",
+        closeTime: form.closeTime || "21:00"
       });
       setToast(t("settingsSavedToast"));
     } catch (err) {
       setSaveError(err.message || t("saveFailed"));
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleClearAll() {
+    if (!window.confirm("Are you sure? This will delete all orders permanently.")) return;
+    setClearing(true);
+    try {
+      await api.post("/orders/clear-all");
+      setToast("All orders cleared — dashboard is fresh.");
+    } catch (err) {
+      setToast(err.message || "Failed to clear orders");
+    } finally {
+      setClearing(false);
     }
   }
 
@@ -335,6 +355,27 @@ export default function Settings() {
                 onChange={(e) => set("freeDeliveryAbove", e.target.value)}
                 placeholder="300"
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+              />
+            </SleekField>
+          </div>
+
+          {/* ---- Group: Shop Timings ---- */}
+          <SectionTitle icon="🕐" title={t("shopTimingsTitle")} sub="Orders are accepted only between these hours." />
+          <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5 mb-8">
+            <SleekField label={t("openTimeLabel")}>
+              <input
+                type="time"
+                value={form.openTime}
+                onChange={(e) => set("openTime", e.target.value)}
+                className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)] [color-scheme:dark]"
+              />
+            </SleekField>
+            <SleekField label={t("closeTimeLabel")}>
+              <input
+                type="time"
+                value={form.closeTime}
+                onChange={(e) => set("closeTime", e.target.value)}
+                className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)] [color-scheme:dark]"
               />
             </SleekField>
           </div>
@@ -522,6 +563,43 @@ export default function Settings() {
           >
             {t("resetWelcomeBtn")}
           </button>
+        </div>
+      </motion.div>
+
+      {/* ===== Danger Zone — clear all orders ===== */}
+      <motion.div
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="relative overflow-hidden rounded-[32px] border border-red-500/30 bg-red-500/[0.04] backdrop-blur-xl shadow-glass mt-8"
+      >
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent" />
+        <div className="pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full bg-red-500/8 blur-3xl" />
+
+        <div className="relative p-6 sm:p-8">
+          <SectionTitle icon="⚠️" title="Danger Zone" sub="Clears every order receipt and order item permanently." />
+
+          <div className="rounded-3xl border border-red-500/25 bg-red-500/[0.05] p-5 sm:p-6">
+            <p className="text-sm text-cream/90 mb-4">
+              Use this to wipe all orders and start fresh. This cannot be undone —
+              order history, UTR numbers, and loyalty stamps earned from those orders
+              are removed.
+            </p>
+            <button
+              type="button"
+              onClick={handleClearAll}
+              disabled={clearing}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-red-500/90 text-white font-bold rounded-2xl px-8 py-3.5 text-sm transition hover:bg-red-500 disabled:opacity-50 disabled:pointer-events-none shadow-[0_0_30px_-10px_rgba(239,68,68,0.6)]"
+            >
+              {clearing ? (
+                <>
+                  <Spinner className="w-4 h-4" /> Clearing…
+                </>
+              ) : (
+                <>🧹 Clear All Orders & Start Fresh</>
+              )}
+            </button>
+          </div>
         </div>
       </motion.div>
 
