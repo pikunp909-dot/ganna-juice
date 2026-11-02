@@ -9,7 +9,7 @@ const OPTIONS = [
 ];
 
 export default function LanguageDropdown() {
-  const { lang, setLang } = useLanguage();
+  const { lang, setLang } = useLanguage() ?? { lang: "en", setLang: () => {} };
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
 

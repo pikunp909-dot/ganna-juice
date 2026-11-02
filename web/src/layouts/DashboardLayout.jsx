@@ -533,6 +533,7 @@ export default function DashboardLayout() {
 }
 
 function BrandBlock({ compact }) {
+  const { t } = useLanguage();
   return (
     <div className={`flex items-center gap-3 ${compact ? "" : "px-5 pt-6 pb-4 border-b border-white/10"}`}>
       <div className="w-11 h-11 rounded-2xl bg-gold-metal shadow-glowGold grid place-items-center shrink-0 text-forest">
