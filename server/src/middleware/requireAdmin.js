@@ -6,7 +6,7 @@
 import jwt from "jsonwebtoken";
 import { get } from "../db.js";
 
-export default function requireAdmin(req, res, next) {
+export default async function requireAdmin(req, res, next) {
   const header = req.headers.authorization || "";
   const [scheme, token] = header.split(" ");
 
@@ -21,11 +21,14 @@ export default function requireAdmin(req, res, next) {
     return res.status(401).json({ error: "Invalid or expired token" });
   }
 
-  const admin = get("SELECT id, email, role FROM AdminUsers WHERE id = ?", [payload.id]);
-  if (!admin || admin.role !== "admin") {
-    return res.status(401).json({ error: "Unauthorized" });
+  try {
+    const admin = await get("SELECT id, email, role FROM AdminUsers WHERE id = ?", [payload.id]);
+    if (!admin || admin.role !== "admin") {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    req.admin = admin;
+    next();
+  } catch (err) {
+    next(err);
   }
-
-  req.admin = admin;
-  next();
 }

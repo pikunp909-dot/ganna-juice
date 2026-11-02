@@ -1,41 +1,36 @@
 import { Router } from "express";
 import multer from "multer";
-import { mkdirSync } from "node:fs";
-import { join, extname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { dirname } from "node:path";
 import requireAdmin from "../middleware/requireAdmin.js";
 
 const router = Router();
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const uploadDir = join(__dirname, "..", "..", "uploads");
-mkdirSync(uploadDir, { recursive: true });
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, file, cb) => {
-    const ts = Date.now();
-    const ext = extname(file.originalname || "").toLowerCase() || ".jpg";
-    cb(null, `${ts}-${Math.round(Math.random() * 1e6)}${ext}`);
-  }
-});
+// Images are stored as inline base64 data URLs inside the Turso database
+// (menu.imageUrl / settings.qrCodeUrl / settings.heroImageUrl). No files are
+// written to disk, so nothing is lost when Render's ephemeral disk resets.
+// Keep uploads small — Turso's free tier has a 500MB total DB limit.
+const MAX_IMAGE_BYTES = 500 * 1024; // 500 KB -> ~667 KB base64
 
 const upload = multer({
-  storage,
-  limits: { fileSize: 8 * 1024 * 1024 },
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_IMAGE_BYTES },
   fileFilter: (_req, file, cb) => {
     if (/^image\//.test(file.mimetype)) cb(null, true);
     else cb(new Error("Only image uploads are allowed"));
   }
 });
 
-// POST /api/upload — single image, returns public URL (served from /uploads).
+// POST /api/upload — single image, returns a data: URL ready to store.
 router.post("/", requireAdmin, upload.single("image"), (req, res) => {
   if (!req.file) return res.status(400).json({ error: "No image file received" });
-  res.status(201).json({ url: `/uploads/${req.file.filename}` });
+  const { buffer, mimetype } = req.file;
+  const b64 = buffer.toString("base64");
+  res.status(201).json({ url: `data:${mimetype};base64,${b64}` });
 });
 
 router.use((err, _req, res, _next) => {
+  if (err instanceof multer.MulterError && err.code === "LIMIT_FILE_SIZE") {
+    return res.status(400).json({ error: "Image too large — max 500 KB" });
+  }
   res.status(400).json({ error: err.message || "Upload failed" });
 });
 

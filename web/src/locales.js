@@ -149,6 +149,23 @@ export const messages = {
     waPayCod: "Payment: Cash on Delivery",
     waPayUpi: "Payment UTR: {utr}",
 
+    // track order
+    trackEyebrow: "Track Order",
+    trackTitle: "Track your order",
+    trackSub: "Enter your order ID to see live status.",
+    trackPlaceholder: "Order ID (e.g. 24)",
+    trackBtn: "Track",
+    trackLiveOrder: "Track Live Order",
+    trackLoading: "Tracking…",
+    trackInvalid: "Enter an order ID first",
+    trackNotFound: "Order not found. Check the ID and try again.",
+    trackStepPending: "Pending",
+    trackStepPreparing: "Preparing",
+    trackStepOut: "Out for Delivery",
+    trackStepDelivered: "Delivered",
+    trackTotal: "Total",
+    trackRefresh: "Refreshes automatically every few seconds",
+
     // misc
     total: "Total"
   },
@@ -296,6 +313,23 @@ export const messages = {
     waConfirm: "ଦୟାକରି ନିଶ୍ଚିତ କରନ୍ତୁ 🙏",
     waPayCod: "ପେମେଣ୍ଟ: କ୍ୟାଶ ଅନ ଡେଲିଭେରି",
     waPayUpi: "ପେମେଣ୍ଟ UTR: {utr}",
+
+    // track order
+    trackEyebrow: "ଅର୍ଡର ଟ୍ରାକ୍",
+    trackTitle: "ଆପଣଙ୍କ ଅର୍ଡର ଟ୍ରାକ୍ କରନ୍ତୁ",
+    trackSub: "ଆପଣଙ୍କ ଅର୍ଡର ID ଦିଅନ୍ତୁ, ଲାଇଭ୍ ସ୍ଥିତି ଦେଖନ୍ତୁ।",
+    trackPlaceholder: "ଅର୍ଡର ID (e.g. 24)",
+    trackBtn: "ଟ୍ରାକ୍",
+    trackLiveOrder: "ଲାଇଭ୍ ଅର୍ଡର ଟ୍ରାକ୍ କରନ୍ତୁ",
+    trackLoading: "ଟ୍ରାକ୍ ହେଉଛି…",
+    trackInvalid: "ପ୍ରଥମେ ଅର୍ଡର ID ଦିଅନ୍ତୁ",
+    trackNotFound: "ଅର୍ଡର ମିଳିଲା ନାହିଁ। ID ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+    trackStepPending: "ବାକି",
+    trackStepPreparing: "ପ୍ରସ୍ତୁତ ହେଉଛି",
+    trackStepOut: "ଡେଲିଭରୀରେ",
+    trackStepDelivered: "ଡେଲିଭରୀ ହୋଇଛି",
+    trackTotal: "ମୋଟ",
+    trackRefresh: "ପ୍ରତି କିଛି ସେକେଣ୍ଡରେ ଅଟୋ ରିଫ୍ରେସ୍ ହେଉଛି",
 
     // misc
     total: "ମୋଟ"

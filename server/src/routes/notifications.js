@@ -11,7 +11,7 @@ router.get("/vapid", (_req, res) => {
 });
 
 /** POST /api/notifications/subscribe — admin only, save the owner's push subscription. */
-router.post("/subscribe", requireAdmin, (req, res) => {
+router.post("/subscribe", requireAdmin, async (req, res) => {
   const { endpoint, keys } = req.body || {};
   if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
     return res.status(400).json({ error: "endpoint, keys.p256dh and keys.auth are required" });
@@ -19,7 +19,7 @@ router.post("/subscribe", requireAdmin, (req, res) => {
 
   const keysJson = JSON.stringify({ p256dh: keys.p256dh, auth: keys.auth });
   try {
-    const { changes } = run(
+    const { changes } = await run(
       "INSERT INTO Subscriptions (endpoint, keysJson, type) VALUES (?, ?, 'admin') ON CONFLICT(endpoint) DO UPDATE SET keysJson = excluded.keysJson, type = 'admin'",
       [String(endpoint), keysJson]
     );
@@ -31,7 +31,7 @@ router.post("/subscribe", requireAdmin, (req, res) => {
 });
 
 /** POST /api/notifications/subscribe-customer — public, save a customer's push subscription. */
-router.post("/subscribe-customer", (req, res) => {
+router.post("/subscribe-customer", async (req, res) => {
   const { endpoint, keys } = req.body || {};
   if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
     return res.status(400).json({ error: "endpoint, keys.p256dh and keys.auth are required" });
@@ -39,7 +39,7 @@ router.post("/subscribe-customer", (req, res) => {
 
   const keysJson = JSON.stringify({ p256dh: keys.p256dh, auth: keys.auth });
   try {
-    const { changes } = run(
+    const { changes } = await run(
       "INSERT INTO Subscriptions (endpoint, keysJson, type) VALUES (?, ?, 'customer') ON CONFLICT(endpoint) DO UPDATE SET keysJson = excluded.keysJson, type = 'customer'",
       [String(endpoint), keysJson]
     );

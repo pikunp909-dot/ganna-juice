@@ -12,6 +12,8 @@ const FILTERS = [
   { key: "verified", label: "Verified" }
 ];
 
+const DELIVERY_STEPS = ["Pending", "Preparing", "Out for Delivery", "Delivered"];
+
 function TrashIcon({ className = "w-4 h-4" }) {
   return (
     <svg
@@ -49,6 +51,34 @@ function summarizeItems(items) {
   return rest > 0 ? `${head} +${rest} more` : head;
 }
 
+function DeliveryStepper({ order, busy, onUpdate }) {
+  const idx = DELIVERY_STEPS.indexOf(order.deliveryStatus);
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {DELIVERY_STEPS.map((step, i) => {
+        const active = i === idx;
+        const done = idx > i;
+        return (
+          <button
+            key={step}
+            disabled={busy}
+            onClick={() => onUpdate(order, step)}
+            className={`px-2.5 py-1.5 text-[11px] font-bold rounded-full border transition ${
+              active
+                ? "bg-gold-metal text-forest border-gold shadow-glowGoldSoft"
+                : done
+                  ? "text-mint border-mint/40 bg-mint/10 hover:bg-mint/20"
+                  : "text-muted border-white/10 bg-white/[0.03] hover:text-cream hover:border-gold/40"
+            }`}
+          >
+            {step}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState("all");
@@ -63,6 +93,8 @@ export default function Orders() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+
+  const [updatingId, setUpdatingId] = useState(null);
 
   const [toast, setToast] = useState("");
 
@@ -134,6 +166,22 @@ export default function Orders() {
       setVerifyError(err.message || "Verification failed");
     } finally {
       setVerifying(false);
+    }
+  }
+
+  async function changeStatus(order, next) {
+    if (order.deliveryStatus === next || updatingId) return;
+    setUpdatingId(order.id);
+    try {
+      await api.updateOrderStatus(order.id, next);
+      setOrders((prev) =>
+        prev.map((x) => (x.id === order.id ? { ...x, deliveryStatus: next } : x))
+      );
+      setToast(`Order #${order.id} → ${next}`);
+    } catch (err) {
+      setToast(err.message || "Failed to update status");
+    } finally {
+      setUpdatingId(null);
     }
   }
 
@@ -223,6 +271,7 @@ export default function Orders() {
                     <th className="px-6 py-3.5 font-bold text-right">Total</th>
                     <th className="px-6 py-3.5 font-bold">UTR</th>
                     <th className="px-6 py-3.5 font-bold">Status</th>
+                    <th className="px-6 py-3.5 font-bold">Delivery</th>
                     <th className="px-6 py-3.5 font-bold text-right">Action</th>
                   </tr>
                 </thead>
@@ -251,6 +300,9 @@ export default function Orders() {
                       <td className="px-6 py-4 text-muted">{o.utrNumber || "—"}</td>
                       <td className="px-6 py-4">
                         <Badge tone={o.status === "Verified" ? "green" : "gold"}>{o.status}</Badge>
+                      </td>
+                      <td className="px-6 py-4">
+                        <DeliveryStepper order={o} busy={updatingId === o.id} onUpdate={changeStatus} />
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
@@ -332,6 +384,10 @@ export default function Orders() {
                         <span className="text-muted">UTR</span>
                         <span className="text-cream text-right">{o.utrNumber || "—"}</span>
                       </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <DeliveryStepper order={o} busy={updatingId === o.id} onUpdate={changeStatus} />
                     </div>
 
                     {o.status === "Pending" && (

@@ -124,6 +124,16 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
     }
   }
 
+  /* ---- track live order (from the success screen) ---- */
+
+  function handleTrackLive() {
+    const id = order?.id;
+    onClose();
+    if (id) {
+      window.dispatchEvent(new CustomEvent("ganna:track-order", { detail: { id } }));
+    }
+  }
+
   /* ---- whatsapp receipt link ---- */
 
   function waLink() {
@@ -264,7 +274,7 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
 
                 {step === "success" && order && (
                   <motion.div key="success" variants={stepVariants} initial="initial" animate="animate" exit="exit">
-                    <SuccessStep order={order} paymentMethod={paymentMethod} waLink={waLink()} onClose={onClose} />
+                    <SuccessStep order={order} paymentMethod={paymentMethod} waLink={waLink()} onClose={onClose} onTrackLive={handleTrackLive} />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -277,6 +287,25 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
 }
 
 /* ================= Step progress indicator ================= */
+
+function RadarIcon({ className = "w-4 h-4" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="12" r="5" />
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <path d="M12 3a9 9 0 0 1 9 9" />
+    </svg>
+  );
+}
 
 function StepProgress({ current }) {
   const { t } = useLanguage();
@@ -750,7 +779,7 @@ function PaymentStep({
 
 /* ================= Step 3 — Done ================= */
 
-function SuccessStep({ order, paymentMethod, waLink, onClose }) {
+function SuccessStep({ order, paymentMethod, waLink, onClose, onTrackLive }) {
   const { t } = useLanguage();
   const isCod = paymentMethod === "COD";
   return (
@@ -813,6 +842,12 @@ function SuccessStep({ order, paymentMethod, waLink, onClose }) {
         >
           💬 {t("sendReceipt")}
         </a>
+        <button
+          onClick={onTrackLive}
+          className="w-full inline-flex items-center justify-center gap-2 border border-gold/30 bg-gold/10 text-gold font-bold rounded-2xl px-6 py-4 text-sm transition hover:border-gold/60 hover:shadow-glowGoldSoft hover:bg-gold/15"
+        >
+          <RadarIcon className="w-4 h-4" /> {t("trackLiveOrder")}
+        </button>
         <button
           onClick={onClose}
           className="w-full text-sm font-bold text-muted hover:text-cream py-2 transition"

@@ -26,7 +26,12 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET === "change-me-to-a-long-r
 const app = express();
 const PORT = Number(process.env.PORT) || 4000;
 
-initSchema();
+try {
+  await initSchema();
+} catch (err) {
+  console.error("Database init failed:", err.message);
+  process.exit(1);
+}
 
 const origins = (process.env.CORS_ORIGINS || "http://localhost:5173").split(",").map((s) => s.trim());
 app.use(cors({ origin: origins, credentials: true }));

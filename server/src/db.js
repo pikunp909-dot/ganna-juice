@@ -1,40 +1,96 @@
 /**
- * DB layer — Node's built-in SQLite (node:sqlite).
- * Zero native deps, fully synchronous. No external database required.
+ * DB layer — Turso (LibSQL) when TURSO_DATABASE_URL is set, otherwise the
+ * local file database (node:sqlite). Both backends expose the same async
+ * API: run(), get(), all(), initSchema().
+ *
+ * Turso persists forever in the cloud (no ephemeral-disk resets on Render).
+ * The local file path is kept for development only.
  */
-import { DatabaseSync } from "node:sqlite";
+// Load .env before anything reads process.env — ESM imports hoist above
+// any dotenv.config() call in the importing file, so without this the
+// Turso credentials would be invisible and we'd silently fall back to the
+// local file DB.
+import "dotenv/config";
+
 import { mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const dataDir = join(__dirname, "..", "data");
-mkdirSync(dataDir, { recursive: true });
 
-const db = new DatabaseSync(join(dataDir, "ganna.db"));
-db.exec("PRAGMA foreign_keys = ON;");
-db.exec("PRAGMA journal_mode = WAL;");
+const tursoUrl = (process.env.TURSO_DATABASE_URL || "").trim();
+const tursoAuthToken = (process.env.TURSO_AUTH_TOKEN || "").trim();
+const useTurso = Boolean(tursoUrl);
 
-/** Run a statement with optional bound params. Returns { changes, lastInsertRowid }. */
-export function run(sql, params = []) {
-  const stmt = db.prepare(sql);
-  const info = stmt.run(...params);
+let db;
+
+if (useTurso) {
+  // Pure-JS fetch client — no native bindings. Works everywhere, including
+  // Node on Render and local devices.
+  if (!tursoAuthToken) {
+    console.warn("⚠ TURSO_DATABASE_URL is set but TURSO_AUTH_TOKEN is missing — queries will fail.");
+  }
+  const { createClient } = await import("@libsql/client/web");
+  db = createClient({
+    url: tursoUrl,
+    authToken: tursoAuthToken || undefined
+  });
+} else {
+  // Local dev — Node's built-in SQLite file.
+  const { DatabaseSync } = await import("node:sqlite");
+  mkdirSync(dataDir, { recursive: true });
+  db = new DatabaseSync(join(dataDir, "ganna.db"));
+  db.exec("PRAGMA foreign_keys = ON;");
+  db.exec("PRAGMA journal_mode = WAL;");
+}
+
+/** SQLite treats undefined bound params as errors — normalize to null. */
+const normParams = (params = []) => params.map((p) => (p === undefined ? null : p));
+
+/** Run a statement with optional bound params. Returns { changes, lastId }. */
+export async function run(sql, params = []) {
+  if (useTurso) {
+    const res = await db.execute({ sql, args: normParams(params) });
+    return {
+      changes: Number(res.rowsAffected || 0),
+      lastId: Number(res.lastInsertRowid || 0)
+    };
+  }
+  const info = db.prepare(sql).run(...normParams(params));
   return { changes: Number(info.changes), lastId: Number(info.lastInsertRowid) };
 }
 
-/** Fetch all rows. */
-export function all(sql, params = []) {
-  return db.prepare(sql).all(...params);
+/** Fetch all rows as objects. */
+export async function all(sql, params = []) {
+  if (useTurso) {
+    const res = await db.execute({ sql, args: normParams(params), rowMode: "object" });
+    return res.rows;
+  }
+  return db.prepare(sql).all(...normParams(params));
 }
 
 /** Fetch first row or undefined. */
-export function get(sql, params = []) {
-  return db.prepare(sql).get(...params);
+export async function get(sql, params = []) {
+  if (useTurso) {
+    const rows = await all(sql, params);
+    return rows[0];
+  }
+  return db.prepare(sql).get(...normParams(params));
 }
 
-/** Create all tables if missing. */
-export function initSchema() {
-  db.exec(`
+/** Execute a bare SQL statement (schema/migrations). */
+async function exec(sql) {
+  if (useTurso) {
+    await db.execute({ sql });
+  } else {
+    db.exec(sql);
+  }
+}
+
+/** Create all tables if missing. Idempotent — safe on every boot. */
+export async function initSchema() {
+  const schema = `
     CREATE TABLE IF NOT EXISTS AdminUsers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       email TEXT NOT NULL UNIQUE,
@@ -77,6 +133,7 @@ export function initSchema() {
       paymentMethod TEXT NOT NULL DEFAULT 'UPI',
       utrNumber TEXT DEFAULT '',
       status TEXT NOT NULL DEFAULT 'Pending',
+      deliveryStatus TEXT NOT NULL DEFAULT 'Pending',
       createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -109,30 +166,47 @@ export function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_orderitems_order ON OrderItems(orderId);
     CREATE INDEX IF NOT EXISTS idx_reviews_created ON Reviews(createdAt);
     CREATE INDEX IF NOT EXISTS idx_subscriptions_endpoint ON Subscriptions(endpoint);
-  `);
+  `;
+
+  if (useTurso) {
+    await db.executeMultiple(schema);
+  } else {
+    db.exec(schema);
+  }
 
   // Lightweight migrations — add columns to existing tables if missing.
-  const settingsCols = db.prepare("PRAGMA table_info(Settings)").all().map((c) => c.name);
+  const tableCols = async (table) => {
+    if (useTurso) {
+      const res = await db.execute({ sql: `PRAGMA table_info(${table})`, rowMode: "object" });
+      return res.rows.map((c) => c.name);
+    }
+    return db.prepare(`PRAGMA table_info(${table})`).all().map((c) => c.name);
+  };
+
+  const settingsCols = await tableCols("Settings");
   if (!settingsCols.includes("qrCodeUrl")) {
-    db.exec("ALTER TABLE Settings ADD COLUMN qrCodeUrl TEXT DEFAULT ''");
+    await exec("ALTER TABLE Settings ADD COLUMN qrCodeUrl TEXT DEFAULT ''");
   }
   if (!settingsCols.includes("pincode")) {
-    db.exec("ALTER TABLE Settings ADD COLUMN pincode TEXT DEFAULT ''");
+    await exec("ALTER TABLE Settings ADD COLUMN pincode TEXT DEFAULT ''");
   }
   if (!settingsCols.includes("exactLocation")) {
-    db.exec("ALTER TABLE Settings ADD COLUMN exactLocation TEXT DEFAULT ''");
+    await exec("ALTER TABLE Settings ADD COLUMN exactLocation TEXT DEFAULT ''");
   }
 
-  const orderCols = db.prepare("PRAGMA table_info(Orders)").all().map((c) => c.name);
+  const orderCols = await tableCols("Orders");
   if (!orderCols.includes("paymentMethod")) {
-    db.exec("ALTER TABLE Orders ADD COLUMN paymentMethod TEXT NOT NULL DEFAULT 'UPI'");
+    await exec("ALTER TABLE Orders ADD COLUMN paymentMethod TEXT NOT NULL DEFAULT 'UPI'");
+  }
+  if (!orderCols.includes("deliveryStatus")) {
+    await exec("ALTER TABLE Orders ADD COLUMN deliveryStatus TEXT NOT NULL DEFAULT 'Pending'");
   }
 
   // Subscribe type: 'admin' (owner) vs 'customer' (village alerts).
   // Older DBs have no column — default every existing row to admin.
-  const subCols = db.prepare("PRAGMA table_info(Subscriptions)").all().map((c) => c.name);
+  const subCols = await tableCols("Subscriptions");
   if (!subCols.includes("type")) {
-    db.exec("ALTER TABLE Subscriptions ADD COLUMN type TEXT NOT NULL DEFAULT 'admin'");
+    await exec("ALTER TABLE Subscriptions ADD COLUMN type TEXT NOT NULL DEFAULT 'admin'");
   }
 }
 

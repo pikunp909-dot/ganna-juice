@@ -23,8 +23,8 @@ export { VAPID_PUBLIC_KEY };
  */
 export async function notifyAllSubscribers({ title, body, data = {}, type }) {
   const subs = type
-    ? all("SELECT id, endpoint, keysJson FROM Subscriptions WHERE type = ?", [type])
-    : all("SELECT id, endpoint, keysJson FROM Subscriptions");
+    ? await all("SELECT id, endpoint, keysJson FROM Subscriptions WHERE type = ?", [type])
+    : await all("SELECT id, endpoint, keysJson FROM Subscriptions");
   const payload = JSON.stringify({ title, body, data });
 
   const results = await Promise.all(
@@ -42,7 +42,7 @@ export async function notifyAllSubscribers({ title, body, data = {}, type }) {
       } catch (err) {
         // 404/410 — subscription no longer valid, drop it.
         if (err.statusCode === 404 || err.statusCode === 410) {
-          run("DELETE FROM Subscriptions WHERE id = ?", [row.id]);
+          await run("DELETE FROM Subscriptions WHERE id = ?", [row.id]);
           return { ok: false, reason: "removed" };
         }
         return { ok: false, reason: `push-error:${err.statusCode || "unknown"}` };

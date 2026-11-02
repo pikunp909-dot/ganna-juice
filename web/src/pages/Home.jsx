@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, Suspense, lazy, Component } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { api } from "../api";
 import { useCart } from "../cart";
@@ -23,6 +23,31 @@ const FALLBACK_SETTINGS = {
 /* default hero image (golden juice pouring close-up — owner can override via Settings) */
 const DEFAULT_HERO_IMAGE =
   "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=1600&q=80";
+
+/* 3D Spline scene (lazy loaded) — falls back to the static hero image while loading or on failure */
+const Spline = lazy(() => import("@splinetool/react-spline"));
+
+function HeroImageFallback({ heroImageUrl }) {
+  return (
+    <img
+      src={heroImageUrl || DEFAULT_HERO_IMAGE}
+      alt=""
+      className="absolute inset-0 w-full h-full object-cover"
+    />
+  );
+}
+
+/* catches WebGL / lazy-import failures so a broken 3D scene never breaks the page */
+class SceneBoundary extends Component {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    if (this.state.failed) return this.props.fallback;
+    return this.props.children;
+  }
+}
 
 const waLink = (phone) => {
   const digits = String(phone || "").replace(/\D/g, "");
@@ -86,6 +111,7 @@ export default function Home() {
       <Hero heroImageUrl={settings.heroImageUrl} />
       <TrustBadges />
       <MenuSection items={items} loading={loading} error={error} onRetry={() => window.location.reload()} />
+      <TrackOrder />
       <ReviewsSection exactLocation={settings.exactLocation} />
       <Footer settings={settings} />
 
@@ -384,12 +410,14 @@ function Hero({ heroImageUrl }) {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full bg-forest3/50 blur-[90px]" />
       </div>
 
-      {/* background image + cinematic vignette */}
-      <img
-        src={heroImageUrl || DEFAULT_HERO_IMAGE}
-        alt=""
-        className="absolute inset-0 w-full h-full object-cover"
-      />
+      {/* 3D Spline scene (lazy loaded) — static image fallback while loading / on failure */}
+      <SceneBoundary fallback={<HeroImageFallback heroImageUrl={heroImageUrl} />}>
+        <Suspense fallback={<HeroImageFallback heroImageUrl={heroImageUrl} />}>
+          <div className="pointer-events-none absolute inset-0">
+            <Spline scene="https://prod.spline.design/6Wq1Q7YGyM-iab9i/scene.splinecode" />
+          </div>
+        </Suspense>
+      </SceneBoundary>
       <div className="absolute inset-0 bg-forest/60" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,13,8,0.45)_60%,rgba(5,13,8,0.94)_100%)]" />
 
@@ -751,6 +779,202 @@ function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout })
         </>
       )}
     </AnimatePresence>
+  );
+}
+
+/* ================= Live order tracking ================= */
+
+const TRACK_STEPS = ["Pending", "Preparing", "Out for Delivery", "Delivered"];
+const TRACK_STEP_KEYS = ["trackStepPending", "trackStepPreparing", "trackStepOut", "trackStepDelivered"];
+
+function TrackOrder() {
+  const { t } = useLanguage();
+  const [input, setInput] = useState("");
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const trackedId = order ? order.id : null;
+
+  const trackById = useCallback(
+    async (id) => {
+      setLoading(true);
+      setError("");
+      setOrder(null);
+      try {
+        const { order: data } = await api.trackOrder(id);
+        setOrder(data);
+      } catch (err) {
+        setError(err.message || t("trackNotFound"));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [t]
+  );
+
+  // live polling while an order is on screen
+  useEffect(() => {
+    if (!trackedId) return;
+    const iv = setInterval(async () => {
+      try {
+        const { order: updated } = await api.trackOrder(trackedId);
+        setOrder(updated);
+      } catch {
+        /* transient blip — keep the last known state */
+      }
+    }, 10000);
+    return () => clearInterval(iv);
+  }, [trackedId]);
+
+  // "Track Live Order" from the checkout success screen: pre-fill the ID,
+  // scroll to this section, and fire the lookup immediately.
+  useEffect(() => {
+    function onTrackRequest(e) {
+      const id = String(e.detail?.id || "").replace(/\D/g, "");
+      if (!id) return;
+      setInput(id);
+      document.getElementById("track")?.scrollIntoView({ behavior: "smooth" });
+      trackById(id);
+    }
+    window.addEventListener("ganna:track-order", onTrackRequest);
+    return () => window.removeEventListener("ganna:track-order", onTrackRequest);
+  }, [trackById]);
+
+  function handleTrack(e) {
+    e.preventDefault();
+    const id = String(input).trim().replace(/\D/g, "");
+    if (!id) {
+      setError(t("trackInvalid"));
+      setOrder(null);
+      return;
+    }
+    trackById(id);
+  }
+
+  const currentIdx = order ? TRACK_STEPS.indexOf(order.deliveryStatus) : -1;
+
+  return (
+    <section id="track" className="relative px-4 sm:px-6 py-24 overflow-hidden">
+      {/* ambient glow */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-gold/8 blur-[120px]" />
+        <div className="absolute bottom-0 -right-32 w-96 h-96 rounded-full bg-mint/6 blur-[120px]" />
+      </div>
+
+      <div className="relative max-w-3xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-14"
+        >
+          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-gold-metal mb-4">{t("trackEyebrow")}</p>
+          <h2 className="font-display font-semibold text-4xl sm:text-6xl text-cream">{t("trackTitle")}</h2>
+          <p className="text-muted mt-4 max-w-lg mx-auto">{t("trackSub")}</p>
+        </motion.div>
+
+        {/* order id form */}
+        <motion.form
+          onSubmit={handleTrack}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+          className="relative glass-card rounded-3xl p-4 sm:p-5 flex gap-3 shadow-glass"
+        >
+          <input
+            type="text"
+            inputMode="numeric"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={t("trackPlaceholder")}
+            className="flex-1 min-w-0 bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex items-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 sm:px-7 py-3 text-sm transition hover:brightness-110 disabled:opacity-50 shadow-glowGold"
+          >
+            {loading ? <Spinner className="w-4 h-4" /> : t("trackBtn")}
+          </button>
+        </motion.form>
+
+        {error && (
+          <div className="mt-5 text-sm text-red-300 bg-red-500/10 border border-red-500/25 rounded-2xl px-5 py-4">
+            {error}
+          </div>
+        )}
+
+        {order && (
+          <motion.div
+            initial={{ opacity: 0, y: 28 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-6 relative rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass overflow-hidden"
+          >
+            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+            <div className="pointer-events-none absolute -top-20 -right-16 w-56 h-56 rounded-full bg-gold/10 blur-3xl" />
+            <div className="relative p-6 sm:p-8">
+              <div className="flex items-center justify-between gap-3 flex-wrap mb-8">
+                <div>
+                  <p className="text-xs text-muted uppercase tracking-wider font-bold">{t("orderLabel")}</p>
+                  <p className="font-display text-2xl text-gold2">#{order.id}</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted uppercase tracking-wider font-bold">{t("trackTotal")}</p>
+                  <p className="font-display text-2xl text-cream">{inr(order.totalAmount)}</p>
+                </div>
+              </div>
+
+              {/* status timeline */}
+              <div className="flex items-start">
+                {TRACK_STEPS.map((step, i) => {
+                  const done = i <= currentIdx;
+                  const fill = i < currentIdx;
+                  const isLast = i === TRACK_STEPS.length - 1;
+                  return (
+                    <div key={step} className="flex items-start flex-1">
+                      <div className="flex flex-col items-center flex-1">
+                        <div
+                          className={`w-10 h-10 rounded-full grid place-items-center text-lg font-bold border transition ${done ? "bg-gold-metal text-forest border-gold shadow-glowGoldSoft" : "bg-white/[0.03] text-muted border-white/10"}`}
+                        >
+                          {done ? "✓" : i + 1}
+                        </div>
+                        <p className={`text-[11px] font-bold mt-2.5 text-center leading-tight ${done ? "text-cream" : "text-muted"}`}>
+                          {t(TRACK_STEP_KEYS[i])}
+                        </p>
+                      </div>
+                      {!isLast && (
+                        <div className={`mt-5 flex-1 h-0.5 rounded-full ${fill ? "bg-gold/60" : "bg-white/10"}`} />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* items */}
+              <div className="mt-8 bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-2 text-sm">
+                {order.items.map((it) => (
+                  <div key={it.name} className="flex justify-between gap-3">
+                    <span className="text-cream">
+                      {it.name} <span className="text-muted">×{it.quantity}</span>
+                    </span>
+                    <span className="text-muted">{inr(it.price * it.quantity)}</span>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-5 text-center text-xs text-muted/60 flex items-center justify-center gap-1.5">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
+                {t("trackRefresh")}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </div>
+    </section>
   );
 }
 

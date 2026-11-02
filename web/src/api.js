@@ -48,6 +48,10 @@ export const api = {
   // orders (admin)
   orders: () => request("GET", "/orders"),
   deleteOrder: (id) => request("DELETE", `/orders/${id}`),
+  updateOrderStatus: (id, status) => request("PATCH", `/orders/${id}/status`, { status }),
+
+  // orders (public tracking)
+  trackOrder: (id) => request("GET", `/orders/track/${id}`),
 
   // settings (admin)
   settings: () => request("GET", "/settings"),
