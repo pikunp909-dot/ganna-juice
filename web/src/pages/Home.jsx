@@ -168,6 +168,7 @@ export default function Home() {
         onRetry={() => window.location.reload()}
         isOpen={isOpen}
         openTime={openTime}
+        closeTime={closeTime}
       />
       <TrackOrder />
       <ReviewsSection exactLocation={settings.exactLocation} />
@@ -273,6 +274,7 @@ export default function Home() {
         remove={remove}
         isOpen={isOpen}
         openTime={openTime}
+        closeTime={closeTime}
         onCheckout={() => {
           setDrawerOpen(false);
           setCheckoutOpen(true);
@@ -706,7 +708,7 @@ function TrustBadges() {
 
 /* ================= Menu ================= */
 
-function MenuSection({ items, loading, error, onRetry, isOpen, openTime }) {
+function MenuSection({ items, loading, error, onRetry, isOpen, openTime, closeTime }) {
   const { t } = useLanguage();
 
   return (
@@ -880,7 +882,7 @@ function MenuItemCard({ item, index }) {
 
 /* ================= Cart Drawer (frosted bottom sheet / side panel) ================= */
 
-function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout, isOpen, openTime }) {
+function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout, isOpen, openTime, closeTime }) {
   const { t } = useLanguage();
 
   return (
