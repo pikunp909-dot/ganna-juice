@@ -6,6 +6,7 @@ import { useLanguage } from "../language";
 import Checkout from "../components/Checkout";
 import { EmptyState, Spinner } from "../components/ui";
 import { SugarcaneStick, SugarcaneLeaf } from "../components/sugarcane";
+import LanguageDropdown from "../components/LanguageDropdown";
 
 const inr = (n) =>
   "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
@@ -218,9 +219,7 @@ function AnimatedWords({ text, className, start = 0, goldWords = [] }) {
 /* ================= Nav ================= */
 
 function Nav({ onMenu, onContact }) {
-  const { t, lang, setLang } = useLanguage();
-  const targetLang = lang === "en" ? "or" : "en";
-  const targetLabel = lang === "en" ? "ଓଡ଼ିଆ" : "EN";
+  const { t } = useLanguage();
 
   // Village-alert subscription state: idle | loading | on | denied
   const [subState, setSubState] = useState("idle");
@@ -350,16 +349,8 @@ function Nav({ onMenu, onContact }) {
             </span>
           )}
 
-          {/* language toggle — glassmorphic */}
-          <button
-            onClick={() => setLang(targetLang)}
-            aria-label={`Switch language to ${targetLabel}`}
-            className="relative ml-2 inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl text-xs font-bold text-cream hover:border-gold/50 hover:text-gold transition shadow-glass overflow-hidden"
-          >
-            <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(245,158,11,0.12),transparent_50%)]" />
-            <span className="relative text-sm leading-none">🌐</span>
-            <span className="relative tracking-wide">{targetLabel}</span>
-          </button>
+          {/* language dropdown — glassmorphic */}
+          <LanguageDropdown />
         </nav>
       </div>
     </header>

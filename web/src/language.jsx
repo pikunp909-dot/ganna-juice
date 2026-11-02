@@ -12,9 +12,11 @@ export function LanguageProvider({ children }) {
     } catch {
       /* storage unavailable — fall through to default */
     }
-    // first visit — match the device language when it is Odia
+    // first visit — match the device language when it is Hindi or Odia
     if (typeof navigator !== "undefined" && navigator.language) {
-      if (navigator.language.toLowerCase().startsWith("or")) return "or";
+      const deviceLang = navigator.language.toLowerCase();
+      if (deviceLang.startsWith("hi")) return "hi";
+      if (deviceLang.startsWith("or")) return "or";
     }
     return DEFAULT_LANG;
   });

@@ -1,8 +1,8 @@
-// Translation dictionary — English (en) and Odia (or).
-// `or` strings are Odia in Odia script. Fallback is always `en`.
+// Translation dictionary — English (en), Hindi (hi) and Odia (or).
+// Fallback is always `en`.
 
 export const DEFAULT_LANG = "en";
-export const SUPPORTED_LANGS = ["en", "or"];
+export const SUPPORTED_LANGS = ["en", "hi", "or"];
 
 export const messages = {
   en: {
@@ -116,6 +116,9 @@ export const messages = {
     verifyUtr: "Verify payment — UTR number",
     utrPlaceholder: "Enter 12-digit UTR reference",
     utrHint: "Found in your UPI app after payment (e.g. 312987654321)",
+    payViaApp: "Pay via App",
+    orScanQr: "Or scan QR code",
+    paidEnterUtr: "Paid? Enter 12-digit UTR to confirm.",
     copy: "Copy",
     copied: "Copied",
     upiReceipt: "UPI Digital Receipt",
@@ -170,10 +173,178 @@ export const messages = {
     total: "Total"
   },
 
+  hi: {
+    // nav / hero
+    orderNow: "अभी ऑर्डर करें",
+    viewMenu: "मेन्यू देखें",
+    menu: "मेन्यू",
+    menuShort: "मेन्यू",
+    home: "होम",
+    login: "लॉगिन",
+    contact: "संपर्क",
+
+    // hero
+    heroLine1: "फ्रेश पिसा हुआ।",
+    heroLine2: "सुनहरा ठंडा।",
+    heroLine3: "शुद्ध गन्ना।",
+    heroSub:
+      "आपके मोहल्ले की दुकान पर ताज़ा पिसा ठंडा गन्ने का रस। बिना चीनी, बिना किसी छोटकाट के।",
+
+    // item / cart
+    add: "जोड़ें",
+    cart: "कार्ट",
+    inCart: "आपके कार्ट में",
+    item: "आइटम",
+    items: "आइटम",
+    viewCart: "कार्ट देखें",
+    yourCart: "आपका कार्ट",
+    cartEmpty: "कार्ट खाली है",
+    cartEmptySub: "मेन्यू से कुछ ठंडा गन्ना जोड़ें।",
+    subtotal: "कुल राशि",
+    proceedCheckout: "चेकआउट पर जाएँ",
+    drawerHint: "भुगतान UPI QR से — अगले स्टेप में।",
+
+    // trust badges
+    trustNatural: "100% नेचुरल",
+    trustNaturalSub: "ना सिरप, ना प्रिज़र्वेटिव",
+    trustSugar: "0g एडेड शुगर",
+    trustSugarSub: "मिठास सीधे गन्ने से",
+    trustCold: "कोल्ड प्रेस्ड",
+    trustColdSub: "लाइव पिसा, बर्फ़ जैसा ठंडा",
+
+    // menu
+    menuEyebrow: "कियोस्क से फ्रेश",
+    menuSub:
+      "हर गिलास ऑर्डर पर पिसा जाता है। अपनी पसंद चुनो — पढ़कर खत्म करने से पहले ही ठंडा हो जाएगा।",
+    retry: "फिर कोशिश करें",
+    menuEmptyTitle: "मेन्यू तैयार हो रहा है",
+    menuEmptySub: "आइटम जल्द ही दिखेंगे।",
+    fresh: "फ्रेश",
+    itemDescFallback: "कोल्ड प्रेस्ड, फ्रेश सर्व किया गया।",
+
+    // checkout
+    checkout: "चेकआउट",
+    name: "नाम",
+    mobileNumber: "मोबाइल नंबर",
+    delivery: "डिलीवरी",
+    pickup: "पिकअप",
+    payOnline: "ऑनलाइन पेमेंट",
+    cashOnDelivery: "कैश ऑन डिलीवरी",
+    placeOrder: "ऑर्डर करें",
+    confirmPayment: "पेमेंट कन्फर्म करें",
+    backToDetails: "← विवरण पर वापस",
+    amountToPay: "देय राशि",
+    secureUpi: "सुरक्षित UPI पेमेंट",
+
+    // success
+    orderPlaced: "ऑर्डर हो गया",
+    paymentRecorded: "पेमेंट रिकॉर्ड हो गया",
+    continueBrowsing: "ब्राउज़ करते रहें",
+
+    // footer
+    findUs: "हमें यहाँ खोजें",
+    openInMaps: "Google Maps में खोलें",
+    footerSub:
+      "लाइव पिसा, सुनहरा ठंडा, शुद्ध गन्ना। आपका मोहल्ला वाला स्टॉल, अब एक टैप दूर।",
+    footerMade: "भुवनेश्वर में ♥ से कोल्ड प्रेस्ड।",
+
+    // reviews
+    reviewsEyebrow: "समीक्षाएँ",
+    reviewsTitle: "ग्राहक क्या कहते हैं",
+    reviewsSub: "स्टॉल की असली बातें, एक टैप दूर।",
+    rateOnMaps: "Google Maps पर रेटिंग दें",
+    writeReviewTitle: "समीक्षा लिखें",
+    reviewNameLabel: "आपका नाम",
+    reviewNamePlaceholder: "जैसे राहुल",
+    reviewRatingLabel: "आपकी रेटिंग",
+    reviewCommentLabel: "आपकी टिप्पणी",
+    reviewCommentPlaceholder: "जूस कैसा था?",
+    reviewSubmit: "समीक्षा भेजें",
+    reviewSending: "भेजा जा रहा है…",
+    reviewThanks: "धन्यवाद! आपकी समीक्षा लाइव है।",
+    reviewEmpty: "अभी तक कोई समीक्षा नहीं — पहले बनिए!",
+    reviewErrName: "कृपया अपना नाम लिखें",
+    reviewErrRating: "कृपया एक स्टार रेटिंग चुनें",
+
+    // step 1 details
+    deliveryAddress: "डिलीवरी का पता",
+    continueToPayment: "पेमेंट पर जाएँ",
+    stepDetails: "विवरण",
+    stepPayment: "पेमेंट",
+    stepDone: "पूरा",
+
+    // validation
+    errName: "कृपया अपना नाम लिखें",
+    errPhone: "सही 10 अंकों का मोबाइल नंबर डालें",
+    errAddress: "डिलीवरी के लिए पता ज़रूरी है",
+    errUtr: "UTR बिल्कुल 12 अंकों का होना चाहिए",
+
+    // payment step
+    scanUpi: "किसी भी UPI ऐप से स्कैन करें (Google Pay, PhonePe, Paytm…)",
+    verifyUtr: "पेमेंट वेरिफाई करें — UTR नंबर",
+    utrPlaceholder: "12 अंकों का UTR रेफरेंस डालें",
+    utrHint: "पेमेंट के बाद आपके UPI ऐप में मिलेगा (जैसे 312987654321)",
+    payViaApp: "ऐप से पे करें",
+    orScanQr: "या QR कोड स्कैन करें",
+    paidEnterUtr: "पे हो गया? कन्फर्म करने के लिए 12 अंकों का UTR डालें।",
+    copy: "कॉपी",
+    copied: "कॉपी हो गया",
+    upiReceipt: "UPI डिजिटल रसीद",
+    liveBadge: "लाइव",
+    orderLabel: "ऑर्डर",
+    newLabel: "नया",
+    amountPayable: "देय राशि",
+    methodLabel: "तरीका",
+    payOnlineSub: "UPI ऐप",
+    payAtPickupSub: "पिकअप पर पे करें",
+    payOnArrival: "ऑर्डर पहुँचने पर पे करें",
+    cashNote:
+      "कोई ऑनलाइन पेमेंट नहीं। नकद तैयार रखें — हमारी टीम डिलीवरी पर ले लेगी।",
+    placingOrder: "ऑर्डर हो रहा है…",
+
+    // success
+    sendReceipt: "WhatsApp पर रसीद भेजें",
+    statusConfirmed: "कन्फर्म",
+    statusAwaiting: "वेरिफिकेशन का इंतज़ार",
+    paymentLabel: "पेमेंट",
+    statusLabel: "स्थिति",
+    successCodSub:
+      "धन्यवाद! आपका ऑर्डर स्टॉल भेज दिया गया है। नकद तैयार रखें — हम जल्द कन्फर्म करेंगे।",
+    successUpiSub:
+      "धन्यवाद! आपका ऑर्डर स्टॉल भेज दिया गया है। पेमेंट वेरिफाई होते ही हम कन्फर्म करेंगे।",
+
+    // whatsapp receipt template
+    waHeader: "नमस्ते! मेरा ऑर्डर {ref} — सुगरकेन जूस",
+    waTotal: "कुल: {total}",
+    waConfirm: "कृपया कन्फर्म करें 🙏",
+    waPayCod: "पेमेंट: कैश ऑन डिलीवरी",
+    waPayUpi: "पेमेंट UTR: {utr}",
+
+    // track order
+    trackEyebrow: "ऑर्डर ट्रैक करें",
+    trackTitle: "अपना ऑर्डर ट्रैक करें",
+    trackSub: "ऑर्डर ID डालें और लाइव स्थिति देखें।",
+    trackPlaceholder: "ऑर्डर ID (जैसे 24)",
+    trackBtn: "ट्रैक करें",
+    trackLiveOrder: "लाइव ऑर्डर ट्रैक करें",
+    trackLoading: "ट्रैक हो रहा है…",
+    trackInvalid: "पहले ऑर्डर ID डालें",
+    trackNotFound: "ऑर्डर नहीं मिला। ID जाँचकर फिर कोशिश करें।",
+    trackStepPending: "लंबित",
+    trackStepPreparing: "तैयार हो रहा है",
+    trackStepOut: "डिलीवरी पर निकला",
+    trackStepDelivered: "डिलीवर हो गया",
+    trackTotal: "कुल",
+    trackRefresh: "हर कुछ सेकंड में अपने आप रिफ्रेश होता है",
+
+    // misc
+    total: "कुल"
+  },
+
   or: {
     // nav / hero
-    orderNow: "ଏବେ ଅର୍ଡର କରନ୍ତୁ",
-    viewMenu: "ମେନୁ ଦେଖନ୍ତୁ",
+    orderNow: "ଏବେ ଅର୍ଡର କର",
+    viewMenu: "ମେନୁ ଦେଖ",
     menu: "ମେନୁ",
     menuShort: "ମେନୁ",
     home: "ମୁଖ୍ୟ ପୃଷ୍ଠା",
@@ -185,35 +356,35 @@ export const messages = {
     heroLine2: "ସୁନା ଥଣ୍ଡା।",
     heroLine3: "ଶୁଦ୍ଧ ଗନ୍ନା।",
     heroSub:
-      "ଥଣ୍ଡା ଚାପା ଆଖୁ ରସ, ଆପଣଙ୍କ ପଡ଼ୋଶୀ ଦୋକାନରେ ଅର୍ଡର ଅନୁଯାୟୀ ତାଜା ଚିପା ହୋଇଥାଏ। କୌଣସି ଚିନି ନାହିଁ, କୌଣସି ସର୍ଟକଟ ନାହିଁ।",
+      "ତୁମର ପଡ଼ୋଶୀ ଦୋକାନରେ ତାଜା ଚିପା ଥଣ୍ଡା ଆଖୁ ରସ। ନା ଚିନି, ନା କୌଣସି ସର୍ଟକଟ।",
 
     // item / cart
-    add: "ଯୋଡନ୍ତୁ",
-    cart: "ଟୋକରି",
-    inCart: "ଆପଣଙ୍କ ଟୋକରିରେ",
+    add: "ଯୋଡ଼",
+    cart: "କାର୍ଟ",
+    inCart: "ତୁମର କାର୍ଟରେ",
     item: "ଆଇଟମ୍",
     items: "ଆଇଟମ୍",
-    viewCart: "କାର୍ଟ ଦେଖନ୍ତୁ",
-    yourCart: "ଆପଣଙ୍କ କାର୍ଟ",
+    viewCart: "କାର୍ଟ ଦେଖ",
+    yourCart: "ତୁମର କାର୍ଟ",
     cartEmpty: "କାର୍ଟ ଖାଲି ଅଛି",
-    cartEmptySub: "ମେନୁରୁ କିଛି ଥଣ୍ଡା ଗନ୍ନା ଯୋଡନ୍ତୁ।",
+    cartEmptySub: "ମେନୁରୁ କିଛି ଥଣ୍ଡା ଗନ୍ନା ଯୋଡ଼।",
     subtotal: "ସବ୍ଟୋଟାଲ",
-    proceedCheckout: "ଚେକ୍ଆଉଟକୁ ଆଗକୁ ଯାଆନ୍ତୁ",
-    drawerHint: "ପେମେଣ୍ଟ UPI QR ମାଧ୍ୟମରେ — ପରବର୍ତ୍ତୀ ପଦକ୍ଷେପରେ।",
+    proceedCheckout: "ଚେକ୍ଆଉଟକୁ ଯାଅ",
+    drawerHint: "ପେମେଣ୍ଟ UPI QR ରେ — ପରବର୍ତ୍ତୀ ପଦକ୍ଷେପରେ।",
 
     // trust badges
     trustNatural: "୧୦୦% ପ୍ରାକୃତିକ",
-    trustNaturalSub: "କୌଣସି ସିରପ୍ ନାହିଁ, କୌଣସି ପ୍ରିଜରଭେଟିଭ ନାହିଁ",
-    trustSugar: "୦ଗ୍ରାମ ୟୋଡ଼ା ଚିନି",
+    trustNaturalSub: "ନା ସିରପ୍, ନା ପ୍ରିଜରଭେଟିଭ",
+    trustSugar: "୦ଗ୍ରାମ ଅତିରିକ୍ତ ଚିନି",
     trustSugarSub: "ମିଠାପଣ ସିଧା ଆଖୁରୁ",
     trustCold: "ଥଣ୍ଡା ଚାପା",
-    trustColdSub: "ତାଜା ଚିପା, ବରଫ ଥଣ୍ଡା ସର୍ଭ",
+    trustColdSub: "ଲାଇଭ୍ ଚିପା, ବରଫ ଥଣ୍ଡା ସର୍ଭ",
 
     // menu
     menuEyebrow: "କିଓସ୍କରୁ ତାଜା",
     menuSub:
-      "ପ୍ରତ୍ୟେକ ଗ୍ଲାସ ଅର୍ଡର ଅନୁଯାୟୀ ଚିପା ହୋଇଥାଏ। ଆପଣଙ୍କ ପସନ୍ଦ ବାଛନ୍ତୁ — ପଢ଼ି ସାରିବା ପୂର୍ବରୁ ଏହା ଥଣ୍ଡା ହୋଇଯିବ।",
-    retry: "ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ",
+      "ପ୍ରତ୍ୟେକ ଗ୍ଲାସ ଅର୍ଡର ଅନୁଯାୟୀ ଚିପା ହୁଏ। ତୁମର ପସନ୍ଦ ବାଛ — ପଢ଼ି ସାରିବା ପୂର୍ବରୁ ଥଣ୍ଡା ହୋଇଯିବ।",
+    retry: "ପୁଣି ଚେଷ୍ଟା କର",
     menuEmptyTitle: "ମେନୁ ପ୍ରସ୍ତୁତ ହେଉଛି",
     menuEmptySub: "ଆଇଟମ୍ ଶୀଘ୍ର ଦେଖାଯିବ।",
     fresh: "ତାଜା",
@@ -227,109 +398,112 @@ export const messages = {
     pickup: "ଉଠାଇ ନେବା",
     payOnline: "ଅନଲାଇନ ପେମେଣ୍ଟ",
     cashOnDelivery: "କ୍ୟାଶ ଅନ ଡେଲିଭେରି",
-    placeOrder: "ଅର୍ଡର ରଖନ୍ତୁ",
-    confirmPayment: "ପେମେଣ୍ଟ ନିଶ୍ଚିତ କରନ୍ତୁ",
-    backToDetails: "← ବିବରଣୀକୁ ଫେରନ୍ତୁ",
+    placeOrder: "ଅର୍ଡର ରଖ",
+    confirmPayment: "ପେମେଣ୍ଟ ନିଶ୍ଚିତ କର",
+    backToDetails: "← ବିବରଣୀକୁ ଫେର",
     amountToPay: "ଦେୟ ରାଶି",
     secureUpi: "ସୁରକ୍ଷିତ UPI ପେମେଣ୍ଟ",
 
     // success
-    orderPlaced: "ଅର୍ଡର ରଖାଯାଇଛି",
-    paymentRecorded: "ପେମେଣ୍ଟ ରେକର୍ଡ ହୋଇଛି",
-    continueBrowsing: "ଆଗକୁ ବ୍ରାଉଜ କରନ୍ତୁ",
+    orderPlaced: "ଅର୍ଡର ହୋଇଗଲା",
+    paymentRecorded: "ପେମେଣ୍ଟ ରେକର୍ଡ ହୋଇଗଲା",
+    continueBrowsing: "ଆଗକୁ ବ୍ରାଉଜ କର",
 
     // footer
-    findUs: "ଆମକୁ ଏଠାରେ ଖୋଜନ୍ତୁ",
-    openInMaps: "ଗୁଗୁଲ ମ୍ୟାପରେ ଖୋଲନ୍ତୁ",
+    findUs: "ଆମକୁ ଏଠାରେ ଖୋଜ",
+    openInMaps: "ଗୁଗୁଲ ମ୍ୟାପରେ ଖୋଲ",
     footerSub:
-      "ତାଜା ଚିପା, ସୁନା ଥଣ୍ଡା, ଶୁଦ୍ଧ ଗନ୍ନା। ଆପଣଙ୍କ ପଡ଼ୋଶୀ ଦୋକାନ, ବର୍ତ୍ତମାନ ଗୋଟିଏ ଟାପରେ।",
+      "ତାଜା ଚିପା, ସୁନା ଥଣ୍ଡା, ଶୁଦ୍ଧ ଗନ୍ନା। ତୁମର ପଡ଼ୋଶୀ ଷ୍ଟଲ, ଏବେ ଗୋଟିଏ ଟାପରେ।",
     footerMade: "ଭୁବନେଶ୍ୱରରେ ♥ ସହିତ ଥଣ୍ଡା ଚାପା।",
 
     // reviews
     reviewsEyebrow: "ସମୀକ୍ଷା",
     reviewsTitle: "ଗ୍ରାହକ କ'ଣ କୁହନ୍ତି",
     reviewsSub: "ଷ୍ଟଲର ଅସଲି କଥା, ଗୋଟିଏ ଟାପରେ।",
-    rateOnMaps: "ଗୁଗୁଲ ମ୍ୟାପରେ ରେଟିଂ ଦିଅନ୍ତୁ",
-    writeReviewTitle: "ଏକ ସମୀକ୍ଷା ଲେଖନ୍ତୁ",
-    reviewNameLabel: "ଆପଣଙ୍କ ନାମ",
-    reviewNamePlaceholder: "ଉଦାହରଣ: ରାହୁଲ",
-    reviewRatingLabel: "ଆପଣଙ୍କ ରେଟିଂ",
-    reviewCommentLabel: "ଆପଣଙ୍କ ମତାମତ",
+    rateOnMaps: "ଗୁଗୁଲ ମ୍ୟାପରେ ରେଟିଂ ଦିଅ",
+    writeReviewTitle: "ସମୀକ୍ଷା ଲେଖ",
+    reviewNameLabel: "ତୁମର ନାମ",
+    reviewNamePlaceholder: "ଯେମିତି ରାହୁଲ",
+    reviewRatingLabel: "ତୁମର ରେଟିଂ",
+    reviewCommentLabel: "ତୁମର ମତାମତ",
     reviewCommentPlaceholder: "ଜୁସ୍ କେମିତି ଥିଲା?",
-    reviewSubmit: "ସମୀକ୍ଷା ଦାଖଲ କରନ୍ତୁ",
-    reviewSending: "ଦାଖଲ ହେଉଛି…",
-    reviewThanks: "ଧନ୍ୟବାଦ! ଆପଣଙ୍କ ସମୀକ୍ଷା ଲାଇଭ ହୋଇଗଲା।",
-    reviewEmpty: "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ସମୀକ୍ଷା ନାହିଁ — ପ୍ରଥମ ବ୍ୟକ୍ତି ହୁଅନ୍ତୁ!",
-    reviewErrName: "ଦୟାକରି ଆପଣଙ୍କ ନାମ ଦିଅନ୍ତୁ",
-    reviewErrRating: "ଦୟାକରି ଏକ ଷ୍ଟାର ରେଟିଂ ବାଛନ୍ତୁ",
+    reviewSubmit: "ସମୀକ୍ଷା ପଠାଅ",
+    reviewSending: "ପଠାଉଛୁ…",
+    reviewThanks: "ଧନ୍ୟବାଦ! ତୁମର ସମୀକ୍ଷା ଲାଇଭ୍ ହୋଇଗଲା।",
+    reviewEmpty: "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି ସମୀକ୍ଷା ନାହିଁ — ପ୍ରଥମ ହୁଅ!",
+    reviewErrName: "ଦୟାକରି ତୁମର ନାମ ଲେଖ",
+    reviewErrRating: "ଦୟାକରି ଗୋଟିଏ ଷ୍ଟାର ରେଟିଂ ବାଛ",
 
     // step 1 details
     deliveryAddress: "ଡେଲିଭେରି ଠିକଣା",
-    continueToPayment: "ପେମେଣ୍ଟକୁ ଆଗକୁ ଯାଆନ୍ତୁ",
+    continueToPayment: "ପେମେଣ୍ଟକୁ ଯାଅ",
     stepDetails: "ବିବରଣୀ",
     stepPayment: "ପେମେଣ୍ଟ",
     stepDone: "ସର୍ବ",
 
     // validation
-    errName: "ଦୟାକରି ଆପଣଙ୍କ ନାମ ଦିଅନ୍ତୁ",
-    errPhone: "ଏକ ବୈଧ ୧୦ ଅଙ୍କ ବିଶିଷ୍ଟ ମୋବାଇଲ ନମ୍ବର ଦିଅନ୍ତୁ",
-    errAddress: "ଡେଲିଭେରି ପାଇଁ ଠିକଣା ଆବଶ୍ୟକ",
-    errUtr: "UTR ଠିକ୍ ୧୨ ଅଙ୍କ ହେବା ଉଚିତ",
+    errName: "ଦୟାକରି ତୁମର ନାମ ଲେଖ",
+    errPhone: "ଠିକ୍ ୧୦ ଅଙ୍କ ବିଶିଷ୍ଟ ମୋବାଇଲ ନମ୍ବର ଦିଅ",
+    errAddress: "ଡେଲିଭେରି ପାଇଁ ଠିକଣା ଜରୁରୀ",
+    errUtr: "UTR ଠିକ୍ ୧୨ ଅଙ୍କର ହେବା ଉଚିତ",
 
     // payment step
-    scanUpi: "କୌଣସି UPI ଆପ୍ ସହିତ ସ୍କାନ କରନ୍ତୁ (Google Pay, PhonePe, Paytm…)",
-    verifyUtr: "ପେମେଣ୍ଟ ଯାଞ୍ଚ କରନ୍ତୁ — UTR ନମ୍ବର",
-    utrPlaceholder: "୧୨ ଅଙ୍କ ବିଶିଷ୍ଟ UTR ରେଫରେନ୍ସ ଦିଅନ୍ତୁ",
-    utrHint: "ପେମେଣ୍ଟ ପରେ ଆପଣଙ୍କ UPI ଆପ୍ରେ ମିଳିଥାଏ (ଉଦାହରଣ: 312987654321)",
+    scanUpi: "କୌଣସି UPI ଆପ୍ ରେ ସ୍କାନ କର (Google Pay, PhonePe, Paytm…)",
+    verifyUtr: "ପେମେଣ୍ଟ ଯାଞ୍ଚ କର — UTR ନମ୍ବର",
+    utrPlaceholder: "୧୨ ଅଙ୍କର UTR ରେଫରେନ୍ସ ଦିଅ",
+    utrHint: "ପେମେଣ୍ଟ ପରେ ତୁମର UPI ଆପ୍ରେ ମିଳିବ (ଯେମିତି: 312987654321)",
+    payViaApp: "ଆପ୍ ରେ ଦିଅ",
+    orScanQr: "କିମ୍ବା QR କୋଡ୍ ସ୍କାନ କର",
+    paidEnterUtr: "ପେମେଣ୍ଟ ହେଲା? କନ୍ଫର୍ମ କରିବାକୁ ୧୨ ଅଙ୍କର UTR ଦିଅ।",
     copy: "କପି",
     copied: "କପି ହେଲା",
     upiReceipt: "UPI ଡିଜିଟାଲ ରିସିଟ",
     liveBadge: "ଲାଇଭ୍",
     orderLabel: "ଅର୍ଡର",
-    newLabel: "ନୂତନ",
+    newLabel: "ନୂଆ",
     amountPayable: "ଦେୟ ରାଶି",
     methodLabel: "ପଦ୍ଧତି",
     payOnlineSub: "UPI ଆପ୍",
-    payAtPickupSub: "ଉଠାଇ ନେବା ସମୟରେ ଦିଅନ୍ତୁ",
-    payOnArrival: "ଆପଣଙ୍କ ଅର୍ଡର ପହଞ୍ଚିଲେ ପେମେଣ୍ଟ କରନ୍ତୁ",
+    payAtPickupSub: "ଉଠାଇ ନେଲାବେଳେ ଦିଅ",
+    payOnArrival: "ଅର୍ଡର ପହଞ୍ଚିଲେ ପେମେଣ୍ଟ କର",
     cashNote:
-      "କୌଣସି ଅନଲାଇନ ପେମେଣ୍ଟ ଦରକାର ନାହିଁ। ନଗଦ ପ୍ରସ୍ତୁତ ରଖନ୍ତୁ — ଆମ ଟିମ୍ ଡେଲିଭେରି ସମୟରେ ସଂଗ୍ରହ କରିବ।",
-    placingOrder: "ଅର୍ଡର ରଖୁଛୁ…",
+      "କୌଣସି ଅନଲାଇନ ପେମେଣ୍ଟ ଦରକାର ନାହିଁ। ନଗଦ ପ୍ରସ୍ତୁତ ରଖ — ଆମ ଟିମ୍ ଡେଲିଭେରି ସମୟରେ ଆଣି ନେବ।",
+    placingOrder: "ଅର୍ଡର ହେଉଛି…",
 
     // success
-    sendReceipt: "WhatsApp ରେ ରିସିଟ ପଠାନ୍ତୁ",
+    sendReceipt: "WhatsApp ରେ ରିସିଟ ପଠାଅ",
     statusConfirmed: "ନିଶ୍ଚିତ",
-    statusAwaiting: "ଯାଞ୍ଚ ଅପେକ୍ଷାରେ",
+    statusAwaiting: "ଯାଞ୍ଚର ଅପେକ୍ଷାରେ",
     paymentLabel: "ପେମେଣ୍ଟ",
     statusLabel: "ସ୍ଥିତି",
     successCodSub:
-      "ଧନ୍ୟବାଦ! ଆପଣଙ୍କ ଅର୍ଡର ଦୋକାନକୁ ପଠାଯାଇଛି। ନଗଦ ପ୍ରସ୍ତୁତ ରଖନ୍ତୁ — ଆମେ ଶୀଘ୍ର ନିଶ୍ଚିତ କରିବୁ।",
+      "ଧନ୍ୟବାଦ! ତୁମର ଅର୍ଡର ଷ୍ଟଲକୁ ଯାଇଛି। ନଗଦ ପ୍ରସ୍ତୁତ ରଖ — ଆମେ ଶୀଘ୍ର କନ୍ଫର୍ମ କରିବୁ।",
     successUpiSub:
-      "ଧନ୍ୟବାଦ! ଆପଣଙ୍କ ଅର୍ଡର ଦୋକାନକୁ ପଠାଯାଇଛି। ପେମେଣ୍ଟ ଯାଞ୍ଚ ହେବା ପରେ ଆମେ ନିଶ୍ଚିତ କରିବୁ।",
+      "ଧନ୍ୟବାଦ! ତୁମର ଅର୍ଡର ଷ୍ଟଲକୁ ଯାଇଛି। ପେମେଣ୍ଟ ଯାଞ୍ଚ ହେବା ପରେ ଆମେ କନ୍ଫର୍ମ କରିବୁ।",
 
     // whatsapp receipt template
-    waHeader: "ନମସ୍କାର! ମୋ ଅର୍ଡର {ref} ଗନ୍ନା ପ୍ଲେଟରେ",
+    waHeader: "ନମସ୍କାର! ମୋ ଅର୍ଡର {ref} — ସୁଗରକେନ ଜୁସ୍",
     waTotal: "ମୋଟ: {total}",
-    waConfirm: "ଦୟାକରି ନିଶ୍ଚିତ କରନ୍ତୁ 🙏",
+    waConfirm: "ଦୟାକରି କନ୍ଫର୍ମ କର 🙏",
     waPayCod: "ପେମେଣ୍ଟ: କ୍ୟାଶ ଅନ ଡେଲିଭେରି",
     waPayUpi: "ପେମେଣ୍ଟ UTR: {utr}",
 
     // track order
     trackEyebrow: "ଅର୍ଡର ଟ୍ରାକ୍",
-    trackTitle: "ଆପଣଙ୍କ ଅର୍ଡର ଟ୍ରାକ୍ କରନ୍ତୁ",
-    trackSub: "ଆପଣଙ୍କ ଅର୍ଡର ID ଦିଅନ୍ତୁ, ଲାଇଭ୍ ସ୍ଥିତି ଦେଖନ୍ତୁ।",
-    trackPlaceholder: "ଅର୍ଡର ID (e.g. 24)",
-    trackBtn: "ଟ୍ରାକ୍",
-    trackLiveOrder: "ଲାଇଭ୍ ଅର୍ଡର ଟ୍ରାକ୍ କରନ୍ତୁ",
+    trackTitle: "ତୁମର ଅର୍ଡର ଟ୍ରାକ୍ କର",
+    trackSub: "ଅର୍ଡର ID ଦିଅ, ଲାଇଭ୍ ସ୍ଥିତି ଦେଖ।",
+    trackPlaceholder: "ଅର୍ଡର ID (ଯେମିତି 24)",
+    trackBtn: "ଟ୍ରାକ୍ କର",
+    trackLiveOrder: "ଲାଇଭ୍ ଅର୍ଡର ଟ୍ରାକ୍ କର",
     trackLoading: "ଟ୍ରାକ୍ ହେଉଛି…",
-    trackInvalid: "ପ୍ରଥମେ ଅର୍ଡର ID ଦିଅନ୍ତୁ",
-    trackNotFound: "ଅର୍ଡର ମିଳିଲା ନାହିଁ। ID ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+    trackInvalid: "ପ୍ରଥମେ ଅର୍ଡର ID ଦିଅ",
+    trackNotFound: "ଅର୍ଡର ମିଳିଲା ନାହିଁ। ID ଯାଞ୍ଚ କରି ପୁଣି ଚେଷ୍ଟା କର।",
     trackStepPending: "ବାକି",
     trackStepPreparing: "ପ୍ରସ୍ତୁତ ହେଉଛି",
     trackStepOut: "ଡେଲିଭରୀରେ",
     trackStepDelivered: "ଡେଲିଭରୀ ହୋଇଛି",
     trackTotal: "ମୋଟ",
-    trackRefresh: "ପ୍ରତି କିଛି ସେକେଣ୍ଡରେ ଅଟୋ ରିଫ୍ରେସ୍ ହେଉଛି",
+    trackRefresh: "ପ୍ରତି କିଛି ସେକେଣ୍ଡରେ ଅଟୋ ରିଫ୍ରେସ୍ ହୁଏ",
 
     // misc
     total: "ମୋଟ"

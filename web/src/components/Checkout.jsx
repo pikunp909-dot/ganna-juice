@@ -45,6 +45,7 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
   const [utr, setUtr] = useState("");
   const [utrError, setUtrError] = useState("");
   const [finalizing, setFinalizing] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   // reset whenever the modal opens
   useEffect(() => {
@@ -59,6 +60,8 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
       setMode("Pickup");
       setPaymentMethod("UPI");
       setFinalizing(false);
+      setShowSuccess(false);
+      autoOpenedRef.current = false;
 
       // pull fresh public settings so admin edits (UPI / QR) show immediately
       api.publicSettings()
@@ -71,7 +74,7 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
   // The manual button stays as a fallback when the browser blocks the popup.
   const autoOpenedRef = useRef(false);
   useEffect(() => {
-    if (step !== "success" || !order || autoOpenedRef.current) return;
+    if (!showSuccess || !order || autoOpenedRef.current) return;
     autoOpenedRef.current = true;
     const t = setTimeout(() => {
       window.open(waLink(), "_blank");
@@ -116,7 +119,8 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
         items: lines.map((l) => ({ menuItemId: l.item.id, quantity: l.qty }))
       });
       setOrder(res.order);
-      setStep("success");
+      setFinalizing(false);
+      setShowSuccess(true);
       clear();
     } catch (err) {
       setPlaceError(err.message || "Could not place order");
@@ -128,6 +132,7 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
 
   function handleTrackLive() {
     const id = order?.id;
+    setShowSuccess(false);
     onClose();
     if (id) {
       window.dispatchEvent(new CustomEvent("ganna:track-order", { detail: { id } }));
@@ -272,15 +277,24 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
                   </motion.div>
                 )}
 
-                {step === "success" && order && (
-                  <motion.div key="success" variants={stepVariants} initial="initial" animate="animate" exit="exit">
-                    <SuccessStep order={order} paymentMethod={paymentMethod} waLink={waLink()} onClose={onClose} onTrackLive={handleTrackLive} />
-                  </motion.div>
-                )}
               </AnimatePresence>
             </div>
           </motion.div>
         </motion.div>
+      )}
+
+      {/* full-screen premium success modal */}
+      {showSuccess && order && (
+        <SuccessStep
+          order={order}
+          paymentMethod={paymentMethod}
+          waLink={waLink()}
+          onClose={() => {
+            setShowSuccess(false);
+            onClose();
+          }}
+          onTrackLive={handleTrackLive}
+        />
       )}
     </AnimatePresence>
   );
@@ -526,7 +540,19 @@ function PaymentStep({
     }
   }
 
-  const upiPayload = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent("Sugarcane Juice")}&am=${total}&cu=INR&tn=${encodeURIComponent("Sugarcane Juice")}`;
+  const upiPayload = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent("SugarcaneJuice")}&am=${total}&cu=INR`;
+
+  function launchUpi() {
+    window.location.href = upiPayload;
+  }
+
+  const upiApps = [
+    { key: "gpay", label: "GPay", mark: "G", bg: "linear-gradient(135deg,#26d07c,#0f9d58)" },
+    { key: "phonepe", label: "PhonePe", mark: "₹", bg: "linear-gradient(135deg,#8a4ddb,#5f259f)" },
+    { key: "paytm", label: "Paytm", mark: "P", bg: "linear-gradient(135deg,#38c9f5,#00baf2)" },
+    { key: "navi", label: "Navi", mark: "N", bg: "linear-gradient(135deg,#1c4e80,#0b2e4f)" },
+    { key: "other", label: "Other UPI Apps", mark: "⋯", bg: "linear-gradient(135deg,#f59e0b,#d97706)" }
+  ];
 
   const methodOptions = [
     { key: "UPI", icon: "📱", title: t("payOnline"), sub: t("payOnlineSub") },
@@ -604,7 +630,7 @@ function PaymentStep({
               </div>
             </div>
 
-            {/* amount + QR */}
+            {/* amount + pay-via-app */}
             <div className="relative px-6 py-6">
               <div className="flex items-end justify-between">
                 <div>
@@ -617,8 +643,41 @@ function PaymentStep({
                 </div>
               </div>
 
+              {/* pay via app */}
+              <div className="mt-6">
+                <p className="text-[11px] text-muted uppercase tracking-wider font-semibold mb-3">{t("payViaApp")}</p>
+                <div className="flex flex-wrap justify-start gap-x-3 gap-y-4">
+                  {upiApps.map((app) => (
+                    <button
+                      key={app.key}
+                      type="button"
+                      onClick={launchUpi}
+                      title={`Pay with ${app.label}`}
+                      className="group flex flex-col items-center gap-2 w-14"
+                    >
+                      <span
+                        className="w-12 h-12 rounded-2xl grid place-items-center text-lg font-black text-white shadow-lg ring-1 ring-white/20 transition transform group-hover:scale-105 group-hover:ring-gold/60 group-active:scale-95"
+                        style={{ background: app.bg }}
+                      >
+                        {app.mark}
+                      </span>
+                      <span className="text-[10px] font-bold text-cream/70 text-center leading-tight group-hover:text-gold transition">
+                        {app.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* or scan QR */}
+              <div className="mt-6 flex items-center gap-3">
+                <span className="h-px flex-1 bg-white/10" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted/70">{t("orScanQr")}</span>
+                <span className="h-px flex-1 bg-white/10" />
+              </div>
+
               {/* QR panel — light surface for contrast */}
-              <div className="relative mt-6 rounded-2xl bg-gradient-to-br from-white to-[#f4ead6] p-2 shadow-inner">
+              <div className="relative mt-5 rounded-2xl bg-gradient-to-br from-white to-[#f4ead6] p-2 shadow-inner">
                 <div className="relative rounded-xl bg-white p-4 grid place-items-center">
                   {settings.qrCodeUrl ? (
                     <img
@@ -665,7 +724,7 @@ function PaymentStep({
             {/* UTR verification */}
             <div className="relative px-6 pt-5 pb-6">
               <label className="block mb-1.5 text-xs font-bold uppercase tracking-wider text-muted">
-                {t("verifyUtr")}
+                {t("paidEnterUtr")}
               </label>
               <input
                 type="text"
@@ -783,7 +842,25 @@ function SuccessStep({ order, paymentMethod, waLink, onClose, onTrackLive }) {
   const { t } = useLanguage();
   const isCod = paymentMethod === "COD";
   return (
-    <div className="text-center py-4">
+    <motion.div
+      className="fixed inset-0 z-[70] grid place-items-center p-4 sm:p-6"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-xl" onClick={onClose} />
+      <motion.div
+        className="relative w-full max-w-md rounded-[32px] border border-white/10 bg-forest2 shadow-card overflow-hidden"
+        initial={{ scale: 0.92, y: 24, opacity: 0 }}
+        animate={{ scale: 1, y: 0, opacity: 1 }}
+        exit={{ scale: 0.95, y: 12, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 28 }}
+      >
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute -top-20 -right-20 w-56 h-56 rounded-full bg-mint/10 blur-[80px]" />
+          <div className="absolute -bottom-24 -left-20 w-64 h-64 rounded-full bg-gold/10 blur-[90px]" />
+        </div>
+        <div className="relative p-8 text-center">
       {/* animated check */}
       <div className="relative w-24 h-24 mx-auto mb-6">
         <div className="absolute inset-0 rounded-full bg-mint/20 blur-2xl animate-pulse" />
@@ -854,7 +931,9 @@ function SuccessStep({ order, paymentMethod, waLink, onClose, onTrackLive }) {
         >
           {t("continueBrowsing")}
         </button>
-      </div>
-    </div>
+        </div>
+        </div>
+      </motion.div>
+    </motion.div>
   );
 }
