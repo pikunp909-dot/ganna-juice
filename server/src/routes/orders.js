@@ -71,6 +71,22 @@ router.post("/", async (req, res) => {
        ON CONFLICT(phone) DO UPDATE SET stamps = stamps + 1, updatedAt = datetime('now')`,
       [customerPhone]
     );
+
+    // Every 10th order unlocks a scratch card: reset stamps, bump the card
+    // count, and ping the owner.
+    const row = await get("SELECT stamps FROM Loyalty WHERE phone = ?", [customerPhone]);
+    if (row && Number(row.stamps) >= 10) {
+      await run(
+        "UPDATE Loyalty SET stamps = 0, scratchCards = scratchCards + 1, updatedAt = datetime('now') WHERE phone = ?",
+        [customerPhone]
+      );
+      notifyAllSubscribers({
+        title: "Scratch Card Unlocked!",
+        body: `Customer ${customerName} completed 10 orders! Scratch card unlocked.`,
+        data: { url: "/customers", phone: customerPhone },
+        type: "admin"
+      }).catch((err) => console.error("Scratch card push error:", err.message));
+    }
   } catch (err) {
     console.error("Loyalty update failed:", err.message);
   }

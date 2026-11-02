@@ -169,6 +169,8 @@ export async function initSchema() {
     CREATE TABLE IF NOT EXISTS Loyalty (
       phone TEXT PRIMARY KEY,
       stamps INTEGER NOT NULL DEFAULT 0,
+      scratchCards INTEGER NOT NULL DEFAULT 0,
+      totalFreeGlasses INTEGER NOT NULL DEFAULT 0,
       updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
@@ -236,6 +238,15 @@ export async function initSchema() {
   const subCols = await tableCols("Subscriptions");
   if (!subCols.includes("type")) {
     await exec("ALTER TABLE Subscriptions ADD COLUMN type TEXT NOT NULL DEFAULT 'admin'");
+  }
+
+  // Loyalty scratch-card upgrade — new columns on existing tables.
+  const loyaltyCols = await tableCols("Loyalty");
+  if (!loyaltyCols.includes("scratchCards")) {
+    await exec("ALTER TABLE Loyalty ADD COLUMN scratchCards INTEGER NOT NULL DEFAULT 0");
+  }
+  if (!loyaltyCols.includes("totalFreeGlasses")) {
+    await exec("ALTER TABLE Loyalty ADD COLUMN totalFreeGlasses INTEGER NOT NULL DEFAULT 0");
   }
 }
 
