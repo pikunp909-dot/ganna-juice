@@ -13,6 +13,7 @@ export const messages = {
     menuShort: "Menu",
     home: "Home",
     login: "Login",
+    ownerLogin: "Owner Login",
     contact: "Contact",
 
     // hero
@@ -431,6 +432,7 @@ export const messages = {
     menuShort: "मेन्यू",
     home: "होम",
     login: "लॉगिन",
+    ownerLogin: "मालिक लॉगिन",
     contact: "संपर्क",
 
     // hero
@@ -849,14 +851,15 @@ export const messages = {
     menuShort: "ମେନୁ",
     home: "ମୁଖ୍ୟ ପୃଷ୍ଠା",
     login: "ଲଗଇନ୍",
+    ownerLogin: "ମାଲିକ ଲଗଇନ୍",
     contact: "ଯୋଗାଯୋଗ",
 
     // hero
-    heroLine1: "ତାଜା ଚିପା।",
-    heroLine2: "ସୁନା ଥଣ୍ଡା।",
-    heroLine3: "ଶୁଦ୍ଧ ଗନ୍ନା।",
+    heroLine1: "ତାଜା ଆଖୁ ରସ।",
+    heroLine2: "ସୁନେଲୀ ଥଣ୍ଡା।",
+    heroLine3: "ଶୁଦ୍ଧ ଆଖୁ ରସ।",
     heroSub:
-      "ତୁମର ପଡ଼ୋଶୀ ଦୋକାନରେ ତାଜା ଚିପା, ଥଣ୍ଡା ଆଖୁ ରସ। ନା ଚିନି, ନା କୌଣସି ମିଶାଣ।",
+      "ଆପଣଙ୍କ ପଡ଼ୋଶୀ ଦୋକାନରେ ସଦ୍ୟ ଚିପା ଥଣ୍ଡା ଆଖୁ ରସ। କୌଣସି ଚିନି ନାହିଁ, କୌଣସି ମିଶାଣ ନାହିଁ।",
 
     // item / cart
     add: "ଯୋଡ଼",

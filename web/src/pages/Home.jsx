@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
+import { Link } from "react-router-dom";
 import { api } from "../api";
 import { useCart } from "../cart";
 import { useLanguage } from "../language";
@@ -1620,7 +1621,13 @@ function Footer({ settings }) {
 
       <div className="border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-between gap-2 text-xs text-muted/60">
-          <span>© {new Date().getFullYear()} Sugarcane Juice.</span>
+          <span className="flex items-center gap-3">
+            <span>© {new Date().getFullYear()} Sugarcane Juice.</span>
+            <span className="text-white/10">|</span>
+            <Link to="/login" className="hover:text-gold transition-colors">
+              {t("ownerLogin")}
+            </Link>
+          </span>
           <span>{t("footerMade")}</span>
         </div>
       </div>
