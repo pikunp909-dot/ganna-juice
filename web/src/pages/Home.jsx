@@ -699,7 +699,7 @@ function TrustBadges() {
 
 /* ================= Menu ================= */
 
-function MenuSection({ items, loading, error, onRetry }) {
+function MenuSection({ items, loading, error, onRetry, isOpen, openTime }) {
   const { t } = useLanguage();
 
   return (
