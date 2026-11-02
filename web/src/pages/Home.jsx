@@ -281,15 +281,34 @@ const glyph = {
 };
 
 function AnimatedWords({ text, className, start = 0, goldWords = [] }) {
+  const { lang } = useLanguage();
+  const isLatin = !lang || lang === "en";
   let delay = start;
   return (
     <span className={className}>
-      {text.split(" ").map((word, wi) => (
-        <span key={wi} className="inline-block whitespace-nowrap">
-          {word.split("").map((ch, ci) => {
-            const d = delay;
-            delay += 0.035;
-            return (
+      {text.split(" ").map((word, wi) => {
+        const d = delay;
+        delay += 0.035;
+        // Indic scripts (hi/or): char-level split breaks ligatures & matras,
+        // so fade whole words instead — shapes stay intact.
+        if (!isLatin) {
+          return (
+            <motion.span
+              key={wi}
+              className={`inline-block whitespace-nowrap ${goldWords.includes(wi) ? "text-gold-metal" : ""}`}
+              variants={glyph}
+              initial="hidden"
+              animate="show"
+              custom={d}
+            >
+              {word}
+              {"\u00A0"}
+            </motion.span>
+          );
+        }
+        return (
+          <span key={wi} className="inline-block whitespace-nowrap">
+            {word.split("").map((ch, ci) => (
               <motion.span
                 key={ci}
                 className={`inline-block ${goldWords.includes(wi) ? "text-gold-metal" : ""}`}
@@ -300,11 +319,11 @@ function AnimatedWords({ text, className, start = 0, goldWords = [] }) {
               >
                 {ch}
               </motion.span>
-            );
-          })}
-          {"\u00A0"}
-        </span>
-      ))}
+            ))}
+            {"\u00A0"}
+          </span>
+        );
+      })}
     </span>
   );
 }

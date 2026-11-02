@@ -370,6 +370,8 @@ export const messages = {
     qrCodeSub: "Your UPI app QR — used at checkout",
     heroTitle: "Homepage Hero",
     heroSub: "Backdrop of the customer site hero",
+    resetWelcomeBtn: "Reset Welcome Popup for my browser",
+    resetWelcomeDone: "Welcome popup reset — reload the site to see it again",
     securityTitle: "Security — Account & Password",
     securitySub: "Manage your login email and password",
     phoneNumber: "Phone Number",
@@ -432,11 +434,11 @@ export const messages = {
     contact: "संपर्क",
 
     // hero
-    heroLine1: "फ्रेश पिसा हुआ।",
+    heroLine1: "ताज़ा पिसा हुआ।",
     heroLine2: "सुनहरा ठंडा।",
     heroLine3: "शुद्ध गन्ना।",
     heroSub:
-      "आपके मोहल्ले की दुकान पर ताज़ा पिसा ठंडा गन्ने का रस। बिना चीनी, बिना किसी छोटकाट के।",
+      "आपके मोहल्ले की दुकान पर ताज़ा पिसा, ठंडा गन्ने का रस। न कोई मिलावट, न कोई शॉर्टकट।",
 
     // item / cart
     add: "जोड़ें",
@@ -786,6 +788,8 @@ export const messages = {
     qrCodeSub: "आपका UPI ऐप QR — चेकआउट पर इस्तेमाल होता है",
     heroTitle: "होमपेज हीरो",
     heroSub: "ग्राहक साइट हीरो की बैकग्राउंड",
+    resetWelcomeBtn: "मेरे ब्राउज़र के लिए वेलकम पॉपअप रीसेट करें",
+    resetWelcomeDone: "वेलकम पॉपअप रीसेट हो गया — दोबारा देखने के लिए साइट रीलोड करें",
     securityTitle: "सुरक्षा — अकाउंट और पासवर्ड",
     securitySub: "अपना लॉगिन ईमेल और पासवर्ड मैनेज करें",
     phoneNumber: "फ़ोन नंबर",
@@ -852,7 +856,7 @@ export const messages = {
     heroLine2: "ସୁନା ଥଣ୍ଡା।",
     heroLine3: "ଶୁଦ୍ଧ ଗନ୍ନା।",
     heroSub:
-      "ତୁମର ପଡ଼ୋଶୀ ଦୋକାନରେ ତାଜା ଚିପା ଥଣ୍ଡା ଆଖୁ ରସ। ନା ଚିନି, ନା କୌଣସି ସର୍ଟକଟ।",
+      "ତୁମର ପଡ଼ୋଶୀ ଦୋକାନରେ ତାଜା ଚିପା, ଥଣ୍ଡା ଆଖୁ ରସ। ନା ଚିନି, ନା କୌଣସି ମିଶାଣ।",
 
     // item / cart
     add: "ଯୋଡ଼",
@@ -1202,6 +1206,8 @@ export const messages = {
     qrCodeSub: "ଆପଣଙ୍କ UPI ଆପ୍ QR — ଚେକଆଉଟରେ ବ୍ୟବହାର ହୁଏ",
     heroTitle: "ହୋମପେଜ୍ ହୀରୋ",
     heroSub: "ଗ୍ରାହକ ସାଇଟ ହୀରୋର ପୃଷ୍ଠଭୂମି",
+    resetWelcomeBtn: "ମୋ ବ୍ରାଉଜର ପାଇଁ ୱେଲକମ ପପଅପ ରିସେଟ କରନ୍ତୁ",
+    resetWelcomeDone: "ୱେଲକମ ପପଅପ ରିସେଟ ହେଲା — ପୁଣି ଦେଖିବାକୁ ସାଇଟ୍ ରିଲୋଡ୍ କରନ୍ତୁ",
     securityTitle: "ସୁରକ୍ଷା — ଆକାଉଣ୍ଟ ଏବଂ ପାସୱାର୍ଡ",
     securitySub: "ଆପଣଙ୍କ ଲଗଇନ୍ ଇମେଲ୍ ଏବଂ ପାସୱାର୍ଡ ପରିଚାଳନା କରନ୍ତୁ",
     phoneNumber: "ଫୋନ୍ ନମ୍ବର",

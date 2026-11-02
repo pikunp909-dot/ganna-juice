@@ -226,20 +226,7 @@ export default function DashboardLayout() {
 
           {/* signed-in card */}
           <div className="px-4 pb-4">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 shrink-0 rounded-full bg-gold-metal grid place-items-center text-sm font-bold text-forest shadow-glowGoldSoft">
-                  {admin?.email?.charAt(0)?.toUpperCase() || "O"}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-wider text-muted">{t("signInAs")}</p>
-                  <p className="text-sm text-cream truncate">{admin?.email}</p>
-                </div>
-              </div>
-              <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-gold">
-                {t("ownerConsole")}
-              </p>
-            </div>
+            <SignedInCard />
           </div>
         </div>
       </aside>
@@ -304,7 +291,8 @@ export default function DashboardLayout() {
                 ))}
               </nav>
 
-              <div className="p-4 border-t border-white/10">
+              <div className="p-4 border-t border-white/10 space-y-3">
+                <SignedInCard />
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-semibold text-muted hover:text-cream hover:bg-white/10 hover:border-gold/40 py-3 transition"
@@ -545,6 +533,27 @@ function BrandBlock({ compact }) {
         </p>
         <p className="text-[11px] text-muted uppercase tracking-wider">{t("ownerConsole")}</p>
       </div>
+    </div>
+  );
+}
+
+function SignedInCard() {
+  const { admin } = useAuth();
+  const { t } = useLanguage();
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 shrink-0 rounded-full bg-gold-metal grid place-items-center text-sm font-bold text-forest shadow-glowGoldSoft">
+          {admin?.email?.charAt(0)?.toUpperCase() || "O"}
+        </div>
+        <div className="min-w-0">
+          <p className="text-[10px] uppercase tracking-wider text-muted">{t("signInAs")}</p>
+          <p className="text-sm text-cream truncate">{admin?.email}</p>
+        </div>
+      </div>
+      <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-gold">
+        {t("ownerConsole")}
+      </p>
     </div>
   );
 }

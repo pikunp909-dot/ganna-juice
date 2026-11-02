@@ -506,6 +506,23 @@ export default function Settings() {
             </button>
           </div>
         </form>
+
+        <div className="relative px-6 sm:px-8 pb-8 flex justify-center border-t border-white/5 pt-6">
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                localStorage.removeItem("ganna_welcomed");
+              } catch {
+                /* storage unavailable — nothing to clear */
+              }
+              setToast(t("resetWelcomeDone"));
+            }}
+            className="text-xs font-semibold text-muted hover:text-gold underline underline-offset-4 transition"
+          >
+            {t("resetWelcomeBtn")}
+          </button>
+        </div>
       </motion.div>
 
       {/* toast */}
