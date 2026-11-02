@@ -1290,5 +1290,5 @@ export const messages = {
 /** Translate a key for a language, with English fallback. */
 export function translate(lang, key) {
   const dict = messages[lang] || messages[DEFAULT_LANG];
-  return dict[key] !== undefined ? dict[key] : messages[DEFAULT_LANG][key];
+  return dict[key] ?? messages[DEFAULT_LANG][key] ?? key;
 }

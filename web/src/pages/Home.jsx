@@ -323,12 +323,10 @@ const glyph = {
 function AnimatedWords({ text, className, start = 0, goldWords = [] }) {
   const { lang } = useLanguage();
   const isLatin = !lang || lang === "en";
-  let delay = start;
   return (
     <span className={className}>
       {text.split(" ").map((word, wi) => {
-        const d = delay;
-        delay += 0.035;
+        const wordDelay = start + wi * 0.035;
         // Indic scripts (hi/or): char-level split breaks ligatures & matras,
         // so fade whole words instead — shapes stay intact.
         if (!isLatin) {
@@ -339,7 +337,7 @@ function AnimatedWords({ text, className, start = 0, goldWords = [] }) {
               variants={glyph}
               initial="hidden"
               animate="show"
-              custom={d}
+              custom={wordDelay}
             >
               {word}
               {"\u00A0"}
@@ -355,7 +353,7 @@ function AnimatedWords({ text, className, start = 0, goldWords = [] }) {
                 variants={glyph}
                 initial="hidden"
                 animate="show"
-                custom={d}
+                custom={wordDelay + ci * 0.03}
               >
                 {ch}
               </motion.span>
