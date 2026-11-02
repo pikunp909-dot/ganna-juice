@@ -188,7 +188,8 @@ export default function Menu() {
         {items.length === 0 ? (
           <EmptyState title="No menu items yet" sub="Add your first item to start selling." />
         ) : (
-          <div className="relative overflow-x-auto">
+          <>
+          <div className="relative hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-[11px] uppercase tracking-wider text-muted border-b border-white/10 bg-white/[0.02]">
@@ -289,6 +290,108 @@ export default function Menu() {
               </tbody>
             </table>
           </div>
+
+          {/* ===== Mobile cards (glass panels) ===== */}
+          <div className="md:hidden grid gap-5">
+            {items.map((item, i) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 + i * 0.05, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass">
+                  <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+                  <div className="pointer-events-none absolute -top-16 -right-12 w-44 h-44 rounded-full bg-gold/8 blur-3xl" />
+
+                  <div className="relative p-5">
+                    {/* top row: image, name, availability badge */}
+                    <div className="flex items-center gap-3.5">
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.name}
+                          className="w-14 h-14 rounded-2xl object-cover border border-white/10 shadow-glass shrink-0"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 grid place-items-center text-2xl shrink-0">
+                          🍹
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-cream text-base leading-snug truncate">{item.name}</p>
+                        <div className="mt-1.5">
+                          <Badge tone={item.isAvailable ? "green" : "gray"}>
+                            {item.isAvailable ? "Available" : "Out of Stock"}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* description + price */}
+                    <div className="mt-4 bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-3">
+                      <p className="text-sm text-muted leading-relaxed line-clamp-2">
+                        {item.description || "—"}
+                      </p>
+                      <div className="flex items-end justify-between gap-3">
+                        <span className="text-xs text-muted uppercase tracking-wider font-semibold">Price</span>
+                        <span className="font-display text-2xl text-gold-metal">{inr(item.price)}</span>
+                      </div>
+                    </div>
+
+                    {/* action row: toggle, edit, delete */}
+                    <div className="mt-4 flex items-center gap-2.5">
+                      <button
+                        role="switch"
+                        aria-checked={!!item.isAvailable}
+                        aria-label={`Toggle ${item.name} availability`}
+                        onClick={() => toggleAvailability(item)}
+                        disabled={togglingId === item.id}
+                        className={`relative w-12 h-7 rounded-full transition-all duration-300 shrink-0 disabled:opacity-60 group/switch ${
+                          item.isAvailable
+                            ? "bg-gradient-to-r from-mint to-emerald-400 shadow-[0_0_18px_-4px_rgba(63,165,102,0.6)]"
+                            : "bg-white/10 border border-white/15"
+                        }`}
+                      >
+                        {togglingId === item.id ? (
+                          <span className="absolute inset-0 grid place-items-center">
+                            <Spinner className="w-3.5 h-3.5" />
+                          </span>
+                        ) : (
+                          <motion.span
+                            className={`absolute top-[2px] left-[2px] w-6 h-6 rounded-full grid place-items-center text-[9px] font-black transition-all duration-300 ${
+                              item.isAvailable
+                                ? "translate-x-5 bg-gold-metal text-forest shadow-glowGoldSoft"
+                                : "translate-x-0 bg-white/40 text-transparent"
+                            }`}
+                            layout
+                            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                          >
+                            ✓
+                          </motion.span>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => openEdit(item)}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-bold rounded-full border border-white/10 bg-white/5 text-cream px-4 py-2.5 transition hover:border-gold/50 hover:text-gold hover:shadow-glowGoldSoft hover:bg-gold/10"
+                      >
+                        <PencilIcon className="w-3.5 h-3.5" /> Edit
+                      </button>
+
+                      <button
+                        onClick={() => setDeleteTarget(item)}
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-bold rounded-full border border-red-500/25 bg-red-500/10 text-red-300 px-4 py-2.5 transition hover:bg-red-500/25 hover:border-red-500/50 hover:shadow-[0_0_18px_-6px_rgba(239,68,68,0.6)]"
+                      >
+                        <TrashIcon className="w-3.5 h-3.5" /> Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          </>
         )}
       </div>
 
