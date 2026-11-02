@@ -24,6 +24,11 @@ export default function Settings() {
   const [saveError, setSaveError] = useState("");
   const [toast, setToast] = useState("");
 
+  // security — change password
+  const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwError, setPwError] = useState("");
+
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError("");
@@ -57,6 +62,32 @@ export default function Settings() {
     const t = setTimeout(() => setToast(""), 3200);
     return () => clearTimeout(t);
   }, [toast]);
+
+  async function changePassword(e) {
+    e.preventDefault();
+    setPwError("");
+    if (pw.next.length < 8) {
+      setPwError("New password must be at least 8 characters");
+      return;
+    }
+    if (pw.next !== pw.confirm) {
+      setPwError("New passwords do not match");
+      return;
+    }
+    setPwSaving(true);
+    try {
+      await api.post("/auth/change-password", {
+        currentPassword: pw.current,
+        newPassword: pw.next
+      });
+      setToast("Password updated successfully");
+      setPw({ current: "", next: "", confirm: "" });
+    } catch (err) {
+      setPwError(err.message || "Could not update password");
+    } finally {
+      setPwSaving(false);
+    }
+  }
 
   function set(key, value) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -312,6 +343,80 @@ export default function Settings() {
                 <>
                   <SaveIcon className="w-4 h-4" /> Save Settings
                 </>
+              )}
+            </button>
+          </div>
+        </form>
+      </motion.div>
+
+      {/* ===== Security — change password ===== */}
+      <motion.div
+        initial={{ opacity: 0, y: 28 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="relative overflow-hidden rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass mt-8"
+      >
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+        <div className="pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full bg-gold/8 blur-3xl" />
+
+        <form onSubmit={changePassword} className="relative p-6 sm:p-8">
+          <SectionTitle icon="🔒" title="Security — Change Password" sub="Keep your admin account safe" />
+
+          {pwError && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6 text-sm text-red-300 bg-red-500/10 border border-red-500/25 rounded-2xl px-4 py-3"
+            >
+              {pwError}
+            </motion.div>
+          )}
+
+          <div className="grid gap-y-5 mb-8">
+            <SleekField label="Current Password">
+              <input
+                type="password"
+                value={pw.current}
+                onChange={(e) => setPw({ ...pw, current: e.target.value })}
+                placeholder="••••••••"
+                autoComplete="current-password"
+                className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+              />
+            </SleekField>
+            <SleekField label="New Password">
+              <input
+                type="password"
+                value={pw.next}
+                onChange={(e) => setPw({ ...pw, next: e.target.value })}
+                placeholder="Minimum 8 characters"
+                autoComplete="new-password"
+                className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+              />
+            </SleekField>
+            <SleekField label="Confirm New Password">
+              <input
+                type="password"
+                value={pw.confirm}
+                onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
+                placeholder="Re-enter new password"
+                autoComplete="new-password"
+                className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+              />
+            </SleekField>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={pwSaving}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 bg-gold-metal text-forest font-bold rounded-2xl px-10 py-4 text-sm transition hover:brightness-110 disabled:opacity-50 disabled:pointer-events-none shadow-glowGold"
+            >
+              {pwSaving ? (
+                <>
+                  <Spinner className="w-4 h-4" /> Updating…
+                </>
+              ) : (
+                <>Update Password</>
               )}
             </button>
           </div>

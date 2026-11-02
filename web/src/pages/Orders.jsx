@@ -14,6 +14,16 @@ const FILTERS = [
 
 const DELIVERY_STEPS = ["Pending", "Preparing", "Out for Delivery", "Delivered"];
 
+// WhatsApp status updates — auto-opened to the customer on status change.
+const WHATSAPP_STATUS_MESSAGES = {
+  Preparing: (name, id) =>
+    `Hello ${name}! Your order #${id} is being prepared. Fresh juice coming up! 🥤`,
+  "Out for Delivery": (name, id) =>
+    `Hello ${name}! Your order #${id} is out for delivery and will reach you shortly. 🛵`,
+  Delivered: (name, id) =>
+    `Hello ${name}! Your order #${id} has been delivered. Hope you enjoyed it! Please review us on Google 🙏`
+};
+
 function TrashIcon({ className = "w-4 h-4" }) {
   return (
     <svg
@@ -42,6 +52,36 @@ function formatDate(createdAt) {
     hour: "2-digit",
     minute: "2-digit"
   });
+}
+
+function LoyaltyStamps({ phone }) {
+  const [stamps, setStamps] = useState(null);
+
+  useEffect(() => {
+    let live = true;
+    api
+      .get(`/loyalty/${phone}`)
+      .then((d) => {
+        if (live) setStamps(typeof d.stamps === "number" ? d.stamps : 0);
+      })
+      .catch(() => {
+        if (live) setStamps(0);
+      });
+    return () => {
+      live = false;
+    };
+  }, [phone]);
+
+  if (stamps === null) {
+    return <span className="text-xs text-muted">…</span>;
+  }
+
+  return (
+    <span className="inline-flex items-center gap-1.5 font-semibold text-gold">
+      <span className="grid place-items-center w-5 h-5 rounded-full bg-gold/10 border border-gold/30 text-[10px]">🍹</span>
+      {stamps} {stamps === 1 ? "stamp" : "stamps"}
+    </span>
+  );
 }
 
 function summarizeItems(items) {
@@ -177,7 +217,16 @@ export default function Orders() {
       setOrders((prev) =>
         prev.map((x) => (x.id === order.id ? { ...x, deliveryStatus: next } : x))
       );
-      setToast(`Order #${order.id} → ${next}`);
+
+      const waMsg = WHATSAPP_STATUS_MESSAGES[next];
+      if (waMsg && order.customerPhone) {
+        const text = waMsg(order.customerName || "there", order.id);
+        const link = `https://wa.me/91${order.customerPhone}?text=${encodeURIComponent(text)}`;
+        setToast("WhatsApp notification ready for customer");
+        window.open(link, "_blank");
+      } else {
+        setToast(`Order #${order.id} → ${next}`);
+      }
     } catch (err) {
       setToast(err.message || "Failed to update status");
     } finally {
@@ -383,6 +432,12 @@ export default function Orders() {
                       <div className="flex justify-between gap-3">
                         <span className="text-muted">UTR</span>
                         <span className="text-cream text-right">{o.utrNumber || "—"}</span>
+                      </div>
+                      <div className="flex justify-between gap-3">
+                        <span className="text-muted">Loyalty</span>
+                        <span className="text-cream text-right">
+                          <LoyaltyStamps phone={o.customerPhone} />
+                        </span>
                       </div>
                     </div>
 

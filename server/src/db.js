@@ -162,6 +162,12 @@ export async function initSchema() {
       createdAt TEXT NOT NULL DEFAULT (datetime('now'))
     );
 
+    CREATE TABLE IF NOT EXISTS Loyalty (
+      phone TEXT PRIMARY KEY,
+      stamps INTEGER NOT NULL DEFAULT 0,
+      updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+
     CREATE INDEX IF NOT EXISTS idx_orders_status ON Orders(status);
     CREATE INDEX IF NOT EXISTS idx_orderitems_order ON OrderItems(orderId);
     CREATE INDEX IF NOT EXISTS idx_reviews_created ON Reviews(createdAt);

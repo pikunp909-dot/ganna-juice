@@ -140,6 +140,15 @@ export default function DashboardLayout() {
           const fresh = pending.find((o) => !seen.has(String(o.id)));
           if (fresh) {
             setOrderAlert({ id: fresh.id, totalAmount: fresh.totalAmount });
+            // New-order chime — fires the moment the popup appears. Browsers
+            // may block audio until a user gesture; the visual alert still
+            // covers that case, so failures are swallowed silently.
+            try {
+              const chime = new Audio("https://actions.google.com/sounds/v1/alarms/beep_short.ogg");
+              chime.play().catch(() => {});
+            } catch {
+              /* audio unavailable — visual popup is the primary alert */
+            }
           }
           for (const o of pending) seen.add(String(o.id));
         } else {

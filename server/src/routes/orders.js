@@ -54,6 +54,18 @@ router.post("/", async (req, res) => {
   const order = await get("SELECT * FROM Orders WHERE id = ?", [lastId]);
   order.items = await all("SELECT menuItemId, name, quantity, price FROM OrderItems WHERE orderId = ?", [lastId]);
 
+  // Loyalty program — award one stamp per completed order. Best-effort:
+  // a loyalty failure must never break the order itself.
+  try {
+    await run(
+      `INSERT INTO Loyalty (phone, stamps) VALUES (?, 1)
+       ON CONFLICT(phone) DO UPDATE SET stamps = stamps + 1, updatedAt = datetime('now')`,
+      [customerPhone]
+    );
+  } catch (err) {
+    console.error("Loyalty update failed:", err.message);
+  }
+
   // Fire-and-forget owner push — never block/break the order response.
   notifyAllSubscribers({
     title: "New Order!",

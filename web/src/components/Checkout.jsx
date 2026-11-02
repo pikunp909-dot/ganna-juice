@@ -846,6 +846,72 @@ function PaymentStep({
 
 /* ================= Step 3 — Done ================= */
 
+function StampCard({ phone }) {
+  const [stamps, setStamps] = useState(null);
+
+  useEffect(() => {
+    let live = true;
+    if (!phone) {
+      setStamps(0);
+      return;
+    }
+    api
+      .get(`/loyalty/${phone}`)
+      .then((d) => {
+        if (live) setStamps(typeof d.stamps === "number" ? d.stamps : 0);
+      })
+      .catch(() => {
+        if (live) setStamps(0);
+      });
+    return () => {
+      live = false;
+    };
+  }, [phone]);
+
+  const filled = stamps === null ? 0 : stamps % 5;
+  const remaining = Math.max(0, 5 - filled);
+
+  return (
+    <div className="mt-5 rounded-[24px] border border-gold/25 bg-gradient-to-br from-gold/[0.12] via-white/[0.03] to-transparent p-5 backdrop-blur-xl">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-sm font-bold text-cream">Digital Juice Stamp Card</span>
+        <span className="text-[10px] uppercase tracking-wider text-gold font-semibold">Loyalty</span>
+      </div>
+
+      <div className="flex items-center justify-between gap-2 mb-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <motion.div
+            key={i}
+            initial={{ scale: 0.6, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.3 + i * 0.07, type: "spring", stiffness: 320, damping: 18 }}
+            className={`relative w-11 h-11 rounded-full grid place-items-center text-lg shadow-glass ${
+              i < filled
+                ? "bg-gradient-to-br from-goldLight via-gold to-goldDark shadow-glowGold"
+                : "bg-white/[0.06] border border-white/15"
+            }`}
+          >
+            {i < filled && <span className="text-forest">🍹</span>}
+          </motion.div>
+        ))}
+      </div>
+
+      {stamps === null ? (
+        <p className="text-xs text-muted">Checking your stamps…</p>
+      ) : remaining === 0 ? (
+        <p className="text-sm font-bold text-gold">
+          You've unlocked a FREE juice! Redeem it at the counter 🎉
+        </p>
+      ) : (
+        <p className="text-sm text-cream">
+          You have <span className="font-bold text-gold">{filled}</span> of 5 stamps.
+          Buy <span className="font-bold text-gold">{remaining}</span> more juices to get 1 FREE!
+        </p>
+      )}
+    </div>
+  );
+}
+
 function SuccessStep({ order, paymentMethod, waLink, onClose, onTrackLive }) {
   const { t } = useLanguage();
   const isCod = paymentMethod === "COD";
@@ -917,6 +983,8 @@ function SuccessStep({ order, paymentMethod, waLink, onClose, onTrackLive }) {
           </span>
         </div>
       </div>
+
+      <StampCard phone={order?.customerPhone} />
 
       <div className="mt-5 grid gap-2.5">
         <a

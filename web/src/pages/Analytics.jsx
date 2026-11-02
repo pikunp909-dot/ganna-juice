@@ -493,6 +493,94 @@ function BroadcastCard() {
   );
 }
 
+function ShareCard() {
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  async function share() {
+    const url = window.location.origin;
+    const payload = {
+      title: "Sugarcane Juice",
+      text: "Order fresh sugarcane juice here!",
+      url
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(payload);
+        setToast({ type: "success", text: "Link shared!" });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setToast({ type: "success", text: "Link copied to clipboard!" });
+      }
+    } catch (err) {
+      // User dismissed the system share sheet — not a failure.
+      if (err && err.name === "AbortError") return;
+      setToast({ type: "error", text: "Could not share link" });
+    }
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.4, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass">
+        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+        <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 max-lg:hidden blur-3xl" />
+
+        <div className="relative p-6">
+          <div className="flex items-center gap-3 mb-4">
+            <span className="w-10 h-10 rounded-2xl bg-gold/10 border border-gold/25 grid place-items-center text-gold">
+              <ShareIcon className="w-5 h-5" />
+            </span>
+            <div>
+              <h3 className="font-display text-xl text-cream leading-none">Refer & Share</h3>
+              <p className="text-xs text-muted mt-1">Grow your orders with one tap</p>
+            </div>
+          </div>
+
+          <p className="text-sm text-cream/90 leading-relaxed mb-5">
+            Share your store link with customers and friends to get more orders!
+          </p>
+
+          <button
+            onClick={share}
+            className="w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm transition hover:brightness-110 shadow-glowGold"
+          >
+            <span className="text-base leading-none">📲</span> Share Website Link
+          </button>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {toast && (
+          <div className="fixed bottom-5 inset-x-0 z-[60] flex justify-center pointer-events-none">
+            <motion.div
+              key={toast.text}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              className={`pointer-events-auto px-5 py-3 rounded-2xl text-sm font-semibold shadow-xl border ${
+                toast.type === "success"
+                  ? "bg-forest2 text-mint border-mint/40"
+                  : "bg-red-950 text-red-200 border-red-500/40"
+              }`}
+            >
+              {toast.text}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 function formatShortDate(isoDate) {
   if (!isoDate) return "";
   const d = new Date(`${isoDate}T00:00:00`);
@@ -612,6 +700,34 @@ export default function Analytics() {
   const pendingOrders = orders.filter((o) => o.status === "Pending").length;
   const recent = orders.slice(0, 5);
 
+  // ---- today's collection (verified orders) ----
+  const isSameDay = (a, b) =>
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate();
+
+  const parseLocal = (iso) => {
+    if (!iso) return null;
+    const d = new Date(iso.includes("T") ? iso : iso.replace(" ", "T") + "Z");
+    return Number.isNaN(d.getTime()) ? null : d;
+  };
+
+  const todayVerified = orders.filter((o) => {
+    if (o.status !== "Verified") return false;
+    const d = parseLocal(o.createdAt);
+    return d ? isSameDay(d, new Date()) : false;
+  });
+
+  const cashCollected = todayVerified
+    .filter((o) => o.paymentMethod === "COD")
+    .reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+  const upiCollected = todayVerified
+    .filter((o) => o.paymentMethod === "UPI")
+    .reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+  const pendingCod = orders
+    .filter((o) => o.status === "Pending" && o.paymentMethod === "COD")
+    .reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+
   const today = stats?.today || { revenue: 0, orders: 0 };
   const month = stats?.month || { revenue: 0, orders: 0 };
   const paymentSplit = stats?.paymentSplit || { upiAmount: 0, codAmount: 0, upiOrders: 0, codOrders: 0 };
@@ -710,6 +826,57 @@ export default function Analytics() {
       <div className="mb-10">
         <BroadcastCard />
       </div>
+
+      {/* Refer & share */}
+      <div className="mb-10">
+        <ShareCard />
+      </div>
+
+      {/* Today's collection (verified orders) */}
+      <motion.div
+        initial={{ opacity: 0, y: 32 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.45, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="mb-10"
+      >
+        <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass">
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+          <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 max-lg:hidden blur-3xl" />
+
+          <div className="relative p-6 sm:p-7">
+            <div className="flex items-center gap-3 mb-6">
+              <span className="w-10 h-10 rounded-2xl bg-gold/10 border border-gold/25 grid place-items-center text-gold">
+                <RupeeIcon className="w-5 h-5" />
+              </span>
+              <div>
+                <h3 className="font-display text-xl text-cream leading-none">Today's Collection (Verified Orders)</h3>
+                <p className="text-xs text-muted mt-1">Cash vs UPI realised today · pending COD owed</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted font-semibold mb-3">
+                  <span className="text-base">💵</span> Cash Collected
+                </div>
+                <p className="font-display text-2xl text-gold-metal">{inr(cashCollected)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted font-semibold mb-3">
+                  <span className="text-base">📱</span> UPI Collected
+                </div>
+                <p className="font-display text-2xl text-gold-metal">{inr(upiCollected)}</p>
+              </div>
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+                <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted font-semibold mb-3">
+                  <span className="text-base">⏳</span> Pending COD
+                </div>
+                <p className="font-display text-2xl text-gold-metal">{inr(pendingCod)}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Recent orders */}
       <motion.div
@@ -880,6 +1047,17 @@ function BellIcon(p) {
     <IconBase {...p}>
       <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
       <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+    </IconBase>
+  );
+}
+
+function ShareIcon(p) {
+  return (
+    <IconBase {...p}>
+      <circle cx="18" cy="5" r="3" />
+      <circle cx="6" cy="12" r="3" />
+      <circle cx="18" cy="19" r="3" />
+      <path d="M8.59 13.51l6.83 3.98M15.41 6.51l-6.82 3.98" />
     </IconBase>
   );
 }
