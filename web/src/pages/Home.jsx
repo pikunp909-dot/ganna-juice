@@ -1,10 +1,11 @@
-import { useEffect, useState, useRef, useCallback, Suspense, lazy, Component } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { api } from "../api";
 import { useCart } from "../cart";
 import { useLanguage } from "../language";
 import Checkout from "../components/Checkout";
 import { EmptyState, Spinner } from "../components/ui";
+import { SugarcaneStick, SugarcaneLeaf } from "../components/sugarcane";
 
 const inr = (n) =>
   "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
@@ -20,34 +21,10 @@ const FALLBACK_SETTINGS = {
   upiId: ""
 };
 
-/* default hero image (golden juice pouring close-up — owner can override via Settings) */
+/* default hero image — kept as the verified fallback; Unsplash sugarcane-field
+   search was not verifiable at build time (owner can override via Settings) */
 const DEFAULT_HERO_IMAGE =
   "https://images.unsplash.com/photo-1553530666-ba11a7da3888?w=1600&q=80";
-
-/* 3D Spline scene (lazy loaded) — falls back to the static hero image while loading or on failure */
-const Spline = lazy(() => import("@splinetool/react-spline"));
-
-function HeroImageFallback({ heroImageUrl }) {
-  return (
-    <img
-      src={heroImageUrl || DEFAULT_HERO_IMAGE}
-      alt=""
-      className="absolute inset-0 w-full h-full object-cover"
-    />
-  );
-}
-
-/* catches WebGL / lazy-import failures so a broken 3D scene never breaks the page */
-class SceneBoundary extends Component {
-  state = { failed: false };
-  static getDerivedStateFromError() {
-    return { failed: true };
-  }
-  render() {
-    if (this.state.failed) return this.props.fallback;
-    return this.props.children;
-  }
-}
 
 const waLink = (phone) => {
   const digits = String(phone || "").replace(/\D/g, "");
@@ -410,16 +387,48 @@ function Hero({ heroImageUrl }) {
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full bg-forest3/50 blur-[90px]" />
       </div>
 
-      {/* 3D Spline scene (lazy loaded) — static image fallback while loading / on failure */}
-      <SceneBoundary fallback={<HeroImageFallback heroImageUrl={heroImageUrl} />}>
-        <Suspense fallback={<HeroImageFallback heroImageUrl={heroImageUrl} />}>
-          <div className="pointer-events-none absolute inset-0">
-            <Spline scene="https://prod.spline.design/6Wq1Q7YGyM-iab9i/scene.splinecode" />
-          </div>
-        </Suspense>
-      </SceneBoundary>
+      {/* background image + cinematic vignette */}
+      <img
+        src={heroImageUrl || DEFAULT_HERO_IMAGE}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover"
+      />
       <div className="absolute inset-0 bg-forest/60" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,13,8,0.45)_60%,rgba(5,13,8,0.94)_100%)]" />
+
+      {/* sugarcane decor — lightweight stroke SVGs, no blur */}
+      <motion.div
+        className="pointer-events-none absolute top-24 left-[6%] text-gold opacity-10"
+        style={{ rotate: -18 }}
+        animate={{ y: [0, -10, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <SugarcaneStick className="w-20 h-80" />
+      </motion.div>
+      <motion.div
+        className="pointer-events-none absolute bottom-16 right-[8%] text-mint opacity-10"
+        style={{ rotate: 14 }}
+        animate={{ y: [0, -10, 0] }}
+        transition={{ duration: 7, delay: 0.5, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <SugarcaneStick className="w-20 h-80" />
+      </motion.div>
+      <motion.div
+        className="pointer-events-none absolute top-32 right-[18%] text-gold opacity-20"
+        style={{ rotate: 24 }}
+        animate={{ y: [0, -10, 0] }}
+        transition={{ duration: 5.5, delay: 1, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <SugarcaneLeaf className="w-32 h-20" />
+      </motion.div>
+      <motion.div
+        className="pointer-events-none absolute bottom-24 left-[14%] text-mint opacity-15"
+        style={{ rotate: -20 }}
+        animate={{ y: [0, -10, 0] }}
+        transition={{ duration: 6.5, delay: 1.5, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <SugarcaneLeaf className="w-28 h-18" />
+      </motion.div>
 
       {/* rotating glass ring (parallax) */}
       <motion.div style={{ y: ringY }} className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
@@ -535,7 +544,24 @@ function MenuSection({ items, loading, error, onRetry }) {
   const { t } = useLanguage();
 
   return (
-    <section id="menu" className="relative px-4 sm:px-6 py-24">
+    <section id="menu" className="relative px-4 sm:px-6 py-24 overflow-hidden">
+      <motion.div
+        className="pointer-events-none absolute top-16 left-[4%] text-gold opacity-10"
+        style={{ rotate: -12 }}
+        animate={{ y: [0, -8, 0] }}
+        transition={{ duration: 6.5, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <SugarcaneStick className="w-16 h-64" />
+      </motion.div>
+      <motion.div
+        className="pointer-events-none absolute bottom-10 right-[6%] text-mint opacity-10"
+        style={{ rotate: 16 }}
+        animate={{ y: [0, -8, 0] }}
+        transition={{ duration: 7, delay: 0.8, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <SugarcaneLeaf className="w-28 h-16" />
+      </motion.div>
+
       <div className="max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1078,6 +1104,24 @@ function ReviewsSection({ exactLocation }) {
         <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-gold/8 blur-[120px]" />
         <div className="absolute bottom-0 -right-32 w-96 h-96 rounded-full bg-mint/6 blur-[120px]" />
       </div>
+
+      {/* sugarcane decor */}
+      <motion.div
+        className="pointer-events-none absolute top-20 left-[5%] text-gold opacity-10"
+        style={{ rotate: -18 }}
+        animate={{ y: [0, -8, 0] }}
+        transition={{ duration: 5.5, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <SugarcaneLeaf className="w-28 h-16" />
+      </motion.div>
+      <motion.div
+        className="pointer-events-none absolute bottom-14 right-[5%] text-mint opacity-10"
+        style={{ rotate: 10 }}
+        animate={{ y: [0, -8, 0] }}
+        transition={{ duration: 6.8, delay: 0.6, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <SugarcaneStick className="w-14 h-56" />
+      </motion.div>
 
       <div className="relative max-w-7xl mx-auto">
         {/* header */}

@@ -4,15 +4,6 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 import { Spinner } from "../components/ui";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 18 },
-  show: (i = 0) => ({
-    opacity: 1,
-    y: 0,
-    transition: { delay: 0.15 * i, duration: 0.6, ease: [0.22, 1, 0.36, 1] }
-  })
-};
-
 function BarChartIcon({ className = "w-5 h-5" }) {
   return (
     <svg
@@ -29,6 +20,9 @@ function BarChartIcon({ className = "w-5 h-5" }) {
     </svg>
   );
 }
+
+const inputClass =
+  "w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-cream placeholder-muted/60 focus:outline-none focus:border-gold/50 focus:ring-2 focus:ring-gold/40 transition";
 
 export default function Login() {
   const { admin, login } = useAuth();
@@ -57,33 +51,15 @@ export default function Login() {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-forest flex items-center justify-center px-4">
-      {/* ambient glows */}
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-40 -left-40 w-[34rem] h-[34rem] rounded-full bg-gold/10 blur-[120px]" />
-        <div className="absolute -bottom-48 -right-32 w-[38rem] h-[38rem] rounded-full bg-mint/10 blur-[120px]" />
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full bg-forest3/60 blur-[90px]" />
-      </div>
-
-      {/* floating gold specks */}
-      {["12%", "78%", "34%", "66%", "88%"].map((left, i) => (
-        <motion.span
-          key={left}
-          className="pointer-events-none absolute top-[14%] w-1.5 h-1.5 rounded-full bg-gold/40"
-          style={{ left }}
-          animate={{ y: [0, -22, 0], opacity: [0.3, 0.8, 0.3] }}
-          transition={{ duration: 5 + i, repeat: Infinity, ease: "easeInOut" }}
-        />
-      ))}
-
+    <div className="min-h-screen bg-forest flex items-center justify-center px-4">
       <motion.div
-        className="relative w-full max-w-md"
-        initial={{ opacity: 0, y: 28, scale: 0.98 }}
+        className="w-full max-w-md"
+        initial={{ opacity: 0, y: 24, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       >
         {/* brand */}
-        <motion.div variants={fadeUp} initial="hidden" animate="show" custom={0} className="text-center mb-9">
+        <div className="text-center mb-9">
           <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-gradient-to-br from-gold to-gold2 shadow-lg shadow-gold/30 grid place-items-center text-forest">
             <BarChartIcon className="w-9 h-9" />
           </div>
@@ -91,16 +67,15 @@ export default function Login() {
             Sugarcane <span className="text-gold">Juice</span>
           </h1>
           <p className="mt-2 text-sm text-muted">Owner dashboard — sign in to manage your stall.</p>
-        </motion.div>
+        </div>
 
-        {/* card */}
+        {/* glass card */}
         <motion.form
           onSubmit={handleSubmit}
-          variants={fadeUp}
-          initial="hidden"
-          animate="show"
-          custom={1}
-          className="bg-white/[0.04] border border-white/10 backdrop-blur-md rounded-3xl p-8 shadow-card"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+          className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-card"
         >
           <label className="block mb-5">
             <span className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">Email</span>
@@ -111,6 +86,7 @@ export default function Login() {
               placeholder="you@ganna.in"
               autoComplete="email"
               required
+              className={inputClass}
             />
           </label>
 
@@ -124,11 +100,12 @@ export default function Login() {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 required
+                className={inputClass}
               />
               <button
                 type="button"
                 onClick={() => setShow((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold uppercase tracking-wider text-muted hover:text-gold transition"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold uppercase tracking-wider text-muted hover:text-gold transition"
                 tabIndex={-1}
               >
                 {show ? "Hide" : "Show"}
@@ -145,7 +122,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-2 font-bold rounded-full bg-gold text-forest hover:bg-gold2 transition shadow-lg shadow-gold/20 px-6 py-3.5 text-sm disabled:opacity-50 disabled:pointer-events-none"
+            className="w-full inline-flex items-center justify-center gap-2 font-bold rounded-full bg-gold text-forest hover:bg-gold2 transition shadow-lg shadow-gold/30 hover:shadow-gold/40 px-6 py-3.5 text-sm disabled:opacity-50 disabled:pointer-events-none"
           >
             {loading ? (
               <>

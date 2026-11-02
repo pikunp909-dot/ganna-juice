@@ -123,23 +123,13 @@ export default function DashboardLayout() {
   }
 
   return (
-    <div className="min-h-screen bg-forest relative">
-      {/* ambient mesh wash behind everything */}
-      <div className="fixed inset-0 bg-forest-mesh pointer-events-none" />
-      <div className="noise fixed inset-0 z-[1] pointer-events-none opacity-[0.04] mix-blend-overlay" />
-
+    <div className="min-h-screen bg-forest">
       {/* ===== Desktop floating glass sidebar ===== */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-72 p-4 flex-col">
-        <div className="relative flex-1 flex flex-col rounded-[28px] border border-white/10 bg-forest2/50 backdrop-blur-2xl shadow-card overflow-hidden">
-          {/* inner ambient glows */}
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -top-20 -left-16 w-56 h-56 rounded-full bg-gold/10 blur-[80px]" />
-            <div className="absolute -bottom-24 -right-16 w-64 h-64 rounded-full bg-mint/8 blur-[90px]" />
-          </div>
-
+        <div className="flex-1 flex flex-col rounded-[28px] border border-white/10 bg-forest2/50 backdrop-blur-xl shadow-card overflow-hidden">
           <BrandBlock />
 
-          <nav className="relative flex-1 px-4 py-3 space-y-1.5 overflow-y-auto">
+          <nav className="flex-1 px-4 py-3 space-y-1.5 overflow-y-auto">
             {NAV.map(({ to, label, end, Icon }) => (
               <NavLink key={to} to={to} end={end}>
                 {({ isActive }) => (
@@ -174,7 +164,7 @@ export default function DashboardLayout() {
           </nav>
 
           {/* signed-in card */}
-          <div className="relative px-4 pb-4">
+          <div className="px-4 pb-4">
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 shrink-0 rounded-full bg-gold-metal grid place-items-center text-sm font-bold text-forest shadow-glowGoldSoft">
@@ -207,18 +197,17 @@ export default function DashboardLayout() {
             />
             <motion.aside
               key="drawer"
-              className="fixed inset-y-0 left-0 z-50 w-[19rem] max-w-[85vw] flex flex-col rounded-r-[28px] border-r border-white/10 bg-forest2/70 backdrop-blur-2xl shadow-glass lg:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-[19rem] max-w-[85vw] flex flex-col rounded-r-[28px] border-r border-white/10 bg-forest2/70 backdrop-blur-xl shadow-glass lg:hidden"
               initial={{ x: "-104%" }}
               animate={{ x: 0 }}
               exit={{ x: "-104%" }}
               transition={{ type: "spring", stiffness: 320, damping: 34 }}
             >
-              <div className="relative flex items-start justify-between p-5">
-                <div className="pointer-events-none absolute -top-16 -left-12 w-48 h-48 rounded-full bg-gold/10 blur-[70px]" />
+              <div className="flex items-start justify-between p-5">
                 <BrandBlock compact />
                 <button
                   onClick={() => setDrawerOpen(false)}
-                  className="relative w-9 h-9 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:bg-white/10"
+                  className="w-9 h-9 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:bg-white/10"
                   aria-label="Close menu"
                 >
                   <CloseIcon className="w-4 h-4" />
@@ -268,10 +257,10 @@ export default function DashboardLayout() {
       </AnimatePresence>
 
       {/* ===== Main column ===== */}
-      <div className="relative z-[2] lg:pl-72">
+      <div className="lg:pl-72">
         {/* Header */}
         <header className="sticky top-0 z-30 flex items-center justify-between gap-4 h-16 lg:h-[4.75rem] px-4 sm:px-6 lg:px-8">
-          <div className="absolute inset-0 bg-forest/70 backdrop-blur-2xl border-b border-white/5" />
+          <div className="absolute inset-0 bg-forest/70 backdrop-blur-md border-b border-white/5" />
           <div className="relative flex items-center gap-3 min-w-0">
             <button
               onClick={() => setDrawerOpen(true)}
@@ -368,7 +357,7 @@ export default function DashboardLayout() {
 
 function BrandBlock({ compact }) {
   return (
-    <div className={`relative flex items-center gap-3 ${compact ? "" : "px-5 pt-6 pb-4 border-b border-white/10"}`}>
+    <div className={`flex items-center gap-3 ${compact ? "" : "px-5 pt-6 pb-4 border-b border-white/10"}`}>
       <div className="w-11 h-11 rounded-2xl bg-gold-metal shadow-glowGold grid place-items-center shrink-0 text-forest">
         <ChartIcon className="w-6 h-6" />
       </div>
