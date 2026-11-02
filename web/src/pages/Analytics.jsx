@@ -2,6 +2,8 @@ import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api";
 import { Card, Badge, Button, Spinner, EmptyState } from "../components/ui";
+import StallQR from "../components/StallQR";
+import { useLanguage } from "../language";
 
 const inr = (n) =>
   "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
@@ -74,6 +76,14 @@ const STAT_TONES = {
     value: "text-cream",
     border: "hover:border-mint/40"
   },
+  profit: {
+    gradient: "from-mint/25 via-mint/8 to-transparent",
+    orb: "bg-mint/20",
+    orbGlow: "shadow-[0_0_40px_-8px_rgba(63,165,102,0.45)]",
+    icon: "bg-mint/15 text-mint border border-mint/40",
+    value: "text-mint",
+    border: "hover:border-mint/40"
+  },
   amber: {
     gradient: "from-amber-500/25 via-amber-500/8 to-transparent",
     orb: "bg-amber-500/20",
@@ -111,7 +121,7 @@ function StatCard({ tone, label, sub, value, icon, delay }) {
           </div>
 
           <p className={`font-display text-4xl leading-none ${t.value}`}>
-            {tone === "gold" ? inr(animated) : Math.round(animated).toLocaleString("en-IN")}
+            {tone === "gold" || tone === "profit" ? inr(animated) : Math.round(animated).toLocaleString("en-IN")}
           </p>
 
           <div className="mt-3.5 h-1 rounded-full bg-white/5 overflow-hidden">
@@ -132,6 +142,7 @@ function StatCard({ tone, label, sub, value, icon, delay }) {
 /* ---- Period card (Today / This Month) ---- */
 function PeriodCard({ tone, label, icon, revenue, orders, delay }) {
   const t = STAT_TONES[tone];
+  const { t: tl } = useLanguage();
   const animatedRevenue = useCountUp(revenue, { delay: 250 + delay * 120 });
   const animatedOrders = useCountUp(orders, { delay: 320 + delay * 120 });
 
@@ -170,7 +181,7 @@ function PeriodCard({ tone, label, icon, revenue, orders, delay }) {
               {Math.round(animatedOrders).toLocaleString("en-IN")}
             </span>
             <span className="text-xs text-muted">
-              {Math.round(animatedOrders) === 1 ? "order" : "orders"} · verified
+              {Math.round(animatedOrders) === 1 ? tl("order") : tl("orders")} · {tl("verified")}
             </span>
           </div>
         </div>
@@ -181,6 +192,7 @@ function PeriodCard({ tone, label, icon, revenue, orders, delay }) {
 
 /* ---- Payment split (UPI vs COD) stacked bar ---- */
 function PaymentSplit({ split }) {
+  const { t } = useLanguage();
   const upi = Number(split.upiAmount || 0);
   const cod = Number(split.codAmount || 0);
   const total = upi + cod;
@@ -203,8 +215,8 @@ function PaymentSplit({ split }) {
             <SplitIcon className="w-5 h-5" />
           </span>
           <div>
-            <h3 className="font-display text-xl text-cream leading-none">Payment Split</h3>
-            <p className="text-xs text-muted mt-1">Verified revenue — online vs cash</p>
+            <h3 className="font-display text-xl text-cream leading-none">{t("paymentSplitTitle")}</h3>
+            <p className="text-xs text-muted mt-1">{t("paymentSplitSub")}</p>
           </div>
         </div>
 
@@ -231,22 +243,22 @@ function PaymentSplit({ split }) {
               <div className="rounded-2xl bg-gold/[0.07] border border-gold/25 px-4 py-3.5">
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-gold shadow-glowGoldSoft" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-gold">Online (UPI)</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-gold">{t("onlineUpi")}</span>
                 </div>
                 <p className="font-display text-2xl text-gold-metal leading-none">{inr(upi)}</p>
                 <p className="text-xs text-muted mt-1.5">
-                  {upiPct}% of revenue · {Number(split.upiOrders || 0)} orders
+                  {upiPct}% {t("ofRevenue")} · {Number(split.upiOrders || 0)} {t("orders")}
                 </p>
               </div>
 
               <div className="rounded-2xl bg-mint/[0.07] border border-mint/25 px-4 py-3.5">
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-mint" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-mint">Cash on Delivery</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-mint">{t("cashOnDelivery")}</span>
                 </div>
                 <p className="font-display text-2xl text-cream leading-none">{inr(cod)}</p>
                 <p className="text-xs text-muted mt-1.5">
-                  {codPct}% of revenue · {Number(split.codOrders || 0)} orders
+                  {codPct}% {t("ofRevenue")} · {Number(split.codOrders || 0)} {t("orders")}
                 </p>
               </div>
             </div>
@@ -254,7 +266,7 @@ function PaymentSplit({ split }) {
         ) : (
           <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center">
             <p className="text-2xl mb-2">💤</p>
-            <p className="text-sm text-muted">No verified payments yet.</p>
+            <p className="text-sm text-muted">{t("noVerifiedPayments")}</p>
           </div>
         )}
       </div>
@@ -264,6 +276,7 @@ function PaymentSplit({ split }) {
 
 /* ---- Custom date range ---- */
 function RangeCard() {
+  const { t } = useLanguage();
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
   const [loading, setLoading] = useState(false);
@@ -274,20 +287,20 @@ function RangeCard() {
     e.preventDefault();
     setErr("");
     if (!start || !end) {
-      setErr("Select both start and end dates");
+      setErr(t("errSelectRange"));
       return;
     }
     if (start > end) {
-      setErr("Start date must be before end date");
+      setErr(t("errRangeOrder"));
       return;
     }
     setLoading(true);
     try {
       const { stats } = await api.get(`/orders/stats?startDate=${start}&endDate=${end}`);
       setStats(stats.rangeStats && stats.rangeSplit ? { range: stats.rangeStats, split: stats.rangeSplit } : null);
-      if (!stats.rangeStats) setErr("No verified orders in this range");
+      if (!stats.rangeStats) setErr(t("noRangeOrders"));
     } catch (err2) {
-      setErr(err2.message || "Failed to load range");
+      setErr(err2.message || t("rangeLoadFailed"));
     } finally {
       setLoading(false);
     }
@@ -315,14 +328,14 @@ function RangeCard() {
             <RangeIcon className="w-5 h-5" />
           </span>
           <div>
-            <h3 className="font-display text-xl text-cream leading-none">Custom Date Range</h3>
-            <p className="text-xs text-muted mt-1">Revenue & payment split for any period</p>
+            <h3 className="font-display text-xl text-cream leading-none">{t("rangeTitle")}</h3>
+            <p className="text-xs text-muted mt-1">{t("rangeSub")}</p>
           </div>
         </div>
 
         <form onSubmit={apply} className="grid sm:grid-cols-[1fr_1fr_auto] gap-3 items-end">
           <label className="block">
-            <span className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">Start date</span>
+            <span className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">{t("startDate")}</span>
             <input
               type="date"
               value={start}
@@ -331,7 +344,7 @@ function RangeCard() {
             />
           </label>
           <label className="block">
-            <span className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">End date</span>
+            <span className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">{t("endDate")}</span>
             <input
               type="date"
               value={end}
@@ -344,7 +357,7 @@ function RangeCard() {
             disabled={loading}
             className="inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-3 text-sm transition hover:brightness-110 disabled:opacity-50 disabled:pointer-events-none shadow-glowGold whitespace-nowrap"
           >
-            {loading ? <Spinner className="w-4 h-4" /> : "Apply"}
+            {loading ? <Spinner className="w-4 h-4" /> : t("apply")}
           </button>
         </form>
 
@@ -356,11 +369,11 @@ function RangeCard() {
           <div className="mt-6">
             <div className="grid sm:grid-cols-2 gap-3 mb-4">
               <div className="rounded-2xl bg-gold/[0.07] border border-gold/25 px-4 py-3.5">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-gold mb-1.5">Revenue</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-gold mb-1.5">{t("revenue")}</p>
                 <p className="font-display text-3xl text-gold-metal leading-none">{inr(stats.range.revenue)}</p>
               </div>
               <div className="rounded-2xl bg-mint/[0.07] border border-mint/25 px-4 py-3.5">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-mint mb-1.5">Orders</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-mint mb-1.5">{t("orders")}</p>
                 <p className="font-display text-3xl text-cream leading-none">
                   {Number(stats.range.orders).toLocaleString("en-IN")}
                 </p>
@@ -388,12 +401,12 @@ function RangeCard() {
                     <span className="w-2.5 h-2.5 rounded-full bg-gold" /> UPI {inr(upi)} · {upiPct}%
                   </span>
                   <span className="inline-flex items-center gap-2 text-muted">
-                    <span className="w-2.5 h-2.5 rounded-full bg-mint" /> COD {inr(cod)} · {codPct}%
+                    <span className="w-2.5 h-2.5 rounded-full bg-mint" /> {t("cashOnDelivery")} {inr(cod)} · {codPct}%
                   </span>
                 </div>
               </>
             ) : (
-              <p className="text-xs text-muted/70">No verified payments in this range.</p>
+              <p className="text-xs text-muted/70">{t("noRangePayments")}</p>
             )}
           </div>
         )}
@@ -402,8 +415,9 @@ function RangeCard() {
   );
 }
 
-/* ---- Last 7 days bar chart ---- */
+/* ---- Owner broadcast ---- */
 function BroadcastCard() {
+  const { t } = useLanguage();
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [toast, setToast] = useState(null);
@@ -423,10 +437,10 @@ function BroadcastCard() {
       setMessage("");
       setToast({
         type: "success",
-        text: `Broadcast sent to ${res.sent} customer${res.sent === 1 ? "" : "s"}!`
+        text: `${t("broadcastSentTo")} ${res.sent} ${res.sent === 1 ? t("customer") : t("customers")}!`
       });
     } catch (err) {
-      setToast({ type: "error", text: err.message || "Broadcast failed" });
+      setToast({ type: "error", text: err.message || t("broadcastFailed") });
     } finally {
       setSending(false);
     }
@@ -448,8 +462,8 @@ function BroadcastCard() {
               <BellIcon className="w-5 h-5" />
             </span>
             <div>
-              <h3 className="font-display text-xl text-cream leading-none">Broadcast Alert to Customers</h3>
-              <p className="text-xs text-muted mt-1">Tell everyone where the stall is right now</p>
+              <h3 className="font-display text-xl text-cream leading-none">{t("broadcastTitle")}</h3>
+              <p className="text-xs text-muted mt-1">{t("broadcastSub")}</p>
             </div>
           </div>
 
@@ -458,13 +472,13 @@ function BroadcastCard() {
             onChange={(e) => setMessage(e.target.value)}
             rows={3}
             maxLength={280}
-            placeholder='e.g., "We are currently in Balasore! Fresh juice ready."'
+            placeholder={t("broadcastPlaceholder")}
             className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-cream placeholder:text-muted/70 resize-none outline-none focus:border-gold/50 transition"
           />
           <div className="mt-2 flex items-center justify-between gap-4">
             <span className="text-[11px] text-muted">{message.length}/280</span>
             <Button variant="primary" onClick={send} disabled={!message.trim() || sending} loading={sending}>
-              {sending ? "Sending…" : "Send Broadcast"}
+              {sending ? t("sending") : t("sendBroadcast")}
             </Button>
           </div>
         </div>
@@ -494,6 +508,7 @@ function BroadcastCard() {
 }
 
 function ShareCard() {
+  const { t } = useLanguage();
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
@@ -505,22 +520,22 @@ function ShareCard() {
   async function share() {
     const url = window.location.origin;
     const payload = {
-      title: "Sugarcane Juice",
-      text: "Order fresh sugarcane juice here!",
+      title: t("shareSheetTitle"),
+      text: t("shareSheetText"),
       url
     };
     try {
       if (navigator.share) {
         await navigator.share(payload);
-        setToast({ type: "success", text: "Link shared!" });
+        setToast({ type: "success", text: t("linkShared") });
       } else {
         await navigator.clipboard.writeText(url);
-        setToast({ type: "success", text: "Link copied to clipboard!" });
+        setToast({ type: "success", text: t("linkCopied") });
       }
     } catch (err) {
       // User dismissed the system share sheet — not a failure.
       if (err && err.name === "AbortError") return;
-      setToast({ type: "error", text: "Could not share link" });
+      setToast({ type: "error", text: t("shareFailed") });
     }
   }
 
@@ -530,31 +545,38 @@ function ShareCard() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass">
-        <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-        <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 max-lg:hidden blur-3xl" />
+      <div className="rounded-[30px] p-px bg-gradient-to-br from-gold/50 via-white/10 to-gold/25 shadow-glass">
+        <div className="relative overflow-hidden rounded-[29px] border border-white/10 bg-white/[0.04] backdrop-blur-md">
+          <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
+          <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/10 max-lg:hidden blur-3xl" />
+          <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(255,255,255,0.04),transparent_50%)]" />
 
-        <div className="relative p-6">
-          <div className="flex items-center gap-3 mb-4">
-            <span className="w-10 h-10 rounded-2xl bg-gold/10 border border-gold/25 grid place-items-center text-gold">
-              <ShareIcon className="w-5 h-5" />
-            </span>
-            <div>
-              <h3 className="font-display text-xl text-cream leading-none">Refer & Share</h3>
-              <p className="text-xs text-muted mt-1">Grow your orders with one tap</p>
+          <div className="relative p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <motion.span
+                className="w-10 h-10 rounded-2xl bg-gold/10 border border-gold/25 grid place-items-center text-gold shadow-glowGoldSoft"
+                animate={{ y: [0, -4, 0], rotate: [0, 3, 0] }}
+                transition={{ duration: 3.4, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <ShareIcon className="w-5 h-5" />
+              </motion.span>
+              <div>
+                <h3 className="font-display text-xl text-cream leading-none">{t("referTitle")}</h3>
+                <p className="text-xs text-muted mt-1">{t("referSub")}</p>
+              </div>
             </div>
+
+            <p className="text-sm text-cream/90 leading-relaxed mb-5">
+              {t("shareBody")}
+            </p>
+
+            <button
+              onClick={share}
+              className="w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm transition hover:brightness-110 shadow-glowGold"
+            >
+              <span className="text-base leading-none">📲</span> {t("shareLink")}
+            </button>
           </div>
-
-          <p className="text-sm text-cream/90 leading-relaxed mb-5">
-            Share your store link with customers and friends to get more orders!
-          </p>
-
-          <button
-            onClick={share}
-            className="w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm transition hover:brightness-110 shadow-glowGold"
-          >
-            <span className="text-base leading-none">📲</span> Share Website Link
-          </button>
         </div>
       </div>
 
@@ -589,6 +611,7 @@ function formatShortDate(isoDate) {
 }
 
 function SevenDayChart({ days }) {
+  const { t } = useLanguage();
   const list = days && days.length > 0 ? days : [];
   const max = Math.max(...list.map((d) => Number(d.revenue || 0)), 1);
 
@@ -608,15 +631,15 @@ function SevenDayChart({ days }) {
             <ChartIcon className="w-5 h-5" />
           </span>
           <div>
-            <h3 className="font-display text-xl text-cream leading-none">Last 7 Days Sales</h3>
-            <p className="text-xs text-muted mt-1">Verified revenue per day</p>
+            <h3 className="font-display text-xl text-cream leading-none">{t("last7DaysTitle")}</h3>
+            <p className="text-xs text-muted mt-1">{t("last7DaysSub")}</p>
           </div>
         </div>
 
         {list.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-white/10 px-4 py-6 text-center">
             <p className="text-2xl mb-2">📊</p>
-            <p className="text-sm text-muted">No sales data yet.</p>
+            <p className="text-sm text-muted">{t("noSalesData")}</p>
           </div>
         ) : (
           <div className="flex items-end gap-2 sm:gap-3 h-48">
@@ -632,7 +655,7 @@ function SevenDayChart({ days }) {
                     initial={{ height: 0 }}
                     animate={{ height: `${pct}%` }}
                     transition={{ delay: 0.15 + i * 0.06, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                    title={`${d.date}: ${inr(v)} · ${d.orders} order(s)`}
+                    title={`${d.date}: ${inr(v)} · ${d.orders} ${t("orders")}`}
                     className="w-full max-w-[46px] rounded-t-xl bg-gradient-to-t from-goldDark via-gold to-goldLight shadow-glowGoldSoft group-hover:brightness-110 transition group-hover:scale-[1.02]"
                   />
                   <span className="text-[10px] text-muted mt-2 whitespace-nowrap">{formatShortDate(d.date)}</span>
@@ -647,30 +670,34 @@ function SevenDayChart({ days }) {
 }
 
 export default function Analytics() {
+  const { t } = useLanguage();
   const [orders, setOrders] = useState([]);
   const [stats, setStats] = useState(null);
   const [visits, setVisits] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [menuItems, setMenuItems] = useState([]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const [{ orders }, { stats }, visitsData] = await Promise.all([
+      const [{ orders }, { stats }, visitsData, { items: menuItems }] = await Promise.all([
         api.orders(),
         api.get("/orders/stats"),
-        api.visits().catch(() => null)
+        api.visits().catch(() => null),
+        api.menu().catch(() => ({ items: [] }))
       ]);
       setOrders(orders || []);
       setStats(stats || {});
       setVisits(visitsData || { today: 0, total: 0 });
+      setMenuItems(menuItems || []);
     } catch (err) {
-      setError(err.message || "Failed to load analytics");
+      setError(err.message || t("loadFailed"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     load();
@@ -688,9 +715,9 @@ export default function Analytics() {
     return (
       <Card className="p-10 text-center">
         <p className="text-3xl mb-3">⛔</p>
-        <p className="font-display text-lg text-cream mb-1">Could not load analytics</p>
+        <p className="font-display text-lg text-cream mb-1">{t("loadFailed")}</p>
         <p className="text-muted text-sm mb-6">{error}</p>
-        <Button variant="primary" onClick={load}>Retry</Button>
+        <Button variant="primary" onClick={load}>{t("retry")}</Button>
       </Card>
     );
   }
@@ -721,6 +748,15 @@ export default function Analytics() {
     return d ? isSameDay(d, new Date()) : false;
   });
 
+  const isSameMonth = (a, b) =>
+    a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
+
+  const monthVerified = orders.filter((o) => {
+    if (o.status !== "Verified") return false;
+    const d = parseLocal(o.createdAt);
+    return d ? isSameMonth(d, new Date()) : false;
+  });
+
   const cashCollected = todayVerified
     .filter((o) => o.paymentMethod === "COD")
     .reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
@@ -730,6 +766,21 @@ export default function Analytics() {
   const pendingCod = orders
     .filter((o) => o.status === "Pending" && o.paymentMethod === "COD")
     .reduce((sum, o) => sum + Number(o.totalAmount || 0), 0);
+
+  // ---- estimated profit (price - costPrice) per item, verified orders only ----
+  const itemsById = new Map(menuItems.map((m) => [String(m.id), m]));
+
+  const orderProfit = (o) =>
+    (Array.isArray(o.items) ? o.items : []).reduce((sum, it) => {
+      const price = Number(it.price || 0);
+      const qty = Number(it.quantity || 1);
+      const menuItem = itemsById.get(String(it.menuItemId));
+      const cost = Number(menuItem?.costPrice || 0);
+      return sum + (price - cost) * qty;
+    }, 0);
+
+  const todayProfit = todayVerified.reduce((sum, o) => sum + orderProfit(o), 0);
+  const monthProfit = monthVerified.reduce((sum, o) => sum + orderProfit(o), 0);
 
   const today = stats?.today || { revenue: 0, orders: 0 };
   const month = stats?.month || { revenue: 0, orders: 0 };
@@ -746,10 +797,10 @@ export default function Analytics() {
       >
         <div className="flex items-center gap-2.5">
           <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-gold">Overview</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-gold">{t("overview")}</p>
         </div>
-        <h3 className="font-display text-2xl text-cream mt-2">Store performance at a glance</h3>
-        <p className="text-sm text-muted mt-1">Live figures from your order book.</p>
+        <h3 className="font-display text-2xl text-cream mt-2">{t("analyticsTitle")}</h3>
+        <p className="text-sm text-muted mt-1">{t("analyticsSub")}</p>
       </motion.div>
 
       {/* Period cards — today + month */}
@@ -761,7 +812,7 @@ export default function Analytics() {
       >
         <PeriodCard
           tone="gold"
-          label="Today's Sales"
+          label={t("todaySales")}
           icon={<SunIcon className="w-5 h-5" />}
           revenue={today.revenue}
           orders={today.orders}
@@ -769,7 +820,7 @@ export default function Analytics() {
         />
         <PeriodCard
           tone="mint"
-          label="This Month's Sales"
+          label={t("monthSales")}
           icon={<MonthIcon className="w-5 h-5" />}
           revenue={month.revenue}
           orders={month.orders}
@@ -786,27 +837,52 @@ export default function Analytics() {
       >
         <StatCard
           tone="gold"
-          label="Total Revenue"
-          sub="Verified orders only"
+          label={t("totalRevenue")}
+          sub={t("verifiedOnly")}
           value={totalRevenue}
           delay={0}
           icon={<RupeeIcon className="w-5 h-5" />}
         />
         <StatCard
           tone="mint"
-          label="Total Orders"
-          sub="Every order received"
+          label={t("totalOrders")}
+          sub={t("everyOrder")}
           value={totalOrders}
           delay={1}
           icon={<ReceiptIcon className="w-5 h-5" />}
         />
         <StatCard
           tone="amber"
-          label="Pending Orders"
-          sub="Awaiting payment verification"
+          label={t("pendingOrders")}
+          sub={t("awaitingVerification")}
           value={pendingOrders}
           delay={2}
           icon={<ClockIcon className="w-5 h-5" />}
+        />
+      </motion.div>
+
+      {/* Estimated profit — today + this month */}
+      <motion.div
+        variants={cardStagger}
+        initial="hidden"
+        animate="show"
+        className="grid gap-5 sm:grid-cols-2 mb-10"
+      >
+        <StatCard
+          tone="profit"
+          label={t("estimatedProfitToday")}
+          sub={t("verifiedOnly")}
+          value={todayProfit}
+          delay={0}
+          icon={<TrendIcon className="w-5 h-5" />}
+        />
+        <StatCard
+          tone="profit"
+          label={t("estimatedProfitMonth")}
+          sub={t("verifiedOnly")}
+          value={monthProfit}
+          delay={1}
+          icon={<TrendIcon className="w-5 h-5" />}
         />
       </motion.div>
 
@@ -819,16 +895,16 @@ export default function Analytics() {
       >
         <StatCard
           tone="mint"
-          label="Website Visits Today"
-          sub="Unique visitors today"
+          label={t("visitsToday")}
+          sub={t("uniqueToday")}
           value={visits?.today ?? 0}
           delay={0}
           icon={<UsersIcon className="w-5 h-5" />}
         />
         <StatCard
           tone="amber"
-          label="Total Visits"
-          sub="All-time visits"
+          label={t("totalVisits")}
+          sub={t("allTime")}
           value={visits?.total ?? 0}
           delay={1}
           icon={<UsersIcon className="w-5 h-5" />}
@@ -860,6 +936,11 @@ export default function Analytics() {
         <ShareCard />
       </div>
 
+      {/* Stall QR code */}
+      <div className="mb-10">
+        <StallQR />
+      </div>
+
       {/* Today's collection (verified orders) */}
       <motion.div
         initial={{ opacity: 0, y: 32 }}
@@ -877,27 +958,27 @@ export default function Analytics() {
                 <RupeeIcon className="w-5 h-5" />
               </span>
               <div>
-                <h3 className="font-display text-xl text-cream leading-none">Today's Collection (Verified Orders)</h3>
-                <p className="text-xs text-muted mt-1">Cash vs UPI realised today · pending COD owed</p>
+                <h3 className="font-display text-xl text-cream leading-none">{t("todayCollection")}</h3>
+                <p className="text-xs text-muted mt-1">{t("collectionSub")}</p>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                 <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted font-semibold mb-3">
-                  <span className="text-base">💵</span> Cash Collected
+                  <span className="text-base">💵</span> {t("cashCollected")}
                 </div>
                 <p className="font-display text-2xl text-gold-metal">{inr(cashCollected)}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                 <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted font-semibold mb-3">
-                  <span className="text-base">📱</span> UPI Collected
+                  <span className="text-base">📱</span> {t("upiCollected")}
                 </div>
                 <p className="font-display text-2xl text-gold-metal">{inr(upiCollected)}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
                 <div className="flex items-center gap-2 text-[11px] uppercase tracking-wider text-muted font-semibold mb-3">
-                  <span className="text-base">⏳</span> Pending COD
+                  <span className="text-base">⏳</span> {t("pendingCod")}
                 </div>
                 <p className="font-display text-2xl text-gold-metal">{inr(pendingCod)}</p>
               </div>
@@ -923,24 +1004,24 @@ export default function Analytics() {
                 <ReceiptIcon className="w-5 h-5" />
               </span>
               <div>
-                <h3 className="font-display text-xl text-cream leading-none">Recent Orders</h3>
-                <p className="text-xs text-muted mt-1">Latest 5 in the queue</p>
+                <h3 className="font-display text-xl text-cream leading-none">{t("recentOrders")}</h3>
+                <p className="text-xs text-muted mt-1">{t("latestQueue")}</p>
               </div>
             </div>
-            <Badge tone="gray">Latest {recent.length}</Badge>
+            <Badge tone="gray">{t("latest")} {recent.length}</Badge>
           </div>
 
           {recent.length === 0 ? (
-            <EmptyState title="No orders yet" sub="Orders will appear here once customers place them." />
+            <EmptyState title={t("noOrdersYet")} sub={t("ordersAppearHere")} />
           ) : (
             <div className="relative overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-[11px] uppercase tracking-wider text-muted border-b border-white/10 bg-white/[0.02]">
-                    <th className="px-6 py-3.5 font-bold">Order</th>
-                    <th className="px-6 py-3.5 font-bold">Customer</th>
-                    <th className="px-6 py-3.5 font-bold text-right">Amount</th>
-                    <th className="px-6 py-3.5 font-bold text-right">Status</th>
+                    <th className="px-6 py-3.5 font-bold">{t("orderLabel")}</th>
+                    <th className="px-6 py-3.5 font-bold">{t("customers")}</th>
+                    <th className="px-6 py-3.5 font-bold text-right">{t("amountHeader")}</th>
+                    <th className="px-6 py-3.5 font-bold text-right">{t("statusLabel")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1076,6 +1157,15 @@ function ChartIcon(p) {
     <IconBase {...p}>
       <path d="M3 3v18h18" />
       <path d="M7 15l3-4 3 2 5-7" />
+    </IconBase>
+  );
+}
+
+function TrendIcon(p) {
+  return (
+    <IconBase {...p}>
+      <path d="M23 6l-9.5 9.5-5-5L1 18" />
+      <path d="M17 6h6v6" />
     </IconBase>
   );
 }

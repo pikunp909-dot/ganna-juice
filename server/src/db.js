@@ -111,6 +111,7 @@ export async function initSchema() {
       upiId TEXT DEFAULT '',
       qrCodeUrl TEXT DEFAULT '',
       heroImageUrl TEXT DEFAULT '',
+      ownerName TEXT DEFAULT 'Kunal',
       deliveryCharge INTEGER DEFAULT 20,
       freeDeliveryAbove INTEGER DEFAULT 300,
       updatedAt TEXT DEFAULT (datetime('now'))
@@ -121,6 +122,7 @@ export async function initSchema() {
       name TEXT NOT NULL,
       description TEXT DEFAULT '',
       price REAL NOT NULL,
+      costPrice REAL NOT NULL DEFAULT 0,
       imageUrl TEXT DEFAULT '',
       isAvailable INTEGER NOT NULL DEFAULT 1,
       createdAt TEXT NOT NULL DEFAULT (datetime('now'))
@@ -211,6 +213,14 @@ export async function initSchema() {
   }
   if (!settingsCols.includes("freeDeliveryAbove")) {
     await exec("ALTER TABLE Settings ADD COLUMN freeDeliveryAbove INTEGER DEFAULT 300");
+  }
+  if (!settingsCols.includes("ownerName")) {
+    await exec("ALTER TABLE Settings ADD COLUMN ownerName TEXT DEFAULT 'Kunal'");
+  }
+
+  const menuCols = await tableCols("Menu");
+  if (!menuCols.includes("costPrice")) {
+    await exec("ALTER TABLE Menu ADD COLUMN costPrice REAL NOT NULL DEFAULT 0");
   }
 
   const orderCols = await tableCols("Orders");

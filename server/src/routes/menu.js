@@ -16,13 +16,16 @@ router.get("/admin", requireAdmin, async (_req, res) => {
 });
 
 router.post("/", requireAdmin, async (req, res) => {
-  const { name, description = "", price, imageUrl = "", isAvailable = 1 } = req.body || {};
+  const { name, description = "", price, costPrice = 0, imageUrl = "", isAvailable = 1 } = req.body || {};
   if (!name || typeof price !== "number" || price < 0) {
     return res.status(400).json({ error: "name and a valid price are required" });
   }
+  if (typeof costPrice !== "number" || costPrice < 0) {
+    return res.status(400).json({ error: "costPrice must be a valid non-negative number" });
+  }
   const { lastId } = await run(
-    "INSERT INTO Menu (name, description, price, imageUrl, isAvailable) VALUES (?, ?, ?, ?, ?)",
-    [name, description, price, imageUrl, isAvailable ? 1 : 0]
+    "INSERT INTO Menu (name, description, price, costPrice, imageUrl, isAvailable) VALUES (?, ?, ?, ?, ?, ?)",
+    [name, description, price, costPrice, imageUrl, isAvailable ? 1 : 0]
   );
   res.status(201).json({ item: await get("SELECT * FROM Menu WHERE id = ?", [lastId]) });
 });
@@ -36,13 +39,14 @@ router.put("/:id", requireAdmin, async (req, res) => {
     name = existing.name,
     description = existing.description,
     price = existing.price,
+    costPrice = existing.costPrice,
     imageUrl = existing.imageUrl,
     isAvailable = existing.isAvailable
   } = req.body || {};
 
   await run(
-    "UPDATE Menu SET name = ?, description = ?, price = ?, imageUrl = ?, isAvailable = ? WHERE id = ?",
-    [name, description, price, imageUrl, isAvailable ? 1 : 0, id]
+    "UPDATE Menu SET name = ?, description = ?, price = ?, costPrice = ?, imageUrl = ?, isAvailable = ? WHERE id = ?",
+    [name, description, price, costPrice, imageUrl, isAvailable ? 1 : 0, id]
   );
   res.json({ item: await get("SELECT * FROM Menu WHERE id = ?", [id]) });
 });

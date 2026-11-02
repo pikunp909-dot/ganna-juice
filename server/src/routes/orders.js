@@ -108,7 +108,7 @@ router.get("/track/:id", async (req, res) => {
 router.get("/", requireAdmin, async (_req, res) => {
   const orders = await all("SELECT * FROM Orders ORDER BY createdAt DESC, id DESC");
   for (const o of orders) {
-    o.items = await all("SELECT name, quantity, price FROM OrderItems WHERE orderId = ?", [o.id]);
+    o.items = await all("SELECT menuItemId, name, quantity, price FROM OrderItems WHERE orderId = ?", [o.id]);
   }
   res.json({ orders });
 });

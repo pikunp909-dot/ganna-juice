@@ -15,6 +15,7 @@ const emptySettings = {
   upiId: "",
   qrCodeUrl: "",
   heroImageUrl: "",
+  ownerName: "",
   deliveryCharge: "",
   freeDeliveryAbove: ""
 };
@@ -53,6 +54,7 @@ export default function Settings() {
         upiId: settings.upiId || "",
         qrCodeUrl: settings.qrCodeUrl || "",
         heroImageUrl: settings.heroImageUrl || "",
+        ownerName: settings.ownerName || "",
         deliveryCharge: settings.deliveryCharge ?? 20,
         freeDeliveryAbove: settings.freeDeliveryAbove ?? 300
       });
@@ -152,6 +154,7 @@ export default function Settings() {
         upiId: form.upiId.trim(),
         qrCodeUrl: form.qrCodeUrl.trim(),
         heroImageUrl: form.heroImageUrl.trim(),
+        ownerName: form.ownerName.trim(),
         deliveryCharge: Number(form.deliveryCharge) || 0,
         freeDeliveryAbove: Number(form.freeDeliveryAbove) || 0
       });
@@ -298,6 +301,20 @@ export default function Settings() {
                 Use the Google Maps share link. Customers tap the footer map to open this exact location.
               </p>
             </div>
+          </div>
+
+          {/* ---- Group: Store Identity ---- */}
+          <SectionTitle icon="👋" title="Store Identity" sub="Name shown in the customer welcome message" />
+          <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5 mb-8">
+            <SleekField label="Owner Name">
+              <input
+                type="text"
+                value={form.ownerName}
+                onChange={(e) => set("ownerName", e.target.value)}
+                placeholder="e.g. Kunal"
+                className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+              />
+            </SleekField>
           </div>
 
           {/* ---- Group: Delivery Charges ---- */}

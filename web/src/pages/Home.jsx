@@ -55,8 +55,11 @@ export default function Home() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [note, setNote] = useState("");
+  const [welcomeOpen, setWelcomeOpen] = useState(false);
   const { lines, count, total, setQty, remove, clear } = useCart();
   const { t } = useLanguage();
+
+  const ownerName = settings.ownerName || "Kunal";
 
   useEffect(() => {
     (async () => {
@@ -89,6 +92,29 @@ export default function Home() {
     }
   }, []);
 
+  // First-visit welcome modal — shows once per browser (localStorage gate).
+  // Never blocks page render; failures just skip the modal.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      try {
+        if (localStorage.getItem("ganna_welcomed") !== null) return;
+      } catch {
+        /* storage unavailable — show anyway */
+      }
+      setWelcomeOpen(true);
+    }, 1500);
+    return () => clearTimeout(t);
+  }, []);
+
+  function closeWelcome() {
+    try {
+      localStorage.setItem("ganna_welcomed", "true");
+    } catch {
+      /* storage unavailable — still close */
+    }
+    setWelcomeOpen(false);
+  }
+
   useEffect(() => {
     if (!note) return;
     const t = setTimeout(() => setNote(""), 2600);
@@ -107,7 +133,58 @@ export default function Home() {
       <MenuSection items={items} loading={loading} error={error} onRetry={() => window.location.reload()} />
       <TrackOrder />
       <ReviewsSection exactLocation={settings.exactLocation} />
+      <ReferSection />
       <Footer settings={settings} />
+
+      {/* first-visit welcome modal */}
+      <AnimatePresence>
+        {welcomeOpen && (
+          <motion.div
+            className="fixed inset-0 z-[80] grid place-items-center p-4 sm:p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={closeWelcome} />
+            <motion.div
+              initial={{ scale: 0.94, y: 24, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.96, y: 12, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              className="relative w-full max-w-md overflow-hidden rounded-[32px] border border-white/10 bg-forest2/90 backdrop-blur-xl shadow-card"
+            >
+              {/* gold glow orbs + corner sheen */}
+              <div className="pointer-events-none absolute -top-20 -right-16 w-56 h-56 rounded-full bg-gold/20 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-24 -left-16 w-52 h-52 rounded-full bg-mint/10 blur-3xl" />
+              <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(255,255,255,0.05),transparent_50%)]" />
+
+              <div className="relative p-7 sm:p-9 text-center">
+                <motion.div
+                  className="mx-auto mb-5 w-20 h-20 rounded-3xl bg-gold/15 border border-gold/40 grid place-items-center text-4xl shadow-glowGoldSoft"
+                  animate={{ scale: [1, 1.08, 1], rotate: [0, -4, 4, 0] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  👋
+                </motion.div>
+
+                <h3 className="font-display text-2xl sm:text-3xl text-cream leading-tight">
+                  {t("welcomeTitle").replace("{name}", ownerName)}
+                </h3>
+                <p className="mt-3 text-muted text-sm sm:text-base leading-relaxed">
+                  {t("welcomeSub").replace("{name}", ownerName)}
+                </p>
+
+                <button
+                  onClick={closeWelcome}
+                  className="mt-8 w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-full px-7 py-4 text-base shadow-glowGold hover:brightness-110 active:scale-[0.97] transition"
+                >
+                  🍹 {t("welcomeBtn")}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* floating whatsapp — hidden while the cart bar is up */}
       {count === 0 && settings.whatsapp && (
@@ -1300,6 +1377,135 @@ function ReviewsSection({ exactLocation }) {
           >
             <span className="text-lg">✓</span>
             {toast}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </section>
+  );
+}
+
+/* ================= Refer & Share ================= */
+
+const GOLD_PARTICLES = [
+  { left: "10%", top: "20%", size: 7, duration: 5.2, delay: 0 },
+  { left: "78%", top: "16%", size: 5, duration: 6.4, delay: 0.9 },
+  { left: "22%", top: "74%", size: 5, duration: 5.8, delay: 1.6 },
+  { left: "88%", top: "70%", size: 8, duration: 7.1, delay: 0.4 },
+  { left: "42%", top: "12%", size: 4, duration: 4.9, delay: 2.2 },
+  { left: "60%", top: "82%", size: 6, duration: 6.1, delay: 1.1 },
+  { left: "94%", top: "42%", size: 4, duration: 5.5, delay: 2.8 },
+  { left: "4%", top: "48%", size: 6, duration: 6.8, delay: 0.2 }
+];
+
+function ReferSection() {
+  const [toast, setToast] = useState(null);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3200);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  async function share() {
+    const url = window.location.origin;
+    const payload = {
+      title: "Sugarcane Juice",
+      text: "Order fresh sugarcane juice here! 🍹",
+      url
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(payload);
+        setToast({ ok: true, text: "Link shared!" });
+      } else {
+        await navigator.clipboard.writeText(url);
+        setToast({ ok: true, text: "Link copied to clipboard!" });
+      }
+    } catch (err) {
+      // User dismissed the system share sheet — not a failure.
+      if (err && err.name === "AbortError") return;
+      setToast({ ok: false, text: "Could not share link" });
+    }
+  }
+
+  return (
+    <section className="relative px-4 sm:px-6 py-24 overflow-hidden">
+      {/* ambient glow */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-1/3 -right-24 w-[34rem] h-[34rem] rounded-full bg-gold/8 blur-[130px]" />
+        <div className="absolute bottom-0 -left-24 w-96 h-96 rounded-full bg-mint/5 blur-[120px]" />
+      </div>
+
+      <div className="relative max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 36 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        >
+          {/* gradient hairline border */}
+          <div className="rounded-[32px] p-px bg-gradient-to-br from-gold/50 via-white/10 to-gold/30 shadow-glass">
+            <div className="relative overflow-hidden rounded-[31px] border border-white/10 bg-forest2/60 backdrop-blur-2xl">
+              {/* glow orbs + corner sheen */}
+              <div className="pointer-events-none absolute -top-24 -right-16 w-72 h-72 rounded-full bg-gold/15 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-28 -left-20 w-72 h-72 rounded-full bg-mint/10 blur-3xl" />
+              <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(255,255,255,0.05),transparent_50%)]" />
+
+              {/* floating gold particles */}
+              <div className="pointer-events-none absolute inset-0">
+                {GOLD_PARTICLES.map((p, i) => (
+                  <motion.span
+                    key={i}
+                    className="absolute rounded-full bg-gold shadow-glowGoldSoft"
+                    style={{ left: p.left, top: p.top, width: p.size, height: p.size }}
+                    animate={{ y: [0, -20, 0], opacity: [0.1, 0.75, 0.1] }}
+                    transition={{ duration: p.duration, delay: p.delay, repeat: Infinity, ease: "easeInOut" }}
+                  />
+                ))}
+              </div>
+
+              <div className="relative px-6 py-14 sm:px-14 sm:py-16 text-center">
+                <motion.div
+                  className="mx-auto mb-7 w-16 h-16 rounded-2xl bg-gold/15 border border-gold/40 grid place-items-center text-3xl shadow-glowGoldSoft"
+                  animate={{ scale: [1, 1.07, 1], opacity: [0.85, 1, 0.85] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                >
+                  🍹
+                </motion.div>
+
+                <h2 className="font-display text-4xl sm:text-5xl text-cream leading-tight">
+                  Share the <span className="text-gold-metal drop-shadow-[0_0_18px_rgba(245,158,11,0.45)]">Taste!</span>
+                </h2>
+                <p className="mt-4 text-muted text-base sm:text-lg max-w-md mx-auto leading-relaxed">
+                  Share your store link with friends and get fresh juice together.
+                </p>
+
+                <button
+                  onClick={share}
+                  className="mt-9 inline-flex items-center justify-center gap-2.5 bg-gold-metal text-forest font-bold rounded-full px-9 py-4 text-base shadow-glowGold hover:brightness-110 active:scale-[0.97] transition"
+                >
+                  <span className="text-lg leading-none">📲</span> Share Website Link
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            className={`fixed bottom-6 right-6 z-[60] flex items-center gap-3 font-bold text-sm px-5 py-3.5 rounded-2xl shadow-card ${
+              toast.ok ? "bg-gradient-to-r from-mint to-emerald-400 text-forest" : "bg-red-950 text-red-200 border border-red-500/40"
+            }`}
+            initial={{ opacity: 0, y: 24, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.97 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <span className="text-lg">{toast.ok ? "✓" : "✕"}</span>
+            {toast.text}
           </motion.div>
         )}
       </AnimatePresence>

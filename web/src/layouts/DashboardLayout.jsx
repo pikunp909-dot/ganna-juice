@@ -5,6 +5,7 @@ import { useAuth } from "../auth";
 import { api } from "../api";
 import { Spinner } from "../components/ui";
 import LanguageDropdown from "../components/LanguageDropdown";
+import { useLanguage } from "../language";
 
 // Converts a base64url VAPID key (from the API) into the Uint8Array
 // that pushManager.subscribe expects.
@@ -18,27 +19,28 @@ function urlBase64ToUint8Array(base64) {
 }
 
 const NAV = [
-  { to: "/admin", label: "Analytics", end: true, Icon: ChartIcon },
-  { to: "/admin/menu", label: "Menu", Icon: MenuIcon },
-  { to: "/admin/orders", label: "Orders", Icon: ReceiptIcon },
-  { to: "/admin/customers", label: "Customers", Icon: UsersIcon },
-  { to: "/admin/reviews", label: "Reviews", Icon: StarIcon },
-  { to: "/admin/settings", label: "Settings", Icon: GearIcon }
+  { to: "/admin", labelKey: "navAnalytics", end: true, Icon: ChartIcon },
+  { to: "/admin/menu", labelKey: "navMenu", Icon: MenuIcon },
+  { to: "/admin/orders", labelKey: "navOrders", Icon: ReceiptIcon },
+  { to: "/admin/customers", labelKey: "navCustomers", Icon: UsersIcon },
+  { to: "/admin/reviews", labelKey: "navReviews", Icon: StarIcon },
+  { to: "/admin/settings", labelKey: "navSettings", Icon: GearIcon }
 ];
 
 const TITLES = {
-  "/admin": "Analytics",
-  "/admin/menu": "Menu",
-  "/admin/orders": "Orders",
-  "/admin/customers": "Customers",
-  "/admin/reviews": "Reviews",
-  "/admin/settings": "Settings"
+  "/admin": "navAnalytics",
+  "/admin/menu": "navMenu",
+  "/admin/orders": "navOrders",
+  "/admin/customers": "navCustomers",
+  "/admin/reviews": "navReviews",
+  "/admin/settings": "navSettings"
 };
 
 export default function DashboardLayout() {
   const { admin, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useLanguage();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifPermission, setNotifPermission] = useState(
@@ -46,7 +48,7 @@ export default function DashboardLayout() {
   );
   const [toast, setToast] = useState(null);
 
-  const title = TITLES[location.pathname] || "Dashboard";
+  const title = t(TITLES[location.pathname] || "navDashboard");
 
   useEffect(() => {
     if (!toast) return;
@@ -189,7 +191,7 @@ export default function DashboardLayout() {
           <BrandBlock />
 
           <nav className="flex-1 px-4 py-3 space-y-1.5 overflow-y-auto">
-            {NAV.map(({ to, label, end, Icon }) => (
+            {NAV.map(({ to, labelKey, end, Icon }) => (
               <NavLink key={to} to={to} end={end}>
                 {({ isActive }) => (
                   <span
@@ -205,7 +207,7 @@ export default function DashboardLayout() {
                       />
                     )}
                     <Icon className={`relative w-5 h-5 ${isActive ? "drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]" : ""}`} />
-                    <span className="relative">{label}</span>
+                    <span className="relative">{t(labelKey)}</span>
 
                     {isActive && (
                       <motion.span
@@ -230,12 +232,12 @@ export default function DashboardLayout() {
                   {admin?.email?.charAt(0)?.toUpperCase() || "O"}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] uppercase tracking-wider text-muted">Signed in as</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted">{t("signInAs")}</p>
                   <p className="text-sm text-cream truncate">{admin?.email}</p>
                 </div>
               </div>
               <p className="mt-3 text-[10px] font-bold uppercase tracking-wider text-gold">
-                Owner console
+                {t("ownerConsole")}
               </p>
             </div>
           </div>
@@ -274,7 +276,7 @@ export default function DashboardLayout() {
               </div>
 
               <nav className="flex-1 px-4 space-y-1.5 overflow-y-auto">
-                {NAV.map(({ to, label, end, Icon }) => (
+                {NAV.map(({ to, labelKey, end, Icon }) => (
                   <NavLink
                     key={to}
                     to={to}
@@ -295,7 +297,7 @@ export default function DashboardLayout() {
                           />
                         )}
                         <Icon className={`relative w-5 h-5 ${isActive ? "drop-shadow-[0_1px_2px_rgba(0,0,0,0.25)]" : ""}`} />
-                        <span className="relative">{label}</span>
+                        <span className="relative">{t(labelKey)}</span>
                       </span>
                     )}
                   </NavLink>
@@ -307,7 +309,7 @@ export default function DashboardLayout() {
                   onClick={handleLogout}
                   className="w-full flex items-center justify-center gap-2 rounded-2xl bg-white/5 border border-white/10 text-sm font-semibold text-muted hover:text-cream hover:bg-white/10 hover:border-gold/40 py-3 transition"
                 >
-                  <LogoutIcon className="w-4 h-4" /> Logout
+                  <LogoutIcon className="w-4 h-4" /> {t("logout")}
                 </button>
               </div>
             </motion.aside>
@@ -341,11 +343,11 @@ export default function DashboardLayout() {
             {!standalone && (
               <button
                 onClick={installApp}
-                title="Install app"
+                title={t("installApp")}
                 className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-sm font-bold text-cream px-4 py-2.5 transition hover:border-gold/50 hover:text-gold hover:shadow-glowGoldSoft"
               >
                 <span className="text-base leading-none">📲</span>
-                <span className="hidden sm:inline">Install Admin App</span>
+                <span className="hidden sm:inline">{t("installApp")}</span>
               </button>
             )}
             {notifPermission === "default" && (
@@ -353,7 +355,7 @@ export default function DashboardLayout() {
                 onClick={enableNotifications}
                 disabled={notifLoading}
                 className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-sm font-bold text-cream px-4 py-2.5 transition hover:border-gold/50 hover:text-gold hover:shadow-glowGoldSoft disabled:opacity-60 disabled:pointer-events-none"
-                title="Enable push notifications for new orders"
+                title={t("enableNotificationsTitle")}
               >
                 {notifLoading ? (
                   <Spinner className="w-4 h-4" />
@@ -361,7 +363,7 @@ export default function DashboardLayout() {
                   <BellIcon className="w-4 h-4" />
                 )}
                 <span className="hidden sm:inline">
-                  {notifLoading ? "Enabling…" : "Enable Notifications"}
+                  {notifLoading ? t("enabling") : t("enableNotifications")}
                 </span>
               </button>
             )}
@@ -394,14 +396,14 @@ export default function DashboardLayout() {
                       transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
                     >
                       <div className="px-5 py-3.5 border-b border-white/10 flex items-center justify-between">
-                        <p className="text-xs font-bold uppercase tracking-wider text-muted">Pending Orders</p>
-                        <span className="text-[10px] font-bold text-gold">{pendingOrders.length} waiting</span>
+                        <p className="text-xs font-bold uppercase tracking-wider text-muted">{t("pendingOrders")}</p>
+                        <span className="text-[10px] font-bold text-gold">{pendingOrders.length} {t("waiting")}</span>
                       </div>
                       <div className="max-h-[22rem] overflow-y-auto">
                         {pendingOrders.length === 0 ? (
                           <div className="px-5 py-10 text-center">
                             <p className="text-2xl mb-2">🎉</p>
-                            <p className="text-sm text-muted">No pending orders</p>
+                            <p className="text-sm text-muted">{t("noPendingOrders")}</p>
                           </div>
                         ) : (
                           pendingOrders.map((o) => (
@@ -433,7 +435,7 @@ export default function DashboardLayout() {
               </div>
               <div className="text-right">
                 <p className="text-sm text-cream leading-tight truncate max-w-[200px]">{admin?.email}</p>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-gold">Owner</p>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gold">{t("owner")}</p>
               </div>
             </div>
             <button
@@ -441,7 +443,7 @@ export default function DashboardLayout() {
               className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] text-sm font-bold text-cream px-4 py-2.5 transition hover:border-gold/50 hover:text-gold hover:shadow-glowGoldSoft"
             >
               <LogoutIcon className="w-4 h-4" />
-              <span className="hidden sm:inline">Logout</span>
+              <span className="hidden sm:inline">{t("logout")}</span>
             </button>
           </div>
         </header>
@@ -540,7 +542,7 @@ function BrandBlock({ compact }) {
         <p className="font-display text-lg text-cream leading-tight">
           Sugarcane <span className="text-gold-metal">Juice</span>
         </p>
-        <p className="text-[11px] text-muted uppercase tracking-wider">Owner console</p>
+        <p className="text-[11px] text-muted uppercase tracking-wider">{t("ownerConsole")}</p>
       </div>
     </div>
   );

@@ -6,7 +6,7 @@ import { Card, Badge, Button, Field, EmptyState, Spinner } from "../components/u
 const inr = (n) =>
   "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
-const emptyForm = { name: "", price: "", description: "", imageUrl: "" };
+const emptyForm = { name: "", price: "", costPrice: "", description: "", imageUrl: "" };
 
 export default function Menu() {
   const [items, setItems] = useState([]);
@@ -55,6 +55,7 @@ export default function Menu() {
     setForm({
       name: item.name,
       price: String(item.price),
+      costPrice: item.costPrice ?? "",
       description: item.description || "",
       imageUrl: item.imageUrl || ""
     });
@@ -75,10 +76,14 @@ export default function Menu() {
     if (!form.name.trim()) return setFormError("Name is required");
     if (!Number.isFinite(price) || price < 0) return setFormError("Enter a valid price");
 
+    const costPrice = Number(form.costPrice) || 0;
+    if (costPrice < 0) return setFormError("Enter a valid cost price");
+
     const payload = {
       name: form.name.trim(),
       description: form.description.trim(),
       price,
+      costPrice,
       imageUrl: form.imageUrl.trim()
     };
 
@@ -229,7 +234,14 @@ export default function Menu() {
                     <td className="px-6 py-4 text-muted max-w-[260px] hidden md:table-cell">
                       <p className="line-clamp-2">{item.description || "—"}</p>
                     </td>
-                    <td className="px-6 py-4 text-right font-semibold text-gold2">{inr(item.price)}</td>
+                    <td className="px-6 py-4 text-right">
+                      <p className="font-semibold text-gold2">{inr(item.price)}</p>
+                      {item.costPrice != null && (
+                        <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-mint bg-mint/10 border border-mint/25 rounded-full px-2 py-0.5">
+                          Profit: {inr(Number(item.price) - Number(item.costPrice))}
+                        </span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 text-center hidden sm:table-cell">
                       <Badge tone={item.isAvailable ? "green" : "gray"}>
                         {item.isAvailable ? "Available" : "Out of Stock"}
@@ -327,7 +339,14 @@ export default function Menu() {
                       </p>
                       <div className="flex items-end justify-between gap-3">
                         <span className="text-xs text-muted uppercase tracking-wider font-semibold">Price</span>
-                        <span className="font-display text-2xl text-gold-metal">{inr(item.price)}</span>
+                        <div className="text-right">
+                          <span className="block font-display text-2xl text-gold-metal">{inr(item.price)}</span>
+                          {item.costPrice != null && (
+                            <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-mint bg-mint/10 border border-mint/25 rounded-full px-2 py-0.5">
+                              Profit: {inr(Number(item.price) - Number(item.costPrice))}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -407,6 +426,18 @@ export default function Menu() {
               value={form.price}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
               placeholder="30"
+              className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+            />
+          </Field>
+
+          <Field label="Cost Price (₹)">
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={form.costPrice}
+              onChange={(e) => setForm({ ...form, costPrice: e.target.value })}
+              placeholder="15"
               className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
             />
           </Field>
