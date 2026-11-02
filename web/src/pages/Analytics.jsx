@@ -91,13 +91,13 @@ function StatCard({ tone, label, sub, value, icon, delay }) {
   return (
     <motion.div variants={cardPop}>
       <div
-        className={`group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass transition-all duration-500 ${t.border}`}
+        className={`group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass transition-all duration-500 ${t.border}`}
       >
         {/* soft gradient wash */}
         <div className={`absolute inset-0 bg-gradient-to-br ${t.gradient}`} />
 
         {/* glow orb */}
-        <div className={`absolute -top-12 -right-12 w-44 h-44 rounded-full blur-3xl ${t.orb} ${t.orbGlow} transition-transform duration-700 group-hover:scale-125`} />
+        <div className={`absolute -top-12 -right-12 w-44 h-44 rounded-full max-lg:hidden blur-3xl ${t.orb} ${t.orbGlow} transition-transform duration-700 group-hover:scale-125`} />
 
         {/* corner sheen */}
         <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(255,255,255,0.06),transparent_50%)]" />
@@ -138,10 +138,10 @@ function PeriodCard({ tone, label, icon, revenue, orders, delay }) {
   return (
     <motion.div variants={cardPop}>
       <div
-        className={`group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass transition-all duration-500 ${t.border}`}
+        className={`group relative overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass transition-all duration-500 ${t.border}`}
       >
         <div className={`absolute inset-0 bg-gradient-to-br ${t.gradient}`} />
-        <div className={`absolute -top-12 -right-12 w-44 h-44 rounded-full blur-3xl ${t.orb} ${t.orbGlow} transition-transform duration-700 group-hover:scale-125`} />
+        <div className={`absolute -top-12 -right-12 w-44 h-44 rounded-full max-lg:hidden blur-3xl ${t.orb} ${t.orbGlow} transition-transform duration-700 group-hover:scale-125`} />
         <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(255,255,255,0.06),transparent_50%)]" />
 
         <div className="relative p-6">
@@ -192,10 +192,10 @@ function PaymentSplit({ split }) {
       initial={{ opacity: 0, y: 32 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.35, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass"
+      className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass"
     >
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-      <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 blur-3xl" />
+      <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 max-lg:hidden blur-3xl" />
 
       <div className="relative p-6 sm:p-7">
         <div className="flex items-center gap-3 mb-6">
@@ -304,10 +304,10 @@ function RangeCard() {
       initial={{ opacity: 0, y: 32 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.4, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass"
+      className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass"
     >
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-      <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 blur-3xl" />
+      <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 max-lg:hidden blur-3xl" />
 
       <div className="relative p-6 sm:p-7">
         <div className="flex items-center gap-3 mb-6">
@@ -438,9 +438,9 @@ function BroadcastCard() {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.35, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass">
+      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass">
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-        <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 blur-3xl" />
+        <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 max-lg:hidden blur-3xl" />
 
         <div className="relative p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -509,10 +509,10 @@ function SevenDayChart({ days }) {
       initial={{ opacity: 0, y: 32 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.45, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass"
+      className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass"
     >
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-      <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 blur-3xl" />
+      <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 max-lg:hidden blur-3xl" />
 
       <div className="relative p-6 sm:p-7">
         <div className="flex items-center gap-3 mb-6">
@@ -717,10 +717,10 @@ export default function Analytics() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass">
+        <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass">
           {/* gold hairline on top edge */}
           <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-          <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 blur-3xl" />
+          <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 max-lg:hidden blur-3xl" />
 
           <div className="relative flex items-center justify-between px-6 pt-6 pb-4">
             <div className="flex items-center gap-3">

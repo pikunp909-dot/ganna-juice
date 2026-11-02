@@ -256,9 +256,9 @@ export default function Orders() {
       ) : (
         <>
           {/* ===== Desktop table (glass) ===== */}
-          <div className="relative hidden md:block overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass">
+          <div className="relative hidden md:block overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass">
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-            <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 blur-3xl" />
+            <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 max-lg:hidden blur-3xl" />
 
             <div className="relative overflow-x-auto">
               <table className="w-full text-sm">
@@ -340,9 +340,9 @@ export default function Orders() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 + i * 0.05, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass">
+                <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass">
                   <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-                  <div className="pointer-events-none absolute -top-16 -right-12 w-44 h-44 rounded-full bg-gold/8 blur-3xl" />
+                  <div className="pointer-events-none absolute -top-16 -right-12 w-44 h-44 rounded-full bg-gold/8 max-lg:hidden blur-3xl" />
 
                   <div className="relative p-5">
                     <div className="flex items-center justify-between mb-4">
@@ -520,8 +520,8 @@ function GlassModal({ open, onClose, title, children }) {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="relative w-full max-w-md rounded-[28px] p-[1.5px] bg-gradient-to-br from-goldLight via-gold/60 to-goldDark shadow-card"
           >
-            <div className="relative rounded-[26.5px] bg-forest2/85 backdrop-blur-2xl p-6 overflow-hidden">
-              <div className="pointer-events-none absolute -top-20 -right-16 w-52 h-52 rounded-full bg-gold/10 blur-3xl" />
+            <div className="relative rounded-[26.5px] bg-forest2/85 backdrop-blur-md p-6 overflow-hidden">
+              <div className="pointer-events-none absolute -top-20 -right-16 w-52 h-52 rounded-full bg-gold/10 max-lg:hidden blur-3xl" />
               <div className="relative flex items-center justify-between mb-5">
                 <h3 className="font-display text-2xl text-cream">{title}</h3>
                 <button

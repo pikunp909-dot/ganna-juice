@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../auth";
 import { api } from "../api";
 import { Spinner } from "../components/ui";
+import LanguageDropdown from "../components/LanguageDropdown";
 
 // Converts a base64url VAPID key (from the API) into the Uint8Array
 // that pushManager.subscribe expects.
@@ -122,11 +123,46 @@ export default function DashboardLayout() {
     navigate("/login", { replace: true });
   }
 
+  // ---- in-app new-order alert (polls every 15s) ----
+  const [orderAlert, setOrderAlert] = useState(null);
+  const seenPendingIdsRef = useRef(null); // null = not seeded yet
+
+  useEffect(() => {
+    let alive = true;
+
+    async function poll() {
+      try {
+        const { orders } = await api.orders();
+        if (!alive) return;
+        const pending = (orders || []).filter((o) => o.status === "Pending");
+        const seen = seenPendingIdsRef.current;
+        if (seen !== null) {
+          const fresh = pending.find((o) => !seen.has(String(o.id)));
+          if (fresh) {
+            setOrderAlert({ id: fresh.id, totalAmount: fresh.totalAmount });
+          }
+          for (const o of pending) seen.add(String(o.id));
+        } else {
+          seenPendingIdsRef.current = new Set(pending.map((o) => String(o.id)));
+        }
+      } catch {
+        /* transient — ignore */
+      }
+    }
+
+    poll();
+    const iv = setInterval(poll, 15000);
+    return () => {
+      alive = false;
+      clearInterval(iv);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-forest">
       {/* ===== Desktop floating glass sidebar ===== */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-40 w-72 p-4 flex-col">
-        <div className="flex-1 flex flex-col rounded-[28px] border border-white/10 bg-forest2/50 backdrop-blur-xl shadow-card overflow-hidden">
+        <div className="flex-1 flex flex-col rounded-[28px] border border-white/10 bg-forest2/50 backdrop-blur-md shadow-card overflow-hidden">
           <BrandBlock />
 
           <nav className="flex-1 px-4 py-3 space-y-1.5 overflow-y-auto">
@@ -197,7 +233,7 @@ export default function DashboardLayout() {
             />
             <motion.aside
               key="drawer"
-              className="fixed inset-y-0 left-0 z-50 w-[19rem] max-w-[85vw] flex flex-col rounded-r-[28px] border-r border-white/10 bg-forest2/70 backdrop-blur-xl shadow-glass lg:hidden"
+              className="fixed inset-y-0 left-0 z-50 w-[19rem] max-w-[85vw] flex flex-col rounded-r-[28px] border-r border-white/10 bg-forest2/70 backdrop-blur-md shadow-glass lg:hidden"
               initial={{ x: "-104%" }}
               animate={{ x: 0 }}
               exit={{ x: "-104%" }}
@@ -306,6 +342,7 @@ export default function DashboardLayout() {
                 </span>
               </button>
             )}
+            <LanguageDropdown />
             <div className="hidden md:flex items-center gap-3">
               <div className="w-9 h-9 rounded-full bg-gold-metal grid place-items-center text-sm font-bold text-forest shadow-glowGoldSoft">
                 {admin?.email?.charAt(0)?.toUpperCase() || "O"}
@@ -349,6 +386,60 @@ export default function DashboardLayout() {
               {toast.message}
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* new-order alert popup */}
+      <AnimatePresence>
+        {orderAlert && (
+          <motion.div
+            className="fixed inset-0 z-[80] grid place-items-center p-4 sm:p-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0 bg-black/75 backdrop-blur-md" onClick={() => setOrderAlert(null)} />
+            <motion.div
+              initial={{ scale: 0.94, y: 24, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.96, y: 12, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 300, damping: 26 }}
+              className="relative w-full max-w-sm rounded-[32px] border border-white/10 bg-forest2/90 backdrop-blur-md shadow-card overflow-hidden"
+            >
+              <div className="pointer-events-none absolute -top-20 -right-16 w-52 h-52 rounded-full bg-gold/10 max-lg:hidden blur-3xl" />
+              <div className="relative p-7 text-center">
+                <div className="mx-auto mb-5 w-16 h-16 rounded-3xl bg-gold/15 border border-gold/40 grid place-items-center text-3xl shadow-glowGoldSoft">
+                  🔔
+                </div>
+                <h3 className="font-display text-2xl text-cream">New Order Received!</h3>
+                <p className="text-muted text-sm mt-2">
+                  Order{" "}
+                  <span className="text-gold2 font-bold">#{orderAlert.id}</span>
+                  {" · "}
+                  <span className="text-cream font-bold">
+                    ₹{Number(orderAlert.totalAmount || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                  </span>
+                </p>
+                <div className="mt-7 grid gap-2.5">
+                  <button
+                    onClick={() => {
+                      setOrderAlert(null);
+                      navigate("/admin/orders");
+                    }}
+                    className="w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-3.5 text-sm transition hover:brightness-110 shadow-glowGold"
+                  >
+                    View & Approve
+                  </button>
+                  <button
+                    onClick={() => setOrderAlert(null)}
+                    className="w-full text-sm font-bold text-muted hover:text-cream py-2 transition"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
