@@ -1059,18 +1059,26 @@ function TrackOrder() {
 
   // Deep link: ?track=00024 (from the WhatsApp receipt) opens tracking
   // pre-filled — used by trackById, then the query is cleaned so a
-  // refresh doesn't re-trigger.
+  // refresh doesn't re-trigger. Fully guarded: a malformed URL or an
+  // environment without scrollIntoView can never take down the Home.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const raw = (params.get("track") || "").trim();
-    if (!raw) return;
-    const id = raw.replace(/\D/g, "");
-    if (!id) return;
-    setInput(raw);
-    document.getElementById("track")?.scrollIntoView({ behavior: "smooth" });
-    trackById(id);
-    const cleanUrl = window.location.pathname + window.location.hash;
-    window.history.replaceState({}, "", cleanUrl);
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const raw = (params.get("track") || "").trim();
+      if (!raw) return;
+      const id = raw.replace(/\D/g, "");
+      if (!id) return;
+      setInput(raw);
+      const el = document.getElementById("track");
+      if (el && typeof el.scrollIntoView === "function") {
+        el.scrollIntoView({ behavior: "smooth" });
+      }
+      trackById(id);
+      const cleanUrl = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, "", cleanUrl);
+    } catch {
+      /* never let a bad deep link crash the homepage */
+    }
   }, [trackById]);
 
   function handleTrack(e) {

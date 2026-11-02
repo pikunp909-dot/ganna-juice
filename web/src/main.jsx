@@ -8,11 +8,16 @@ import "./index.css";
 
 // Top-level error boundary — if any component throws during render, show a
 // recoverable fallback instead of unmounting the whole tree (black screen).
+// The fallback also exposes the error message/stack for quick triage.
 class ErrorBoundary extends React.Component {
-  state = { hasError: false };
+  state = { hasError: false, message: "", stack: "" };
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(err) {
+    return {
+      hasError: true,
+      message: err && err.message ? err.message : String(err),
+      stack: err && err.stack ? err.stack : "",
+    };
   }
 
   componentDidCatch(err) {
@@ -57,6 +62,42 @@ class ErrorBoundary extends React.Component {
             >
               Refresh
             </button>
+            {(this.state.message || this.state.stack) && (
+              <details
+                style={{
+                  marginTop: "1.5rem",
+                  textAlign: "left",
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: "12px",
+                  padding: "0.75rem 1rem",
+                  maxWidth: "560px",
+                  marginLeft: "auto",
+                  marginRight: "auto",
+                }}
+              >
+                <summary
+                  style={{ cursor: "pointer", color: "#c8a24b", fontSize: "12px", fontWeight: 700 }}
+                >
+                  Technical details
+                </summary>
+                <pre
+                  style={{
+                    marginTop: "0.6rem",
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    fontSize: "11px",
+                    color: "#f5e9d0",
+                    opacity: 0.75,
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {this.state.message}
+                  {"\n\n"}
+                  {this.state.stack}
+                </pre>
+              </details>
+            )}
           </div>
         </div>
       );
