@@ -10,6 +10,7 @@ const inr = (n) =>
 
 const PHONE_RE = /^[6-9]\d{9}$/;
 const UTR_RE = /^\d{12}$/;
+const MIN_ORDER_VALUE = 150;
 
 const emptyForm = { customerName: "", customerPhone: "", address: "" };
 
@@ -92,6 +93,9 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
     if (!form.customerName.trim()) e.customerName = t("errName");
     if (!PHONE_RE.test(form.customerPhone.trim())) e.customerPhone = t("errPhone");
     if (mode === "Delivery" && !form.address.trim()) e.address = t("errAddress");
+    if (total < MIN_ORDER_VALUE) {
+      e.minOrder = "Minimum order value is ₹150. Please add more items.";
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -499,6 +503,10 @@ function DetailsStep({ mode, setMode, form, setForm, errors, onNext, lines, tota
           </motion.div>
         )}
       </AnimatePresence>
+
+      {errors.minOrder && (
+        <p className="text-xs text-red-300 mt-1.5">{errors.minOrder}</p>
+      )}
 
       <button
         onClick={onNext}

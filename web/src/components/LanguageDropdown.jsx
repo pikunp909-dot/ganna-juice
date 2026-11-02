@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLanguage } from "../language";
 
 const OPTIONS = [
-  { code: "en", label: "English" },
-  { code: "hi", label: "हिंदी" },
-  { code: "or", label: "ଓଡ଼ିଆ" }
+  { code: "en", label: "English", short: "EN" },
+  { code: "hi", label: "हिंदी", short: "HI" },
+  { code: "or", label: "ଓଡ଼ିଆ", short: "OD" }
 ];
 
 export default function LanguageDropdown() {
@@ -24,23 +24,16 @@ export default function LanguageDropdown() {
   const current = OPTIONS.find((o) => o.code === lang) || OPTIONS[0];
 
   return (
-    <div ref={ref} className="relative ml-2">
+    <div ref={ref} className="relative ml-2 flex-shrink-0">
       <button
         onClick={() => setOpen((o) => !o)}
         aria-label="Switch language"
         aria-expanded={open}
-        className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl text-xs font-bold text-cream hover:border-gold/50 hover:text-gold transition shadow-glass overflow-hidden"
+        className="relative inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-white/10 bg-white/[0.05] backdrop-blur-xl text-xs font-bold text-cream hover:border-gold/50 hover:text-gold transition shadow-glass overflow-hidden whitespace-nowrap"
       >
         <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(245,158,11,0.12),transparent_50%)]" />
         <span className="relative text-sm leading-none">🌐</span>
-        <span className="relative tracking-wide">{current.label}</span>
-        <motion.span
-          className="relative text-[9px] leading-none text-muted"
-          animate={{ rotate: open ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          ▼
-        </motion.span>
+        <span className="relative tracking-wide">{current.short}</span>
       </button>
 
       <AnimatePresence>
@@ -65,7 +58,10 @@ export default function LanguageDropdown() {
                     active ? "text-gold bg-gold/10" : "text-cream hover:bg-white/5"
                   }`}
                 >
-                  <span>{opt.label}</span>
+                  <span className="flex items-center gap-2">
+                    <span>{opt.label}</span>
+                    <span className="text-[9px] uppercase tracking-wider text-muted">{opt.short}</span>
+                  </span>
                   {active && <span className="text-gold">✓</span>}
                 </button>
               );

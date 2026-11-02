@@ -37,6 +37,10 @@ router.post("/", async (req, res) => {
   }
   total = Math.round(total * 100) / 100;
 
+  if (total < 150) {
+    return res.status(400).json({ error: "Minimum order value is ₹150" });
+  }
+
   const { lastId } = await run(
     "INSERT INTO Orders (customerName, customerPhone, address, totalAmount, paymentMethod, status) VALUES (?, ?, ?, ?, ?, 'Pending')",
     [customerName, customerPhone, address === "" && mode === "Pickup" ? "Pickup" : address, total, method]

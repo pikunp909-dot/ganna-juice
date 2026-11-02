@@ -8,6 +8,8 @@ import { EmptyState, Spinner } from "../components/ui";
 import { SugarcaneStick, SugarcaneLeaf } from "../components/sugarcane";
 import LanguageDropdown from "../components/LanguageDropdown";
 
+const MIN_ORDER_VALUE = 150;
+
 const inr = (n) =>
   "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
@@ -320,6 +322,9 @@ function Nav({ onMenu, onContact }) {
             </button>
           )}
 
+          {/* language dropdown — glassmorphic */}
+          <LanguageDropdown />
+
           {/* village alerts — glassmorphic */}
           {(subState === "idle" || subState === "loading") && (
             <button
@@ -349,8 +354,6 @@ function Nav({ onMenu, onContact }) {
             </span>
           )}
 
-          {/* language dropdown — glassmorphic */}
-          <LanguageDropdown />
         </nav>
       </div>
     </header>
@@ -781,9 +784,14 @@ function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout })
                 <span className="text-muted text-sm">{t("subtotal")}</span>
                 <span className="font-display text-2xl text-gold-metal">{inr(total)}</span>
               </div>
+              {lines.length > 0 && total < MIN_ORDER_VALUE && (
+                <p className="text-xs font-semibold text-gold/80 mb-3">
+                  Add ₹{(MIN_ORDER_VALUE - total).toLocaleString("en-IN", { maximumFractionDigits: 2 })} more to checkout. (Min order ₹150)
+                </p>
+              )}
               <button
                 onClick={onCheckout}
-                disabled={lines.length === 0}
+                disabled={lines.length === 0 || total < MIN_ORDER_VALUE}
                 className="w-full bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm transition hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none shadow-glowGold"
               >
                 {t("proceedCheckout")}
