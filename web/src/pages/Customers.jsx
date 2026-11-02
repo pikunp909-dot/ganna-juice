@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { api } from "../api";
+import { useLanguage } from "../language";
 import { Spinner, Card, Button } from "../components/ui";
 
 const inr = (n) => "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
@@ -15,6 +16,7 @@ const waLink = (phone, name) => {
 const avatar = (name) => String(name || "?").trim().charAt(0).toUpperCase() || "?";
 
 export default function Customers() {
+  const { t } = useLanguage();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,9 +50,9 @@ export default function Customers() {
     return (
       <Card className="p-10 text-center">
         <p className="text-3xl mb-3">⛔</p>
-        <p className="font-display text-lg text-cream mb-1">Could not load customers</p>
+        <p className="font-display text-lg text-cream mb-1">{t("customersLoadFailed")}</p>
         <p className="text-muted text-sm mb-6">{error}</p>
-        <Button variant="primary" onClick={load}>Retry</Button>
+        <Button variant="primary" onClick={load}>{t("retry")}</Button>
       </Card>
     );
   }
@@ -66,11 +68,11 @@ export default function Customers() {
       >
         <div className="flex items-center gap-2.5">
           <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-gold">Customers</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-gold">{t("customersTitle")}</p>
         </div>
-        <h3 className="font-display text-2xl text-cream mt-2">Your regulars at a glance</h3>
+        <h3 className="font-display text-2xl text-cream mt-2">{t("customersSub")}</h3>
         <p className="text-sm text-muted mt-1">
-          {customers.length} unique customer{customers.length === 1 ? "" : "s"} · total spend + loyalty stamps.
+          {t("customersCount").replace("{count}", customers.length)}
         </p>
       </motion.div>
 
@@ -86,12 +88,12 @@ export default function Customers() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-[10px] font-bold uppercase tracking-wider text-muted border-b border-white/5">
-                  <th className="px-6 py-4">Customer</th>
-                  <th className="px-6 py-4">Phone</th>
-                  <th className="px-6 py-4 text-center">Orders</th>
-                  <th className="px-6 py-4 text-right">Total Spent</th>
-                  <th className="px-6 py-4 text-center">Stamps</th>
-                  <th className="px-6 py-4 text-right">Contact</th>
+                  <th className="px-6 py-4">{t("customer")}</th>
+                  <th className="px-6 py-4">{t("phone")}</th>
+                  <th className="px-6 py-4 text-center">{t("totalOrders")}</th>
+                  <th className="px-6 py-4 text-right">{t("totalSpent")}</th>
+                  <th className="px-6 py-4 text-center">{t("stamps")}</th>
+                  <th className="px-6 py-4 text-right">{t("contact")}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -131,7 +133,7 @@ export default function Customers() {
                         className="inline-flex items-center gap-2 rounded-full bg-mint/15 text-mint border border-mint/40 px-4 py-2 text-xs font-bold transition hover:bg-mint/25 hover:shadow-glowGoldSoft"
                       >
                         <WhatsAppIcon className="w-4 h-4" />
-                        WhatsApp
+                        {t("chatOnWhatsApp")}
                       </a>
                     </td>
                   </tr>
@@ -142,8 +144,8 @@ export default function Customers() {
           {customers.length === 0 && (
             <div className="p-10 text-center">
               <p className="text-3xl mb-3">🧾</p>
-              <p className="font-display text-lg text-cream mb-1">No customers yet</p>
-              <p className="text-muted text-sm">Orders placed on the store will show up here.</p>
+              <p className="font-display text-lg text-cream mb-1">{t("noCustomersYet")}</p>
+              <p className="text-muted text-sm">{t("customersEmptySub")}</p>
             </div>
           )}
         </div>
@@ -176,15 +178,15 @@ export default function Customers() {
               </div>
               <div className="relative grid grid-cols-3 gap-2 mb-4">
                 <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-3 text-center">
-                  <p className="text-[10px] uppercase tracking-wider text-muted font-bold">Orders</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted font-bold">{t("totalOrders")}</p>
                   <p className="text-lg text-cream font-bold mt-1">{c.orderCount}</p>
                 </div>
                 <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-3 text-center col-span-1">
-                  <p className="text-[10px] uppercase tracking-wider text-muted font-bold">Spent</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted font-bold">{t("spent")}</p>
                   <p className="text-sm text-gold-metal font-bold mt-1.5 leading-none">{inr(c.totalSpent)}</p>
                 </div>
                 <div className="rounded-2xl bg-white/[0.04] border border-white/10 p-3 text-center">
-                  <p className="text-[10px] uppercase tracking-wider text-muted font-bold">Stamps</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted font-bold">{t("stamps")}</p>
                   <p className="text-lg text-mint font-bold mt-1">🎫 {c.stamps}</p>
                 </div>
               </div>
@@ -195,7 +197,7 @@ export default function Customers() {
                 className="relative w-full inline-flex items-center justify-center gap-2 rounded-2xl bg-mint/15 text-mint border border-mint/40 px-4 py-2.5 text-sm font-bold transition hover:bg-mint/25"
               >
                 <WhatsAppIcon className="w-4 h-4" />
-                Chat on WhatsApp
+                {t("chatOnWhatsApp")}
               </a>
             </div>
           </motion.div>
@@ -203,8 +205,8 @@ export default function Customers() {
         {customers.length === 0 && (
           <Card className="p-10 text-center">
             <p className="text-3xl mb-3">🧾</p>
-            <p className="font-display text-lg text-cream mb-1">No customers yet</p>
-            <p className="text-muted text-sm">Orders placed on the store will show up here.</p>
+            <p className="font-display text-lg text-cream mb-1">{t("noCustomersYet")}</p>
+            <p className="text-muted text-sm">{t("customersEmptySub")}</p>
           </Card>
         )}
       </motion.div>

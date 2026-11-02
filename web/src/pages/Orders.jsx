@@ -1,16 +1,11 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api";
+import { useLanguage } from "../language";
 import { Card, Badge, Button, EmptyState, Spinner } from "../components/ui";
 
 const inr = (n) =>
   "₹" + Number(n || 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
-
-const FILTERS = [
-  { key: "all", label: "All" },
-  { key: "pending", label: "Pending" },
-  { key: "verified", label: "Verified" }
-];
 
 const DELIVERY_STEPS = ["Pending", "Preparing", "Out for Delivery", "Delivered"];
 
@@ -54,7 +49,7 @@ function formatDate(createdAt) {
   });
 }
 
-function LoyaltyStamps({ phone }) {
+function LoyaltyStamps({ phone, t }) {
   const [stamps, setStamps] = useState(null);
 
   useEffect(() => {
@@ -79,16 +74,16 @@ function LoyaltyStamps({ phone }) {
   return (
     <span className="inline-flex items-center gap-1.5 font-semibold text-gold">
       <span className="grid place-items-center w-5 h-5 rounded-full bg-gold/10 border border-gold/30 text-[10px]">🍹</span>
-      {stamps} {stamps === 1 ? "stamp" : "stamps"}
+      {stamps} {stamps === 1 ? t("stamp") : t("stamps")}
     </span>
   );
 }
 
-function summarizeItems(items) {
+function summarizeItems(items, t) {
   if (!items || items.length === 0) return "—";
   const head = items.slice(0, 2).map((i) => `${i.name} ×${i.quantity}`).join(", ");
   const rest = items.length - 2;
-  return rest > 0 ? `${head} +${rest} more` : head;
+  return rest > 0 ? head + " " + t("more").replace("{n}", rest) : head;
 }
 
 function DeliveryStepper({ order, busy, onUpdate }) {
@@ -120,6 +115,7 @@ function DeliveryStepper({ order, busy, onUpdate }) {
 }
 
 export default function Orders() {
+  const { t } = useLanguage();
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
@@ -248,31 +244,31 @@ export default function Orders() {
     return (
       <Card className="p-10 text-center">
         <p className="text-3xl mb-3">⛔</p>
-        <p className="font-display text-lg text-cream mb-1">Could not load orders</p>
+        <p className="font-display text-lg text-cream mb-1">{t("ordersLoadFailed")}</p>
         <p className="text-muted text-sm mb-6">{loadError}</p>
-        <Button variant="primary" onClick={load}>Retry</Button>
+        <Button variant="primary" onClick={load}>{t("retry")}</Button>
       </Card>
     );
   }
 
   const emptyText =
     filter === "all"
-      ? "No orders yet"
+      ? t("noOrdersYet")
       : filter === "pending"
-        ? "No pending orders right now"
-        : "No verified orders yet";
+        ? t("noPendingOrders")
+        : t("noVerifiedOrders");
 
   return (
     <div>
       {/* Header + segmented filter control */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h3 className="font-display text-xl text-cream">Order Receipts</h3>
-          <p className="text-sm text-muted mt-1">Check UTR numbers and verify payments.</p>
+          <h3 className="font-display text-xl text-cream">{t("ordersTitle")}</h3>
+          <p className="text-sm text-muted mt-1">{t("ordersSub")}</p>
         </div>
 
         <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-md shadow-inner p-1.5 self-start">
-          {FILTERS.map((f) => {
+          {[{ key: "all", label: t("all") }, { key: "pending", label: t("pending") }, { key: "verified", label: t("verified") }].map((f) => {
             const active = filter === f.key;
             return (
               <button
@@ -300,7 +296,7 @@ export default function Orders() {
 
       {filtered.length === 0 ? (
         <Card>
-          <EmptyState icon="🧾" title={emptyText} sub="Verified orders move to the revenue tally." />
+          <EmptyState icon="🧾" title={emptyText} sub={t("verifiedEmptySub")} />
         </Card>
       ) : (
         <>
@@ -313,15 +309,15 @@ export default function Orders() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-[11px] uppercase tracking-wider text-muted border-b border-white/10 bg-white/[0.02]">
-                    <th className="px-6 py-3.5 font-bold">Order</th>
-                    <th className="px-6 py-3.5 font-bold">Date</th>
-                    <th className="px-6 py-3.5 font-bold">Customer</th>
-                    <th className="px-6 py-3.5 font-bold">Items</th>
-                    <th className="px-6 py-3.5 font-bold text-right">Total</th>
-                    <th className="px-6 py-3.5 font-bold">UTR</th>
-                    <th className="px-6 py-3.5 font-bold">Status</th>
-                    <th className="px-6 py-3.5 font-bold">Delivery</th>
-                    <th className="px-6 py-3.5 font-bold text-right">Action</th>
+                    <th className="px-6 py-3.5 font-bold">{t("orderId")}</th>
+                    <th className="px-6 py-3.5 font-bold">{t("date")}</th>
+                    <th className="px-6 py-3.5 font-bold">{t("customer")}</th>
+                    <th className="px-6 py-3.5 font-bold">{t("items")}</th>
+                    <th className="px-6 py-3.5 font-bold text-right">{t("total")}</th>
+                    <th className="px-6 py-3.5 font-bold">{t("utr")}</th>
+                    <th className="px-6 py-3.5 font-bold">{t("status")}</th>
+                    <th className="px-6 py-3.5 font-bold">{t("delivery")}</th>
+                    <th className="px-6 py-3.5 font-bold text-right">{t("action")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -360,14 +356,14 @@ export default function Orders() {
                               onClick={() => openVerify(o)}
                               className="inline-flex items-center gap-1.5 text-xs font-bold rounded-full border border-gold/30 bg-gold/10 text-gold px-4 py-2 transition hover:border-gold/60 hover:shadow-glowGoldSoft hover:bg-gold/15"
                             >
-                              <VerifyIcon className="w-3.5 h-3.5" /> Verify Payment
+                              <VerifyIcon className="w-3.5 h-3.5" /> {t("verifyPayment")}
                             </button>
                           )}
                           <button
                             onClick={() => setDeleteTarget(o)}
                             className="w-8 h-8 grid place-items-center rounded-full bg-red-500/10 border border-red-500/20 text-red-300 hover:bg-red-500/20 hover:shadow-[0_0_18px_-6px_rgba(239,68,68,0.6)] transition"
-                            aria-label={`Delete order ${o.id}`}
-                            title="Delete order"
+                            aria-label={t("deleteOrder").replace("{id}", o.id)}
+                            title={t("deleteOrder")}
                           >
                             <TrashIcon className="w-4 h-4" />
                           </button>
@@ -401,8 +397,8 @@ export default function Orders() {
                         <button
                           onClick={() => setDeleteTarget(o)}
                           className="w-8 h-8 grid place-items-center rounded-full bg-red-500/10 border border-red-500/20 text-red-300 hover:bg-red-500/20 hover:shadow-[0_0_18px_-6px_rgba(239,68,68,0.6)] transition"
-                          aria-label={`Delete order ${o.id}`}
-                          title="Delete order"
+                          aria-label={t("deleteOrder").replace("{id}", o.id)}
+                          title={t("deleteOrder")}
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>
@@ -411,32 +407,32 @@ export default function Orders() {
 
                     <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-2.5 text-sm">
                       <div className="flex justify-between gap-3">
-                        <span className="text-muted">Date</span>
+                        <span className="text-muted">{t("date")}</span>
                         <span className="text-cream text-right">{formatDate(o.createdAt)}</span>
                       </div>
                       <div className="flex justify-between gap-3">
-                        <span className="text-muted">Customer</span>
+                        <span className="text-muted">{t("customer")}</span>
                         <span className="text-cream text-right">
                           {o.customerName}<br />
                           <span className="text-xs text-muted">{o.customerPhone}</span>
                         </span>
                       </div>
                       <div className="flex justify-between gap-3">
-                        <span className="text-muted">Items</span>
-                        <span className="text-cream text-right">{summarizeItems(o.items)}</span>
+                        <span className="text-muted">{t("items")}</span>
+                        <span className="text-cream text-right">{summarizeItems(o.items, t)}</span>
                       </div>
                       <div className="flex justify-between gap-3">
-                        <span className="text-muted">Total</span>
+                        <span className="text-muted">{t("total")}</span>
                         <span className="font-semibold text-gold-metal">{inr(o.totalAmount)}</span>
                       </div>
                       <div className="flex justify-between gap-3">
-                        <span className="text-muted">UTR</span>
+                        <span className="text-muted">{t("utr")}</span>
                         <span className="text-cream text-right">{o.utrNumber || "—"}</span>
                       </div>
                       <div className="flex justify-between gap-3">
-                        <span className="text-muted">Loyalty</span>
+                        <span className="text-muted">{t("loyalty")}</span>
                         <span className="text-cream text-right">
-                          <LoyaltyStamps phone={o.customerPhone} />
+                          <LoyaltyStamps phone={o.customerPhone} t={t} />
                         </span>
                       </div>
                     </div>
@@ -450,7 +446,7 @@ export default function Orders() {
                         onClick={() => openVerify(o)}
                         className="mt-4 w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-3.5 text-sm transition hover:brightness-110 shadow-glowGold"
                       >
-                        <VerifyIcon className="w-4 h-4" /> Verify Payment
+                        <VerifyIcon className="w-4 h-4" /> {t("verifyPayment")}
                       </button>
                     )}
                   </div>
@@ -465,34 +461,34 @@ export default function Orders() {
       <GlassModal
         open={!!verifyTarget}
         onClose={() => !verifying && setVerifyTarget(null)}
-        title="Verify Payment"
+        title={t("verifyPayment")}
       >
         {verifyTarget && (
           <>
             <div className="rounded-2xl bg-white/[0.03] border border-white/10 p-4 mb-5 text-sm">
               <div className="flex justify-between mb-1.5">
-                <span className="text-muted">Order</span>
+                <span className="text-muted">{t("orderId")}</span>
                 <span className="font-semibold text-gold2">#{verifyTarget.id}</span>
               </div>
               <div className="flex justify-between mb-1.5">
-                <span className="text-muted">Customer</span>
+                <span className="text-muted">{t("customer")}</span>
                 <span className="text-cream">{verifyTarget.customerName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-muted">Amount</span>
+                <span className="text-muted">{t("amountHeader")}</span>
                 <span className="text-cream font-semibold">{inr(verifyTarget.totalAmount)}</span>
               </div>
             </div>
 
             <label className="block mb-4">
               <span className="block text-xs font-bold uppercase tracking-wider text-muted mb-2">
-                UTR Number <span className="normal-case font-normal opacity-60">(required)</span>
+                {t("utr")} <span className="normal-case font-normal opacity-60">{t("required")}</span>
               </span>
               <input
                 type="text"
                 value={utr}
                 onChange={(e) => setUtr(e.target.value)}
-                placeholder="e.g. 415298741023"
+                placeholder={t("utrPlaceholder")}
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)] tracking-[0.08em]"
               />
             </label>
@@ -504,9 +500,9 @@ export default function Orders() {
             )}
 
             <div className="flex items-center justify-end gap-3">
-              <Button variant="ghost" onClick={() => setVerifyTarget(null)} disabled={verifying}>Cancel</Button>
+              <Button variant="ghost" onClick={() => setVerifyTarget(null)} disabled={verifying}>{t("cancel")}</Button>
               <Button variant="primary" loading={verifying} onClick={confirmVerify}>
-                {verifying ? "Verifying…" : "Confirm Verified"}
+                {verifying ? t("verifying") : t("confirmVerified")}
               </Button>
             </div>
           </>
@@ -514,12 +510,14 @@ export default function Orders() {
       </GlassModal>
 
       {/* ===== Delete confirm modal (glass) ===== */}
-      <GlassModal open={!!deleteTarget} onClose={() => !deleting && setDeleteTarget(null)} title="Delete Order">
+      <GlassModal open={!!deleteTarget} onClose={() => !deleting && setDeleteTarget(null)} title={t("deleteOrder")}>
         {deleteTarget && (
           <>
             <p className="text-sm text-muted mb-6">
-              Delete order <span className="text-cream font-semibold">#{deleteTarget.id}</span> (
-              {deleteTarget.customerName}, {inr(deleteTarget.totalAmount)})? This cannot be undone.
+              {t("confirmDelete")
+                .replace("{id}", `#${deleteTarget.id}`)
+                .replace("{name}", deleteTarget.customerName)
+                .replace("{amount}", inr(deleteTarget.totalAmount))}
             </p>
             {deleteError && (
               <div className="mb-4 text-sm text-red-300 bg-red-500/10 border border-red-500/25 rounded-xl px-4 py-3">
@@ -527,9 +525,9 @@ export default function Orders() {
               </div>
             )}
             <div className="flex items-center justify-end gap-3">
-              <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</Button>
+              <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>{t("cancel")}</Button>
               <Button variant="danger" loading={deleting} onClick={confirmDelete}>
-                {deleting ? "Deleting…" : "Delete"}
+                {deleting ? t("deleting") : t("deleteOrder")}
               </Button>
             </div>
           </>

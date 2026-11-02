@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { useLanguage } from "../language";
 import { Card, Button, Spinner } from "../components/ui";
 
 const emptySettings = {
@@ -21,6 +22,7 @@ const emptySettings = {
 };
 
 export default function Settings() {
+  const { t } = useLanguage();
   const [form, setForm] = useState(emptySettings);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -61,7 +63,7 @@ export default function Settings() {
       setProfileEmail(admin?.email || "");
       setPw((prev) => ({ ...prev, email: admin?.email || "" }));
     } catch (err) {
-      setLoadError(err.message || "Failed to load settings");
+      setLoadError(err.message || t("settingsLoadFailed"));
     } finally {
       setLoading(false);
     }
@@ -85,25 +87,25 @@ export default function Settings() {
     const emailChanged = Boolean(email) && email.toLowerCase() !== profileEmail.toLowerCase();
 
     if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setPwError("Enter a valid email address");
+      setPwError(t("invalidEmail"));
       return;
     }
     if (emailChanged && !pw.current) {
-      setPwError("Current password is required to change the email");
+      setPwError(t("currentPwRequired"));
       return;
     }
     if (pw.next) {
       if (pw.next.length < 8) {
-        setPwError("New password must be at least 8 characters");
+        setPwError(t("pwTooShort"));
         return;
       }
       if (pw.next !== pw.confirm) {
-        setPwError("New passwords do not match");
+        setPwError(t("pwMismatch"));
         return;
       }
     }
     if (!emailChanged && !pw.next) {
-      setPwError("Change your email or enter a new password first");
+      setPwError(t("noChangeProvided"));
       return;
     }
 
@@ -121,10 +123,10 @@ export default function Settings() {
           /* non-fatal — header updates on next load */
         }
       }
-      setToast("Profile updated successfully");
+      setToast(t("profileUpdatedToast"));
       setPw({ email: emailChanged ? email : pw.email, current: "", next: "", confirm: "" });
     } catch (err) {
-      setPwError(err.message || "Could not update profile");
+      setPwError(err.message || t("updateProfileFailed"));
     } finally {
       setPwSaving(false);
     }
@@ -138,7 +140,7 @@ export default function Settings() {
     e.preventDefault();
     setSaveError("");
     if (!form.upiId.trim()) {
-      setSaveError("UPI ID is required — it powers the customer payment QR code");
+      setSaveError(t("upiRequired"));
       return;
     }
     setSaving(true);
@@ -158,9 +160,9 @@ export default function Settings() {
         deliveryCharge: Number(form.deliveryCharge) || 0,
         freeDeliveryAbove: Number(form.freeDeliveryAbove) || 0
       });
-      setToast("Settings Saved! Refresh customer page to see changes");
+      setToast(t("settingsSavedToast"));
     } catch (err) {
-      setSaveError(err.message || "Save failed");
+      setSaveError(err.message || t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -180,9 +182,9 @@ export default function Settings() {
     return (
       <Card className="p-10 text-center">
         <p className="text-3xl mb-3">⛔</p>
-        <p className="font-display text-lg text-cream mb-1">Could not load settings</p>
+        <p className="font-display text-lg text-cream mb-1">{t("settingsLoadFailed")}</p>
         <p className="text-muted text-sm mb-6">{loadError}</p>
-        <Button variant="primary" onClick={load}>Retry</Button>
+        <Button variant="primary" onClick={load}>{t("retry")}</Button>
       </Card>
     );
   }
@@ -198,11 +200,11 @@ export default function Settings() {
       >
         <div className="flex items-center gap-2.5">
           <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-gold">Configuration</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-gold">{t("configurationEyebrow")}</p>
         </div>
-        <h3 className="font-display text-2xl text-cream mt-2">Stall Settings</h3>
+        <h3 className="font-display text-2xl text-cream mt-2">{t("settingsTitle")}</h3>
         <p className="text-sm text-muted mt-1">
-          Contact details and payment info shown on the customer site.
+          {t("settingsSub")}
         </p>
       </motion.div>
 
@@ -219,108 +221,103 @@ export default function Settings() {
 
         <form onSubmit={handleSave} className="relative p-6 sm:p-8">
           {/* ---- Group: Direct Contact ---- */}
-          <SectionTitle icon="📞" title="Direct Contact" sub="Where customers can reach you" />
+          <SectionTitle icon="📞" title={t("directContactTitle")} sub={t("directContactSub")} />
           <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5 mb-8">
-            <SleekField label="Phone Number">
+            <SleekField label={t("phoneNumber")}>
               <input
                 type="tel"
                 value={form.phone}
                 onChange={(e) => set("phone", e.target.value)}
-                placeholder="+91 98765 43210"
+                placeholder={t("phonePlaceholder")}
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               />
             </SleekField>
-            <SleekField label="WhatsApp Number">
+            <SleekField label={t("whatsappNumber")}>
               <input
                 type="tel"
                 value={form.whatsapp}
                 onChange={(e) => set("whatsapp", e.target.value)}
-                placeholder="+91 98765 43210"
+                placeholder={t("phonePlaceholder")}
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               />
             </SleekField>
           </div>
 
           {/* ---- Group: Social & Location ---- */}
-          <SectionTitle icon="🌐" title="Social & Location" sub="Links shown in the homepage footer" />
+          <SectionTitle icon="🌐" title={t("socialLocationTitle")} sub={t("socialLocationSub")} />
           <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5 mb-8">
-            <SleekField label="Instagram Link">
+            <SleekField label={t("instagramLink")}>
               <input
                 type="url"
                 value={form.instagram}
                 onChange={(e) => set("instagram", e.target.value)}
-                placeholder="https://instagram.com/yourpage"
+                placeholder={t("instagramPlaceholder")}
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               />
             </SleekField>
-            <SleekField label="Telegram Link">
+            <SleekField label={t("telegramLink")}>
               <input
                 type="url"
                 value={form.telegram}
                 onChange={(e) => set("telegram", e.target.value)}
-                placeholder="https://t.me/yourhandle"
+                placeholder={t("telegramPlaceholder")}
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               />
             </SleekField>
             <div className="sm:col-span-2">
-              <SleekField label="Google Maps Embed URL">
+              <SleekField label={t("mapsEmbedUrl")}>
                 <input
                   type="url"
                   value={form.locationUrl}
                   onChange={(e) => set("locationUrl", e.target.value)}
-                  placeholder="https://www.google.com/maps?q=…&output=embed"
+                  placeholder={t("mapsEmbedPlaceholder")}
                   className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
                 />
               </SleekField>
-              <p className="-mt-3 mb-0 text-xs text-muted/70 pl-1">
-                Use the share → embed URL from Google Maps (ends with{" "}
-                <span className="text-muted">output=embed</span>).
-              </p>
+              <p className="-mt-3 mb-0 text-xs text-muted/70 pl-1">{t("mapsEmbedHint")}</p>
             </div>
-            <SleekField label="Shop Pincode">
+            <SleekField label={t("pincode")}>
               <input
                 type="text"
                 inputMode="numeric"
                 value={form.pincode}
                 onChange={(e) => set("pincode", e.target.value)}
-                placeholder="e.g. 110001"
+                placeholder={t("pincodePlaceholder")}
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               />
             </SleekField>
             <div className="sm:col-span-2">
-              <SleekField label="Google Maps Link (exact location)">
+              <SleekField label={t("mapsExactLink")}>
                 <input
                   type="url"
                   value={form.exactLocation}
                   onChange={(e) => set("exactLocation", e.target.value)}
-                  placeholder="https://maps.app.goo.gl/…"
+                  placeholder={t("mapsExactPlaceholder")}
                   className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
                 />
               </SleekField>
-              <p className="-mt-3 mb-0 text-xs text-muted/70 pl-1">
-                Use the Google Maps share link. Customers tap the footer map to open this exact location.
-              </p>
+              <p className="-mt-3 mb-0 text-xs text-muted/70 pl-1">{t("mapsExactHint")}</p>
             </div>
           </div>
 
           {/* ---- Group: Store Identity ---- */}
-          <SectionTitle icon="👋" title="Store Identity" sub="Name shown in the customer welcome message" />
+          <SectionTitle icon="👋" title={t("storeIdentityTitle")} sub={t("storeIdentitySub")} />
           <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5 mb-8">
-            <SleekField label="Owner Name">
+            <SleekField label={t("ownerName")}>
               <input
                 type="text"
                 value={form.ownerName}
                 onChange={(e) => set("ownerName", e.target.value)}
-                placeholder="e.g. Kunal"
+                placeholder={t("ownerPlaceholder")}
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               />
             </SleekField>
           </div>
 
           {/* ---- Group: Delivery Charges ---- */}
-          <SectionTitle icon="🛵" title="Delivery Charges" sub="Flat fee per delivery order, waived above the free threshold" />
+          <SectionTitle icon="🛵" title={t("deliveryChargesTitle")} sub={t("deliveryChargesSub")} />
           <div className="grid sm:grid-cols-2 gap-x-4 gap-y-5 mb-8">
-            <SleekField label="Delivery Charge (₹)">
+            <SleekField label={t("deliveryCharge")}>
               <input
                 type="number"
                 min="0"
@@ -330,7 +327,7 @@ export default function Settings() {
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               />
             </SleekField>
-            <SleekField label="Free Delivery Above (₹)">
+            <SleekField label={t("freeDeliveryAbove")}>
               <input
                 type="number"
                 min="0"
@@ -343,7 +340,7 @@ export default function Settings() {
           </div>
 
           {/* ---- Group: UPI (glowing gold highlight) ---- */}
-          <SectionTitle icon="💰" title="Payments" sub="UPI powers the customer payment QR code" />
+          <SectionTitle icon="💰" title={t("paymentsTitle")} sub={t("paymentsSub")} />
           <div className="relative rounded-3xl border border-gold/40 bg-gradient-to-br from-gold/20 via-gold/[0.08] to-transparent p-5 sm:p-6 mb-8 shadow-[0_0_45px_-14px_rgba(245,158,11,0.55)]">
             <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-goldLight/80 to-transparent" />
             <div className="pointer-events-none absolute -top-14 -right-14 w-40 h-40 rounded-full bg-gold/15 blur-3xl" />
@@ -353,9 +350,9 @@ export default function Settings() {
                 🏦
               </span>
               <div>
-                <p className="font-display text-lg text-gold-metal leading-tight">UPI ID</p>
+                <p className="font-display text-lg text-gold-metal leading-tight">{t("upiId")}</p>
                 <p className="text-xs text-muted mt-1">
-                  Critical — generates the customer's payment QR at checkout. Double-check this.
+                  {t("upiCriticalNote")}
                 </p>
               </div>
             </div>
@@ -365,37 +362,34 @@ export default function Settings() {
                 type="text"
                 value={form.upiId}
                 onChange={(e) => set("upiId", e.target.value)}
-                placeholder="kunal@okaxis"
+                placeholder={t("upiPlaceholder")}
                 className="bg-black/40 border-gold/30 text-goldLight font-semibold tracking-wide placeholder:text-muted/40 focus:border-gold/80 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.18)]"
               />
             </div>
           </div>
 
           {/* ---- Group: Payment QR code ---- */}
-          <SectionTitle icon="📱" title="Payment QR Code" sub="Your UPI app QR — used at checkout" />
+          <SectionTitle icon="📱" title={t("qrCodeTitle")} sub={t("qrCodeSub")} />
           <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-5 sm:p-6 mb-8">
             <SettingsImageUpload
-              label="Payment QR code image"
+              label={t("qrImageLabel")}
+              t={t}
               value={form.qrCodeUrl}
               onChange={(url) => set("qrCodeUrl", url)}
             />
-            <p className="mt-3 text-xs text-muted/70 pl-1">
-              Upload your Google Pay / PhonePe / Paytm QR screenshot. Leave empty to auto-generate
-              from the UPI ID above.
-            </p>
+            <p className="mt-3 text-xs text-muted/70 pl-1">{t("qrHint")}</p>
           </div>
 
           {/* ---- Group: Homepage hero ---- */}
-          <SectionTitle icon="🖼️" title="Homepage Hero" sub="Backdrop of the customer site hero" />
+          <SectionTitle icon="🖼️" title={t("heroTitle")} sub={t("heroSub")} />
           <div className="rounded-3xl border border-white/10 bg-white/[0.02] p-5 sm:p-6 mb-8">
             <SettingsImageUpload
-              label="Hero background image"
+              label={t("heroImageLabel")}
+              t={t}
               value={form.heroImageUrl}
               onChange={(url) => set("heroImageUrl", url)}
             />
-            <p className="mt-3 text-xs text-muted/70 pl-1">
-              Shown as the backdrop of the customer homepage hero. Landscape works best.
-            </p>
+            <p className="mt-3 text-xs text-muted/70 pl-1">{t("heroHint")}</p>
           </div>
 
           {saveError && (
@@ -410,9 +404,7 @@ export default function Settings() {
 
           {/* ---- Save ---- */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2 border-t border-white/10">
-            <p className="text-xs text-muted/70">
-              Customers will see changes after refreshing the homepage.
-            </p>
+            <p className="text-xs text-muted/70">{t("saveNote")}</p>
             <button
               type="submit"
               disabled={saving}
@@ -420,11 +412,11 @@ export default function Settings() {
             >
               {saving ? (
                 <>
-                  <Spinner className="w-4 h-4" /> Saving…
+                  <Spinner className="w-4 h-4" /> {t("saving")}
                 </>
               ) : (
                 <>
-                  <SaveIcon className="w-4 h-4" /> Save Settings
+                  <SaveIcon className="w-4 h-4" /> {t("saveSettings")}
                 </>
               )}
             </button>
@@ -443,7 +435,7 @@ export default function Settings() {
         <div className="pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full bg-gold/8 blur-3xl" />
 
         <form onSubmit={changePassword} className="relative p-6 sm:p-8">
-          <SectionTitle icon="🔒" title="Security — Account & Password" sub="Manage your login email and password" />
+          <SectionTitle icon="🔒" title={t("securityTitle")} sub={t("securitySub")} />
 
           {pwError && (
             <motion.div
@@ -456,17 +448,17 @@ export default function Settings() {
           )}
 
           <div className="grid gap-y-5 mb-8">
-            <SleekField label="Email Address">
+            <SleekField label={t("emailAddress")}>
               <input
                 type="email"
                 value={pw.email}
                 onChange={(e) => setPw({ ...pw, email: e.target.value })}
-                placeholder="you@example.com"
+                placeholder={t("emailPlaceholder")}
                 autoComplete="email"
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               />
             </SleekField>
-            <SleekField label="Current Password">
+            <SleekField label={t("currentPassword")}>
               <input
                 type="password"
                 value={pw.current}
@@ -476,22 +468,22 @@ export default function Settings() {
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               />
             </SleekField>
-            <SleekField label="New Password">
+            <SleekField label={t("newPassword")}>
               <input
                 type="password"
                 value={pw.next}
                 onChange={(e) => setPw({ ...pw, next: e.target.value })}
-                placeholder="Minimum 8 characters"
+                placeholder={t("pwMinHint")}
                 autoComplete="new-password"
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               />
             </SleekField>
-            <SleekField label="Confirm New Password">
+            <SleekField label={t("confirmPassword")}>
               <input
                 type="password"
                 value={pw.confirm}
                 onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
-                placeholder="Re-enter new password"
+                placeholder={t("confirmPwPlaceholder")}
                 autoComplete="new-password"
                 className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               />
@@ -506,10 +498,10 @@ export default function Settings() {
             >
               {pwSaving ? (
                 <>
-                  <Spinner className="w-4 h-4" /> Updating…
+                  <Spinner className="w-4 h-4" /> {t("updating")}
                 </>
               ) : (
-                <>Update Profile</>
+                <>{t("updateProfile")}</>
               )}
             </button>
           </div>
@@ -562,7 +554,7 @@ function SleekField({ label, children }) {
 
 /* ---- elegant hero image upload (dashed / hover glow) ---- */
 
-function SettingsImageUpload({ value, onChange, label = "Image" }) {
+function SettingsImageUpload({ value, onChange, t, label }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -576,7 +568,7 @@ function SettingsImageUpload({ value, onChange, label = "Image" }) {
       const { url } = await api.upload(file);
       onChange(url);
     } catch (err) {
-      setError(err.message || "Upload failed");
+      setError(err.message || t("uploadFailed"));
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -592,7 +584,7 @@ function SettingsImageUpload({ value, onChange, label = "Image" }) {
           <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(245,158,11,0.08),transparent_50%)]" />
           <img
             src={value}
-            alt="Uploaded hero"
+            alt={t("uploadedHeroAlt")}
             className="relative w-20 h-14 rounded-xl object-cover border border-white/10 shadow-glass"
           />
           <div className="relative flex flex-col gap-2">
@@ -604,10 +596,10 @@ function SettingsImageUpload({ value, onChange, label = "Image" }) {
             >
               {uploading ? (
                 <>
-                  <Spinner className="w-3.5 h-3.5" /> Uploading…
+                  <Spinner className="w-3.5 h-3.5" /> {t("uploading")}
                 </>
               ) : (
-                "Replace"
+                t("replace")
               )}
             </button>
             <button
@@ -616,7 +608,7 @@ function SettingsImageUpload({ value, onChange, label = "Image" }) {
               disabled={uploading}
               className="text-xs font-semibold text-muted hover:text-red-300 transition disabled:opacity-50"
             >
-              Remove
+              {t("remove")}
             </button>
           </div>
         </div>
@@ -629,7 +621,7 @@ function SettingsImageUpload({ value, onChange, label = "Image" }) {
         >
           {uploading ? (
             <span className="inline-flex items-center gap-2 text-sm text-muted">
-              <Spinner className="w-4 h-4" /> Uploading…
+              <Spinner className="w-4 h-4" /> {t("uploading")}
             </span>
           ) : (
             <span className="flex flex-col items-center gap-2">
@@ -637,9 +629,9 @@ function SettingsImageUpload({ value, onChange, label = "Image" }) {
                 ⬆️
               </span>
               <span className="text-sm font-semibold text-muted group-hover:text-cream transition-colors">
-                Upload image
+                {t("uploadImage")}
               </span>
-              <span className="text-[10px] uppercase tracking-wider text-muted/60">PNG · JPG · WebP</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted/60">{t("formatsHint")}</span>
             </span>
           )}
         </button>

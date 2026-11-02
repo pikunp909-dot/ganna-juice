@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { api } from "../api";
+import { useLanguage } from "../language";
 import { Card, Badge, Button, Field, EmptyState, Spinner } from "../components/ui";
 
 const inr = (n) =>
@@ -9,6 +10,7 @@ const inr = (n) =>
 const emptyForm = { name: "", price: "", costPrice: "", description: "", imageUrl: "" };
 
 export default function Menu() {
+  const { t } = useLanguage();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -31,7 +33,7 @@ export default function Menu() {
       const { items } = await api.menu();
       setItems(items || []);
     } catch (err) {
-      setLoadError(err.message || "Failed to load menu");
+      setLoadError(err.message || t("menuLoadFailed"));
     } finally {
       setLoading(false);
     }
@@ -73,11 +75,11 @@ export default function Menu() {
   async function handleSave(e) {
     e.preventDefault();
     const price = Number(form.price);
-    if (!form.name.trim()) return setFormError("Name is required");
-    if (!Number.isFinite(price) || price < 0) return setFormError("Enter a valid price");
+    if (!form.name.trim()) return setFormError(t("nameRequired"));
+    if (!Number.isFinite(price) || price < 0) return setFormError(t("invalidPrice"));
 
     const costPrice = Number(form.costPrice) || 0;
-    if (costPrice < 0) return setFormError("Enter a valid cost price");
+    if (costPrice < 0) return setFormError(t("invalidCostPrice"));
 
     const payload = {
       name: form.name.trim(),
@@ -100,7 +102,7 @@ export default function Menu() {
       );
       setModalOpen(false);
     } catch (err) {
-      setFormError(err.message || "Save failed");
+      setFormError(err.message || t("saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -119,7 +121,7 @@ export default function Menu() {
       setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
     } catch (err) {
       setItems((prev) => prev.map((i) => (i.id === item.id ? item : i)));
-      setActionError(err.message || "Toggle failed — reverted");
+      setActionError(err.message || t("toggleFailed"));
     } finally {
       setTogglingId(null);
     }
@@ -136,7 +138,7 @@ export default function Menu() {
       setItems((prev) => prev.filter((i) => i.id !== deleteTarget.id));
       setDeleteTarget(null);
     } catch (err) {
-      setActionError(err.message || "Delete failed");
+      setActionError(err.message || t("deleteFailed"));
       setDeleteTarget(null);
     } finally {
       setDeleting(false);
@@ -157,9 +159,9 @@ export default function Menu() {
     return (
       <Card className="p-10 text-center">
         <p className="text-3xl mb-3">⛔</p>
-        <p className="font-display text-lg text-cream mb-1">Could not load menu</p>
+        <p className="font-display text-lg text-cream mb-1">{t("menuLoadFailed")}</p>
         <p className="text-muted text-sm mb-6">{loadError}</p>
-        <Button variant="primary" onClick={load}>Retry</Button>
+        <Button variant="primary" onClick={load}>{t("retry")}</Button>
       </Card>
     );
   }
@@ -168,10 +170,10 @@ export default function Menu() {
     <div>
       <div className="flex items-center justify-between gap-4 mb-6">
         <div>
-          <h3 className="font-display text-xl text-cream">Menu Items</h3>
-          <p className="text-sm text-muted mt-1">Manage what customers see on the stall menu.</p>
+          <h3 className="font-display text-xl text-cream">{t("menuTitle")}</h3>
+          <p className="text-sm text-muted mt-1">{t("menuSub")}</p>
         </div>
-        <Button variant="primary" onClick={openNew}>+ Add New Item</Button>
+        <Button variant="primary" onClick={openNew}>{t("addNewItem")}</Button>
       </div>
 
       {actionError && (
@@ -191,19 +193,19 @@ export default function Menu() {
         <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 blur-3xl" />
 
         {items.length === 0 ? (
-          <EmptyState title="No menu items yet" sub="Add your first item to start selling." />
+          <EmptyState title={t("noMenuItems")} sub={t("noMenuItemsSub")} />
         ) : (
           <>
           <div className="relative hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-[11px] uppercase tracking-wider text-muted border-b border-white/10 bg-white/[0.02]">
-                  <th className="px-6 py-3.5 font-bold w-16">Image</th>
-                  <th className="px-6 py-3.5 font-bold">Name</th>
-                  <th className="px-6 py-3.5 font-bold hidden md:table-cell">Description</th>
-                  <th className="px-6 py-3.5 font-bold text-right">Price</th>
-                  <th className="px-6 py-3.5 font-bold text-center hidden sm:table-cell">Status</th>
-                  <th className="px-6 py-3.5 font-bold text-right">Actions</th>
+                  <th className="px-6 py-3.5 font-bold w-16">{t("image")}</th>
+                  <th className="px-6 py-3.5 font-bold">{t("name")}</th>
+                  <th className="px-6 py-3.5 font-bold hidden md:table-cell">{t("description")}</th>
+                  <th className="px-6 py-3.5 font-bold text-right">{t("price")}</th>
+                  <th className="px-6 py-3.5 font-bold text-center hidden sm:table-cell">{t("status")}</th>
+                  <th className="px-6 py-3.5 font-bold text-right">{t("actions")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -238,13 +240,13 @@ export default function Menu() {
                       <p className="font-semibold text-gold2">{inr(item.price)}</p>
                       {item.costPrice != null && (
                         <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-mint bg-mint/10 border border-mint/25 rounded-full px-2 py-0.5">
-                          Profit: {inr(Number(item.price) - Number(item.costPrice))}
+                          {t("profit").replace("{amount}", inr(Number(item.price) - Number(item.costPrice)))}
                         </span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-center hidden sm:table-cell">
                       <Badge tone={item.isAvailable ? "green" : "gray"}>
-                        {item.isAvailable ? "Available" : "Out of Stock"}
+                        {item.isAvailable ? t("available") : t("outOfStock")}
                       </Badge>
                     </td>
                     <td className="px-6 py-4">
@@ -253,7 +255,7 @@ export default function Menu() {
                         <button
                           role="switch"
                           aria-checked={!!item.isAvailable}
-                          aria-label={`Toggle ${item.name} availability`}
+                          aria-label={t("toggleAvailability").replace("{name}", item.name)}
                           onClick={() => toggleAvailability(item)}
                           disabled={togglingId === item.id}
                           className={`relative w-12 h-7 rounded-full transition-all duration-300 shrink-0 disabled:opacity-60 group/switch ${
@@ -283,13 +285,13 @@ export default function Menu() {
                           onClick={() => openEdit(item)}
                           className="inline-flex items-center gap-1.5 text-xs font-bold rounded-full border border-white/10 bg-white/5 text-cream px-4 py-2 transition hover:border-gold/50 hover:text-gold hover:shadow-glowGoldSoft hover:bg-gold/10"
                         >
-                          <PencilIcon className="w-3.5 h-3.5" /> Edit
+                          <PencilIcon className="w-3.5 h-3.5" /> {t("edit")}
                         </button>
                         <button
                           onClick={() => setDeleteTarget(item)}
                           className="inline-flex items-center gap-1.5 text-xs font-bold rounded-full border border-red-500/25 bg-red-500/10 text-red-300 px-4 py-2 transition hover:bg-red-500/25 hover:border-red-500/50 hover:shadow-[0_0_18px_-6px_rgba(239,68,68,0.6)]"
                         >
-                          <TrashIcon className="w-3.5 h-3.5" /> Delete
+                          <TrashIcon className="w-3.5 h-3.5" /> {t("delete")}
                         </button>
                       </div>
                     </td>
@@ -326,7 +328,7 @@ export default function Menu() {
                         <p className="font-semibold text-cream text-base leading-snug truncate">{item.name}</p>
                         <div className="mt-1.5">
                           <Badge tone={item.isAvailable ? "green" : "gray"}>
-                            {item.isAvailable ? "Available" : "Out of Stock"}
+                            {item.isAvailable ? t("available") : t("outOfStock")}
                           </Badge>
                         </div>
                       </div>
@@ -343,7 +345,7 @@ export default function Menu() {
                           <span className="block font-display text-2xl text-gold-metal">{inr(item.price)}</span>
                           {item.costPrice != null && (
                             <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold text-mint bg-mint/10 border border-mint/25 rounded-full px-2 py-0.5">
-                              Profit: {inr(Number(item.price) - Number(item.costPrice))}
+                              {t("profit").replace("{amount}", inr(Number(item.price) - Number(item.costPrice)))}
                             </span>
                           )}
                         </div>
@@ -355,7 +357,7 @@ export default function Menu() {
                       <button
                         role="switch"
                         aria-checked={!!item.isAvailable}
-                        aria-label={`Toggle ${item.name} availability`}
+                        aria-label={t("toggleAvailability").replace("{name}", item.name)}
                         onClick={() => toggleAvailability(item)}
                         disabled={togglingId === item.id}
                         className={`relative w-12 h-7 rounded-full transition-all duration-300 shrink-0 disabled:opacity-60 group/switch ${
@@ -385,14 +387,14 @@ export default function Menu() {
                         onClick={() => openEdit(item)}
                         className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-bold rounded-full border border-white/10 bg-white/5 text-cream px-4 py-2.5 transition hover:border-gold/50 hover:text-gold hover:shadow-glowGoldSoft hover:bg-gold/10"
                       >
-                        <PencilIcon className="w-3.5 h-3.5" /> Edit
+                        <PencilIcon className="w-3.5 h-3.5" /> {t("edit")}
                       </button>
 
                       <button
                         onClick={() => setDeleteTarget(item)}
                         className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-bold rounded-full border border-red-500/25 bg-red-500/10 text-red-300 px-4 py-2.5 transition hover:bg-red-500/25 hover:border-red-500/50 hover:shadow-[0_0_18px_-6px_rgba(239,68,68,0.6)]"
                       >
-                        <TrashIcon className="w-3.5 h-3.5" /> Delete
+                        <TrashIcon className="w-3.5 h-3.5" /> {t("delete")}
                       </button>
                     </div>
                   </div>
@@ -405,20 +407,20 @@ export default function Menu() {
       </div>
 
       {/* ===== Add/Edit modal (glass + gold border) ===== */}
-      <GlassModal open={modalOpen} onClose={closeModal} title={editing ? "Edit Item" : "Add New Item"}>
+      <GlassModal open={modalOpen} onClose={closeModal} title={editing ? t("editItem") : t("addNewItem")}>
         <form onSubmit={handleSave}>
-          <Field label="Name">
+          <Field label={t("name")}>
             <input
               type="text"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. Classic Ganna"
+              placeholder={t("namePlaceholder")}
               className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               autoFocus
             />
           </Field>
 
-          <Field label="Price (₹)">
+          <Field label={t("price")}>
             <input
               type="number"
               min="0"
@@ -430,7 +432,7 @@ export default function Menu() {
             />
           </Field>
 
-          <Field label="Cost Price (₹)">
+          <Field label={t("costPrice")}>
             <input
               type="number"
               min="0"
@@ -444,18 +446,19 @@ export default function Menu() {
 
           <div className="mb-5">
             <MenuImageUpload
-              label="Image"
+              label={t("image")}
+              t={t}
               value={form.imageUrl}
               onChange={(url) => setForm({ ...form, imageUrl: url })}
             />
           </div>
 
-          <Field label="Description">
+          <Field label={t("description")}>
             <textarea
               rows={3}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="What makes it special?"
+              placeholder={t("descriptionPlaceholder")}
               className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)] resize-none"
             />
           </Field>
@@ -467,24 +470,23 @@ export default function Menu() {
           )}
 
           <div className="flex items-center justify-end gap-3 pt-2">
-            <Button variant="ghost" onClick={closeModal} disabled={saving}>Cancel</Button>
+            <Button variant="ghost" onClick={closeModal} disabled={saving}>{t("cancel")}</Button>
             <Button type="submit" variant="primary" loading={saving}>
-              {saving ? "Saving…" : editing ? "Save Changes" : "Add Item"}
+              {saving ? t("saving") : editing ? t("saveChanges") : t("addItem")}
             </Button>
           </div>
         </form>
       </GlassModal>
 
       {/* ===== Delete confirm modal ===== */}
-      <GlassModal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Item">
+      <GlassModal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title={t("deleteItem")}>
         <p className="text-sm text-muted mb-6">
-          Are you sure you want to delete <span className="text-cream font-semibold">“{deleteTarget?.name}”</span>?
-          This cannot be undone.
+          {t("confirmDeleteItem").replace("{name}", deleteTarget?.name)}
         </p>
         <div className="flex items-center justify-end gap-3">
-          <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</Button>
+          <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>{t("cancel")}</Button>
           <Button variant="danger" loading={deleting} onClick={confirmDelete}>
-            {deleting ? "Deleting…" : "Delete"}
+            {deleting ? t("deleting") : t("delete")}
           </Button>
         </div>
       </GlassModal>
@@ -535,7 +537,7 @@ function GlassModal({ open, onClose, title, children }) {
 
 /* ================= Elegant image upload ================= */
 
-function MenuImageUpload({ value, onChange, label = "Image" }) {
+function MenuImageUpload({ value, onChange, t, label }) {
   const inputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
@@ -549,7 +551,7 @@ function MenuImageUpload({ value, onChange, label = "Image" }) {
       const { url } = await api.upload(file);
       onChange(url);
     } catch (err) {
-      setError(err.message || "Upload failed");
+      setError(err.message || t("uploadFailed"));
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -565,7 +567,7 @@ function MenuImageUpload({ value, onChange, label = "Image" }) {
           <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(245,158,11,0.08),transparent_50%)]" />
           <img
             src={value}
-            alt="Uploaded"
+            alt={t("uploadedAlt")}
             loading="lazy"
             className="relative w-16 h-16 rounded-xl object-cover border border-white/10 shadow-glass"
           />
@@ -578,10 +580,10 @@ function MenuImageUpload({ value, onChange, label = "Image" }) {
             >
               {uploading ? (
                 <>
-                  <Spinner className="w-3.5 h-3.5" /> Uploading…
+                  <Spinner className="w-3.5 h-3.5" /> {t("uploading")}
                 </>
               ) : (
-                "Replace"
+                t("replace")
               )}
             </button>
             <button
@@ -590,7 +592,7 @@ function MenuImageUpload({ value, onChange, label = "Image" }) {
               disabled={uploading}
               className="text-xs font-semibold text-muted hover:text-red-300 transition disabled:opacity-50"
             >
-              Remove
+              {t("remove")}
             </button>
           </div>
         </div>
@@ -603,7 +605,7 @@ function MenuImageUpload({ value, onChange, label = "Image" }) {
         >
           {uploading ? (
             <span className="inline-flex items-center gap-2 text-sm text-muted">
-              <Spinner className="w-4 h-4" /> Uploading…
+              <Spinner className="w-4 h-4" /> {t("uploading")}
             </span>
           ) : (
             <span className="flex flex-col items-center gap-2">
@@ -611,9 +613,9 @@ function MenuImageUpload({ value, onChange, label = "Image" }) {
                 ⬆️
               </span>
               <span className="text-sm font-semibold text-muted group-hover:text-cream transition-colors">
-                Upload image
+                {t("uploadImage")}
               </span>
-              <span className="text-[10px] uppercase tracking-wider text-muted/60">PNG · JPG · WebP</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted/60">{t("formatsHint")}</span>
             </span>
           )}
         </button>
