@@ -1,13 +1,16 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, lazy, Suspense } from "react";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
 import { api } from "../api";
 import { useCart } from "../cart";
 import { useLanguage } from "../language";
-import Checkout from "../components/Checkout";
 import { EmptyState, Spinner } from "../components/ui";
 import { SugarcaneStick, SugarcaneLeaf } from "../components/sugarcane";
 import LanguageDropdown from "../components/LanguageDropdown";
+
+// Checkout is a modal — load it only when the customer actually checks out,
+// keeping the homepage bundle lean (drops qrcode.react from the entry chunk).
+const Checkout = lazy(() => import("../components/Checkout"));
 
 const MIN_ORDER_VALUE = 150;
 
@@ -281,15 +284,17 @@ export default function Home() {
         }}
       />
 
-      {/* checkout modal */}
-      <Checkout
-        open={checkoutOpen}
-        lines={lines}
-        total={total}
-        settings={settings}
-        clear={clear}
-        onClose={() => setCheckoutOpen(false)}
-      />
+      {/* checkout modal (lazy-loaded) */}
+      <Suspense fallback={null}>
+        <Checkout
+          open={checkoutOpen}
+          lines={lines}
+          total={total}
+          settings={settings}
+          clear={clear}
+          onClose={() => setCheckoutOpen(false)}
+        />
+      </Suspense>
 
       {/* toast */}
       <AnimatePresence>
