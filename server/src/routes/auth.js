@@ -1,4 +1,5 @@
 import { Router } from "express";
+import asyncHandler from "../utils/asyncHandler.js";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
@@ -22,7 +23,7 @@ const loginLimiter = rateLimit({
 // so "unknown email" and "wrong password" take the same time.
 const DUMMY_HASH = "$2a$12$LQv3c1yqBWVHxkd0LHAqO7ZgGkZzR5mJQy4YxP2q6lQK1M0Y9eW";
 
-router.post("/login", loginLimiter, async (req, res) => {
+router.post("/login", loginLimiter, asyncHandler(async (req, res) => {
   const { email, password } = req.body || {};
 
   if (typeof email !== "string" || typeof password !== "string" || !email.trim() || !password) {
@@ -50,7 +51,7 @@ router.post("/login", loginLimiter, async (req, res) => {
     admin: { id: admin.id, email: admin.email, role: admin.role },
     expiresIn: TOKEN_TTL
   });
-});
+}));
 
 // Current admin (validates a stored token on app load).
 router.get("/me", requireAdmin, (req, res) => {
@@ -60,7 +61,7 @@ router.get("/me", requireAdmin, (req, res) => {
 // Change password / update profile — protected. Current password required.
 // Accepts an optional new email (validated + uniqueness-checked) alongside
 // an optional new password. Either one can be supplied alone.
-router.post("/change-password", requireAdmin, async (req, res) => {
+router.post("/change-password", requireAdmin, asyncHandler(async (req, res) => {
   const { currentPassword, newPassword, email } = req.body || {};
 
   const emailStr = typeof email === "string" ? email.trim().toLowerCase() : "";
@@ -99,7 +100,7 @@ router.post("/change-password", requireAdmin, async (req, res) => {
 
   const updated = await get("SELECT id, email, role FROM AdminUsers WHERE id = ?", [admin.id]);
   res.json({ ok: true, admin: updated, message: "Profile updated" });
-});
+}));
 
 // Logout is client-side (token discarded); nothing to revoke server-side.
 router.post("/logout", (_req, res) => {

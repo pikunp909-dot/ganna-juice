@@ -1,17 +1,18 @@
 import { Router } from "express";
+import asyncHandler from "../utils/asyncHandler.js";
 import { run, get, all } from "../db.js";
 import requireAdmin from "../middleware/requireAdmin.js";
 
 const router = Router();
 
 // Public — all reviews, newest first.
-router.get("/", async (_req, res) => {
+router.get("/", asyncHandler(async (_req, res) => {
   const reviews = await all("SELECT * FROM Reviews ORDER BY createdAt DESC, id DESC");
   res.json({ reviews });
-});
+}));
 
 // Public — submit a review.
-router.post("/", async (req, res) => {
+router.post("/", asyncHandler(async (req, res) => {
   const body = req.body || {};
   const customerName = String(body.customerName || "").trim();
   const comment = String(body.comment || "").trim();
@@ -30,10 +31,10 @@ router.post("/", async (req, res) => {
   );
 
   res.status(201).json({ review: await get("SELECT * FROM Reviews WHERE id = ?", [lastId]) });
-});
+}));
 
 // Admin only — delete a review.
-router.delete("/:id", requireAdmin, async (req, res) => {
+router.delete("/:id", requireAdmin, asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) {
     return res.status(400).json({ error: "Invalid review id" });
@@ -43,6 +44,6 @@ router.delete("/:id", requireAdmin, async (req, res) => {
     return res.status(404).json({ error: "Review not found" });
   }
   res.json({ ok: true });
-});
+}));
 
 export default router;

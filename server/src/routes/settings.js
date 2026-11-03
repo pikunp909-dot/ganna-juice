@@ -1,4 +1,5 @@
 import { Router } from "express";
+import asyncHandler from "../utils/asyncHandler.js";
 import { run, get } from "../db.js";
 import requireAdmin from "../middleware/requireAdmin.js";
 
@@ -8,21 +9,21 @@ const FIELDS = ["phone", "whatsapp", "instagram", "telegram", "locationUrl", "pi
 const NUMERIC_FIELDS = ["deliveryCharge", "freeDeliveryAbove"];
 
 // Public subset the customer site needs.
-router.get("/public", async (_req, res) => {
+router.get("/public", asyncHandler(async (_req, res) => {
   const s = (await get("SELECT * FROM Settings WHERE id = 1")) || {};
   const pick = {};
   for (const f of FIELDS) pick[f] = s[f] || "";
   pick.heroImageUrl = s.heroImageUrl || "";
   for (const f of NUMERIC_FIELDS) pick[f] = Number(s[f] ?? 0);
   res.json({ settings: pick });
-});
+}));
 
 // Admin — full settings, and update.
-router.get("/", requireAdmin, async (_req, res) => {
+router.get("/", requireAdmin, asyncHandler(async (_req, res) => {
   res.json({ settings: (await get("SELECT * FROM Settings WHERE id = 1")) || {} });
-});
+}));
 
-router.put("/", requireAdmin, async (req, res) => {
+router.put("/", requireAdmin, asyncHandler(async (req, res) => {
   const body = req.body || {};
   const s = await get("SELECT * FROM Settings WHERE id = 1");
 
@@ -47,6 +48,6 @@ router.put("/", requireAdmin, async (req, res) => {
   }
 
   res.json({ settings: await get("SELECT * FROM Settings WHERE id = 1") });
-});
+}));
 
 export default router;
