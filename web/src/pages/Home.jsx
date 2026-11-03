@@ -734,22 +734,28 @@ function MenuSection({ items, loading, error, onRetry, isOpen, openTime, closeTi
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="text-center mb-14"
         >
-          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-gold-metal mb-4">{t("menuEyebrow")}</p>
-          <h2 className="font-display font-semibold text-4xl sm:text-6xl text-cream">{t("menu")}</h2>
-          <p className="text-muted mt-4 max-w-lg mx-auto">
-            {t("menuSub")}
-          </p>
+          <span className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-xl px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.3em] text-goldLight">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-gold opacity-75 animate-ping" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-goldLight" />
+            </span>
+            {t("menuEyebrow")}
+          </span>
+          <h2 className="mt-5 font-display font-semibold text-4xl sm:text-5xl text-cream leading-tight">
+            {t("menu")}
+          </h2>
+          <p className="text-muted mt-4 max-w-lg mx-auto leading-relaxed">{t("menuSub")}</p>
         </motion.div>
 
         {!isOpen && (
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
-            className="max-w-xl mx-auto text-center rounded-2xl border border-red-500/30 bg-red-500/[0.08] text-red-200 text-sm font-semibold px-5 py-3.5 mb-10"
+            className="max-w-xl mx-auto text-center rounded-2xl border border-red-500/30 bg-red-500/[0.08] text-red-200 text-sm font-semibold px-5 py-3.5 mb-10 backdrop-blur-md"
           >
             {t("shopClosedBanner")
               .replace("{openTime}", formatHour12(openTime))
@@ -805,32 +811,46 @@ function MenuItemCard({ item, index }) {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ delay: (index % 3) * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="group glass-card rounded-[28px] overflow-hidden shadow-glass hover:shadow-glowGold hover:-translate-y-2 transition-all duration-500 glow-ring"
+      className="group relative rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-2xl shadow-glass overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] hover:border-gold/40 hover:shadow-glowGold"
     >
-      {/* image */}
-      <div className="relative h-44 overflow-hidden">
+      {/* glass sheen + corner light pools */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+      <div className="pointer-events-none absolute -top-16 -right-16 w-48 h-48 rounded-full bg-gold/[0.12] blur-3xl opacity-70 group-hover:opacity-100 transition-opacity duration-500" />
+      <div className="pointer-events-none absolute -bottom-20 -left-16 w-48 h-48 rounded-full bg-mint/[0.10] blur-3xl opacity-60 group-hover:opacity-100 transition-opacity duration-500" />
+
+      {/* image — fixed aspect ratio, zero CLS, lazy */}
+      <div className="relative aspect-[4/3] overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-forest3 via-forest2 to-forestD" />
         {item.imageUrl ? (
-          <div className="absolute inset-0 overflow-hidden">
-            <div className="absolute -inset-y-10 inset-x-0 animate-floaty">
-              <img
-                src={item.imageUrl}
-                alt={item.name}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.08]"
-              />
-            </div>
-          </div>
+          <img
+            src={item.imageUrl}
+            alt={item.name || "Fresh juice"}
+            loading="lazy"
+            decoding="async"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.08]"
+          />
         ) : (
-          <span className="relative grid place-items-center h-full text-6xl drop-shadow-[0_8px_20px_rgba(245,158,11,0.35)]">🍹</span>
+          <span
+            className="absolute inset-0 grid place-items-center text-gold/[0.28]"
+            aria-hidden="true"
+          >
+            <svg className="w-16 h-16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+              <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+              <path d="M5 8l1.5-5.5h5L13 8" />
+              <path d="M9.5 11v6" />
+              <path d="M12.5 13.5H6.5" />
+            </svg>
+          </span>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0b1a10]/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0b1a10]/70 via-transparent to-transparent" />
         <span className="absolute top-3.5 right-3.5 bg-black/40 backdrop-blur-md text-[11px] font-bold uppercase tracking-wider text-cream px-3 py-1 rounded-full border border-white/15 shadow-glass">
           {t("fresh")}
         </span>
       </div>
 
       {/* body */}
-      <div className="p-6">
+      <div className="relative p-6">
         <h3 className="font-display text-xl text-cream group-hover:text-gold transition-colors">{item.name}</h3>
         <p className="text-sm text-muted mt-1.5 line-clamp-2 min-h-[2.5rem]">
           {item.description || t("itemDescFallback")}
@@ -839,7 +859,7 @@ function MenuItemCard({ item, index }) {
         <div className="mt-5 flex items-center justify-between">
           <span className="font-display text-2xl text-gold-metal">{inr(item.price)}</span>
 
-          {/* circular glowing add button */}
+          {/* add to cart — exact same logic, untouched */}
           <motion.button
             onClick={handleAdd}
             whileTap={{ scale: 0.88 }}
