@@ -14,6 +14,27 @@ const MIN_ORDER_VALUE = 150;
 
 const emptyForm = { customerName: "", customerPhone: "", address: "" };
 
+/* Premium input styling — glass field with smooth gold focus ring.
+   text-base on mobile prevents iOS zoom; error variant glows red. */
+const inputCls = (err = false) =>
+  `w-full rounded-xl bg-white/[0.05] border px-4 py-3.5 text-base text-cream placeholder:text-muted/50 outline-none transition-all duration-300 ${
+    err
+      ? "border-red-500/60 focus:border-red-500/70 focus:shadow-[0_0_0_3px_rgba(248,113,113,0.15)]"
+      : "border-white/10 focus:border-gold/60 focus:bg-white/[0.07] focus:shadow-[0_0_0_3px_rgba(245,158,11,0.12)]"
+  }`;
+
+function PremiumField({ label, error, children }) {
+  return (
+    <div>
+      {label && (
+        <label className="block mb-1.5 text-xs font-bold uppercase tracking-wider text-muted">{label}</label>
+      )}
+      {children}
+      {error && <p className="text-xs text-red-300 mt-1.5">{error}</p>}
+    </div>
+  );
+}
+
 const STEP_INDEX = { form: 0, payment: 1, success: 2 };
 
 /* Framer Motion variants for step transitions */
@@ -210,8 +231,8 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          {/* backdrop */}
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
+          {/* backdrop — heavier frost */}
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-xl" onClick={onClose} />
 
           {/* modal shell */}
           <motion.div
@@ -221,6 +242,8 @@ export default function Checkout({ open, lines, total, settings: propSettings, c
             exit={{ opacity: 0, y: 20, scale: 0.98 }}
             transition={{ type: "spring", stiffness: 280, damping: 30 }}
           >
+            {/* glass top sheen hairline */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
             {/* ambient glow inside the shell */}
             <div className="pointer-events-none absolute inset-0">
               <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-gold/10 blur-[90px]" />
@@ -485,35 +508,31 @@ function DetailsStep({ mode, setMode, form, setForm, errors, onNext, lines, tota
       </div>
 
       {/* fields */}
-      <div>
-        <label className="block mb-1.5 text-xs font-bold uppercase tracking-wider text-muted">{t("name")}</label>
+      <PremiumField label={t("name")} error={errors.customerName}>
         <input
           type="text"
           placeholder={t("name")}
+          autoComplete="name"
+          enterKeyHint="next"
           value={form.customerName}
           onChange={(e) => setForm({ ...form, customerName: e.target.value })}
-          className={errors.customerName ? "!border-red-500/60" : ""}
+          className={inputCls(!!errors.customerName)}
         />
-        {errors.customerName && (
-          <p className="text-xs text-red-300 mt-1.5">{errors.customerName}</p>
-        )}
-      </div>
+      </PremiumField>
 
-      <div>
-        <label className="block mb-1.5 text-xs font-bold uppercase tracking-wider text-muted">{t("mobileNumber")}</label>
+      <PremiumField label={t("mobileNumber")} error={errors.customerPhone}>
         <input
           type="tel"
           inputMode="numeric"
           maxLength={10}
+          autoComplete="tel"
+          enterKeyHint="next"
           placeholder={t("mobileNumber")}
           value={form.customerPhone}
           onChange={(e) => setForm({ ...form, customerPhone: e.target.value.replace(/\D/g, "") })}
-          className={errors.customerPhone ? "!border-red-500/60" : ""}
+          className={inputCls(!!errors.customerPhone)}
         />
-        {errors.customerPhone && (
-          <p className="text-xs text-red-300 mt-1.5">{errors.customerPhone}</p>
-        )}
-      </div>
+      </PremiumField>
 
       <AnimatePresence>
         {mode === "Delivery" && (
@@ -524,17 +543,17 @@ function DetailsStep({ mode, setMode, form, setForm, errors, onNext, lines, tota
             transition={{ duration: 0.28, ease: "easeOut" }}
             className="overflow-hidden"
           >
-            <label className="block mb-1.5 text-xs font-bold uppercase tracking-wider text-muted">{t("deliveryAddress")}</label>
-            <textarea
-              rows={2}
-              placeholder={t("deliveryAddress")}
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-              className={`resize-none ${errors.address ? "!border-red-500/60" : ""}`}
-            />
-            {errors.address && (
-              <p className="text-xs text-red-300 mt-1.5">{errors.address}</p>
-            )}
+            <PremiumField label={t("deliveryAddress")} error={errors.address}>
+              <textarea
+                rows={2}
+                placeholder={t("deliveryAddress")}
+                autoComplete="street-address"
+                enterKeyHint="done"
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                className={`resize-none ${inputCls(!!errors.address)}`}
+              />
+            </PremiumField>
           </motion.div>
         )}
       </AnimatePresence>
@@ -546,7 +565,7 @@ function DetailsStep({ mode, setMode, form, setForm, errors, onNext, lines, tota
       <button
         onClick={onNext}
         disabled={lines.length === 0}
-        className="w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm transition hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none shadow-glowGold"
+        className="w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm tracking-wide transition-all hover:brightness-110 hover:shadow-[0_0_60px_-12px_rgba(245,158,11,0.55)] disabled:opacity-40 disabled:pointer-events-none shadow-glowGold"
       >
         {t("continueToPayment")} →
       </button>
@@ -766,23 +785,20 @@ function PaymentStep({
 
             {/* UTR verification */}
             <div className="relative px-6 pt-5 pb-6">
-              <label className="block mb-1.5 text-xs font-bold uppercase tracking-wider text-muted">
-                {t("paidEnterUtr")}
-              </label>
-              <input
-                type="text"
-                inputMode="numeric"
-                maxLength={12}
-                placeholder={t("utrPlaceholder")}
-                value={utr}
-                onChange={(e) => setUtr(e.target.value.replace(/\D/g, ""))}
-                className={`text-center tracking-[0.2em] font-semibold ${
-                  utrError ? "!border-red-500/60" : ""
-                }`}
-              />
-              {utrError ? (
-                <p className="text-xs text-red-300 mt-1.5">{utrError}</p>
-              ) : (
+              <PremiumField label={t("paidEnterUtr")} error={utrError}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={12}
+                  autoComplete="off"
+                  enterKeyHint="done"
+                  placeholder={t("utrPlaceholder")}
+                  value={utr}
+                  onChange={(e) => setUtr(e.target.value.replace(/\D/g, ""))}
+                  className={`text-center tracking-[0.2em] font-semibold ${inputCls(!!utrError)}`}
+                />
+              </PremiumField>
+              {!utrError && (
                 <p className="text-[11px] text-muted/70 mt-1.5">
                   {t("utrHint")}
                 </p>
@@ -797,7 +813,7 @@ function PaymentStep({
               <button
                 onClick={onPlace}
                 disabled={finalizing || utr.trim().length !== 12}
-                className="mt-4 w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm transition hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none shadow-glowGold"
+                className="mt-4 w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm tracking-wide transition-all hover:brightness-110 hover:shadow-[0_0_60px_-12px_rgba(245,158,11,0.55)] disabled:opacity-40 disabled:pointer-events-none shadow-glowGold"
               >
                 {finalizing ? (
                   <>
@@ -855,7 +871,7 @@ function PaymentStep({
             <button
               onClick={onPlace}
               disabled={finalizing}
-              className="mt-5 w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm transition hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none shadow-glowGold"
+              className="mt-5 w-full inline-flex items-center justify-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm tracking-wide transition-all hover:brightness-110 hover:shadow-[0_0_60px_-12px_rgba(245,158,11,0.55)] disabled:opacity-40 disabled:pointer-events-none shadow-glowGold"
             >
               {finalizing ? (
                 <>
