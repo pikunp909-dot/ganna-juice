@@ -9,6 +9,16 @@ const inr = (n) =>
 
 const emptyForm = { name: "", price: "", costPrice: "", description: "", imageUrl: "" };
 
+const listContainer = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.06 } }
+};
+
+const listItem = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.22, 1, 0.36, 1] } }
+};
+
 export default function Menu() {
   const { t } = useLanguage();
   const [items, setItems] = useState([]);
@@ -188,7 +198,7 @@ export default function Menu() {
       )}
 
       {/* ===== Glass table container ===== */}
-      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass">
+      <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-xl shadow-glass">
         <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
         <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 blur-3xl" />
 
@@ -208,10 +218,11 @@ export default function Menu() {
                   <th className="px-6 py-3.5 font-bold text-right">{t("actions")}</th>
                 </tr>
               </thead>
-              <tbody>
+              <motion.tbody initial="hidden" animate="show" variants={listContainer}>
                 {items.map((item) => (
-                  <tr
+                  <motion.tr
                     key={item.id}
+                    variants={listItem}
                     className="group transition-all duration-300 hover:bg-gold/[0.045] hover:shadow-[inset_0_0_32px_-16px_rgba(245,158,11,0.35)]"
                   >
                     <td className="relative px-6 py-4 w-16">
@@ -295,17 +306,17 @@ export default function Menu() {
                         </button>
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
-              </tbody>
+              </motion.tbody>
             </table>
           </div>
 
           {/* ===== Mobile cards (glass panels) ===== */}
-          <div className="md:hidden grid gap-5">
+          <motion.div className="md:hidden grid gap-5" initial="hidden" animate="show" variants={listContainer}>
             {items.map((item) => (
-              <div key={item.id}>
-                <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass">
+              <motion.div key={item.id} variants={listItem}>
+                <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-md shadow-glass">
                   <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
                   <div className="pointer-events-none absolute -top-16 -right-12 w-44 h-44 rounded-full bg-gold/8 blur-3xl" />
 
@@ -399,9 +410,9 @@ export default function Menu() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
           </>
         )}
       </div>
@@ -415,7 +426,7 @@ export default function Menu() {
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder={t("namePlaceholder")}
-              className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+              className="bg-black/30 border-white/10 text-base focus:border-gold/60 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
               autoFocus
             />
           </Field>
@@ -428,7 +439,7 @@ export default function Menu() {
               value={form.price}
               onChange={(e) => setForm({ ...form, price: e.target.value })}
               placeholder="30"
-              className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+              className="bg-black/30 border-white/10 text-base focus:border-gold/60 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
             />
           </Field>
 
@@ -440,7 +451,7 @@ export default function Menu() {
               value={form.costPrice}
               onChange={(e) => setForm({ ...form, costPrice: e.target.value })}
               placeholder="15"
-              className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
+              className="bg-black/30 border-white/10 text-base focus:border-gold/60 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
             />
           </Field>
 
@@ -459,7 +470,7 @@ export default function Menu() {
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
               placeholder={t("descriptionPlaceholder")}
-              className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)] resize-none"
+              className="bg-black/30 border-white/10 text-base focus:border-gold/60 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)] resize-none"
             />
           </Field>
 
@@ -609,8 +620,8 @@ function MenuImageUpload({ value, onChange, t, label }) {
             </span>
           ) : (
             <span className="flex flex-col items-center gap-2">
-              <span className="w-11 h-11 rounded-2xl bg-gold/10 border border-gold/25 grid place-items-center text-lg text-gold transition-transform duration-300 group-hover:scale-110">
-                ⬆️
+              <span className="w-11 h-11 rounded-2xl bg-gold/10 border border-gold/25 grid place-items-center text-gold transition-transform duration-300 group-hover:scale-110">
+                <UploadIcon className="w-5 h-5" />
               </span>
               <span className="text-sm font-semibold text-muted group-hover:text-cream transition-colors">
                 {t("uploadImage")}
@@ -649,6 +660,14 @@ function PencilIcon(p) {
   return (
     <IconBase {...p}>
       <path d="M17 3a2.8 2.8 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
+    </IconBase>
+  );
+}
+
+function UploadIcon(p) {
+  return (
+    <IconBase {...p}>
+      <path d="M12 16V4m0 0 4 4m-4-4-4 4M4 20h16" />
     </IconBase>
   );
 }
