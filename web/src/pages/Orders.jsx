@@ -118,6 +118,23 @@ function DeliveryStepper({ order, busy, onUpdate }) {
   );
 }
 
+function StatusBadge({ status }) {
+  const verified = status === "Verified";
+  const pulse = verified ? "bg-mint" : "bg-gold";
+  const cls = verified
+    ? "text-mint border-mint/40 bg-mint/10 shadow-[0_0_18px_-6px_rgba(63,165,102,0.55)]"
+    : "text-gold border-gold/40 bg-gold/10 shadow-[0_0_18px_-6px_rgba(245,158,11,0.55)]";
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider px-3 py-1 rounded-full border ${cls}`}>
+      <span className="relative flex h-1.5 w-1.5">
+        <span className={`absolute inline-flex h-full w-full rounded-full ${pulse} opacity-75 animate-ping`} />
+        <span className={`relative inline-flex h-1.5 w-1.5 rounded-full ${pulse}`} />
+      </span>
+      {status}
+    </span>
+  );
+}
+
 export default function Orders() {
   const { t } = useLanguage();
   const [orders, setOrders] = useState([]);
@@ -305,9 +322,9 @@ export default function Orders() {
       ) : (
         <>
           {/* ===== Desktop table (glass) ===== */}
-          <div className="relative hidden md:block overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass">
+          <div className="relative hidden md:block overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-2xl shadow-glass">
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-            <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/8 max-lg:hidden blur-3xl" />
+            <div className="pointer-events-none absolute -top-20 -right-16 w-64 h-64 rounded-full bg-gold/[0.08] max-lg:hidden blur-3xl" />
 
             <div className="relative overflow-x-auto">
               <table className="w-full text-sm">
@@ -348,7 +365,7 @@ export default function Orders() {
                       <td className="px-6 py-4 text-right font-semibold text-cream">{inr(o.totalAmount)}</td>
                       <td className="px-6 py-4 text-muted">{o.utrNumber || "—"}</td>
                       <td className="px-6 py-4">
-                        <Badge tone={o.status === "Verified" ? "green" : "gold"}>{o.status}</Badge>
+                        <StatusBadge status={o.status} />
                       </td>
                       <td className="px-6 py-4">
                         <DeliveryStepper order={o} busy={updatingId === o.id} onUpdate={changeStatus} />
@@ -389,15 +406,15 @@ export default function Orders() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 + i * 0.05, duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
               >
-                <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.03] backdrop-blur-md shadow-glass">
+                <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/[0.04] backdrop-blur-2xl shadow-glass">
                   <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-                  <div className="pointer-events-none absolute -top-16 -right-12 w-44 h-44 rounded-full bg-gold/8 max-lg:hidden blur-3xl" />
+                  <div className="pointer-events-none absolute -top-16 -right-12 w-44 h-44 rounded-full bg-gold/[0.08] max-lg:hidden blur-3xl" />
 
                   <div className="relative p-5">
                     <div className="flex items-center justify-between mb-4">
                       <span className="font-display text-xl text-gold2">#{fmtOrderId(o.id)}</span>
                       <div className="flex items-center gap-2">
-                        <Badge tone={o.status === "Verified" ? "green" : "gold"}>{o.status}</Badge>
+                        <StatusBadge status={o.status} />
                         <button
                           onClick={() => setDeleteTarget(o)}
                           className="w-8 h-8 grid place-items-center rounded-full bg-red-500/10 border border-red-500/20 text-red-300 hover:bg-red-500/20 hover:shadow-[0_0_18px_-6px_rgba(239,68,68,0.6)] transition"
@@ -493,7 +510,7 @@ export default function Orders() {
                 value={utr}
                 onChange={(e) => setUtr(e.target.value)}
                 placeholder={t("utrPlaceholder")}
-                className="bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)] tracking-[0.08em]"
+                className="w-full rounded-xl bg-white/[0.05] border px-4 py-3.5 text-base text-cream placeholder:text-muted/50 outline-none transition-all duration-300 border-white/10 focus:border-gold/60 focus:bg-white/[0.07] focus:shadow-[0_0_0_3px_rgba(245,158,11,0.12)] tracking-[0.08em]"
               />
             </label>
 
@@ -569,7 +586,7 @@ function GlassModal({ open, onClose, title, children }) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
         >
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-xl" onClick={onClose} />
           <motion.div
             initial={{ opacity: 0, y: 28, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -577,16 +594,19 @@ function GlassModal({ open, onClose, title, children }) {
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
             className="relative w-full max-w-md rounded-[28px] p-[1.5px] bg-gradient-to-br from-goldLight via-gold/60 to-goldDark shadow-card"
           >
-            <div className="relative rounded-[26.5px] bg-forest2/85 backdrop-blur-md p-6 overflow-hidden">
-              <div className="pointer-events-none absolute -top-20 -right-16 w-52 h-52 rounded-full bg-gold/10 max-lg:hidden blur-3xl" />
+            <div className="relative rounded-[26.5px] bg-forest2/90 backdrop-blur-xl p-6 overflow-hidden">
+              <div className="pointer-events-none absolute -top-20 -right-16 w-52 h-52 rounded-full bg-gold/[0.10] max-lg:hidden blur-3xl" />
               <div className="relative flex items-center justify-between mb-5">
                 <h3 className="font-display text-2xl text-cream">{title}</h3>
                 <button
                   onClick={onClose}
-                  className="w-9 h-9 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:bg-white/10"
+                  className="w-9 h-9 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:bg-white/10 hover:border-gold/40 transition-all"
                   aria-label="Close"
                 >
-                  ✕
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 6 6 18" />
+                    <path d="m6 6 12 12" />
+                  </svg>
                 </button>
               </div>
               <div className="relative max-h-[72vh] overflow-y-auto pr-1">{children}</div>
