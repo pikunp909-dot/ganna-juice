@@ -942,6 +942,16 @@ function MenuItemCard({ item, index }) {
 
 function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout, isOpen, openTime, closeTime }) {
   const { t } = useLanguage();
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // responsive drawer motion: right-slide on desktop, bottom-sheet on mobile
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setIsDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   return (
     <AnimatePresence>
@@ -955,81 +965,141 @@ function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout, i
             onClick={onClose}
           />
           <motion.aside
-            className="fixed z-50 w-full md:max-w-md bg-forest2/85 backdrop-blur-2xl border-l border-white/10 flex flex-col shadow-glass md:inset-y-0 md:right-0 rounded-t-[28px] md:rounded-none bottom-0 max-h-[85vh] md:max-h-none"
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", stiffness: 300, damping: 32 }}
+            className="fixed z-50 w-full md:max-w-md bg-forest2/90 backdrop-blur-3xl border-l border-white/10 flex flex-col shadow-glass md:inset-y-0 md:right-0 rounded-t-[28px] md:rounded-none bottom-0 max-h-[85vh] md:max-h-none overflow-hidden"
+            initial={isDesktop ? { x: "100%" } : { y: "100%" }}
+            animate={{ x: 0, y: 0 }}
+            exit={isDesktop ? { x: "100%" } : { y: "100%" }}
+            transition={{ type: "spring", stiffness: 320, damping: 34 }}
           >
-            <div className="md:hidden pt-3 flex justify-center">
+            {/* glass sheen + gold corner glow */}
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+            <div className="pointer-events-none absolute -top-24 -right-16 w-64 h-64 rounded-full bg-gold/[0.10] blur-3xl" />
+
+            {/* mobile drag handle */}
+            <div className="md:hidden relative pt-3 flex justify-center">
               <span className="w-12 h-1.5 rounded-full bg-white/[0.15]" />
             </div>
-            <div className="flex items-center justify-between px-6 h-16 border-b border-white/5">
-              <h3 className="font-display text-xl text-cream">{t("yourCart")}</h3>
+
+            {/* header */}
+            <div className="relative flex items-center justify-between px-6 h-16 border-b border-white/5">
+              <div className="flex items-center gap-2.5">
+                <h3 className="font-display text-xl text-cream">{t("yourCart")}</h3>
+                {lines.length > 0 && (
+                  <span className="text-[11px] font-bold text-forest bg-gold-metal rounded-full px-2.5 py-0.5">
+                    {lines.length}
+                  </span>
+                )}
+              </div>
               <button
                 onClick={onClose}
-                className="w-9 h-9 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:bg-white/10"
+                className="w-9 h-9 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:bg-white/10 hover:border-gold/40 transition-all"
                 aria-label="Close cart"
               >
-                ✕
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6 6 18" />
+                  <path d="m6 6 12 12" />
+                </svg>
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 py-5">
+            {/* items */}
+            <div className="relative flex-1 overflow-y-auto px-5 py-5">
               {lines.length === 0 ? (
                 <EmptyState icon="🧺" title={t("cartEmpty")} sub={t("cartEmptySub")} />
               ) : (
-                <div className="space-y-4">
-                  {lines.map((l) => (
-                    <div key={l.item.id} className="glass-card rounded-2xl p-3 flex gap-4 items-center">
-                      <div className="w-14 h-14 shrink-0 rounded-2xl bg-forest3 grid place-items-center text-2xl border border-white/10 overflow-hidden">
-                        {l.item.imageUrl ? (
-                          <img src={l.item.imageUrl} alt={l.item.name} className="w-full h-full object-cover" />
-                        ) : (
-                          "🍹"
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-cream truncate">{l.item.name}</p>
-                        <p className="text-sm text-gold-metal">{inr(l.item.price)}</p>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <button
-                          onClick={() => setQty(l.item.id, l.qty - 1)}
-                          className="w-8 h-8 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:border-gold/40"
-                          aria-label="Decrease quantity"
-                        >
-                          −
-                        </button>
-                        <span className="w-6 text-center font-bold">{l.qty}</span>
-                        <button
-                          onClick={() => setQty(l.item.id, l.qty + 1)}
-                          className="w-8 h-8 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:border-gold/40"
-                          aria-label="Increase quantity"
-                        >
-                          +
-                        </button>
+                <div className="space-y-3">
+                  <AnimatePresence initial={false} mode="popLayout">
+                    {lines.map((l) => (
+                      <motion.div
+                        key={l.item.id}
+                        layout
+                        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, x: 40, scale: 0.95 }}
+                        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                        className="relative flex items-center gap-3.5 rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-3 shadow-glass"
+                      >
+                        {/* thumbnail — lazy */}
+                        <div className="w-16 h-16 shrink-0 rounded-2xl bg-forest3 border border-white/10 overflow-hidden grid place-items-center">
+                          {l.item.imageUrl ? (
+                            <img
+                              src={l.item.imageUrl}
+                              alt={l.item.name}
+                              loading="lazy"
+                              decoding="async"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <svg className="w-7 h-7 text-gold/[0.30]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+                              <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+                              <path d="M5 8l1.5-5.5h5L13 8" />
+                              <path d="M9.5 11v6" />
+                              <path d="M12.5 13.5H6.5" />
+                            </svg>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-cream truncate">{l.item.name}</p>
+                          <p className="text-sm text-gold-metal mt-0.5">{inr(l.item.price)}</p>
+                          <p className="text-xs text-muted/70 mt-0.5">
+                            {t("subtotal")}: {inr(l.item.price * l.qty)}
+                          </p>
+                        </div>
+
+                        {/* quantity stepper */}
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => setQty(l.item.id, l.qty - 1)}
+                            className="w-8 h-8 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:border-gold/40 transition-all"
+                            aria-label="Decrease quantity"
+                          >
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                              <path d="M5 12h14" />
+                            </svg>
+                          </button>
+                          <span className="w-6 text-center font-bold text-cream">{l.qty}</span>
+                          <button
+                            onClick={() => setQty(l.item.id, l.qty + 1)}
+                            className="w-8 h-8 grid place-items-center rounded-full bg-white/5 border border-white/10 text-muted hover:text-cream hover:border-gold/40 transition-all"
+                            aria-label="Increase quantity"
+                          >
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                              <path d="M12 5v14" />
+                              <path d="M5 12h14" />
+                            </svg>
+                          </button>
+                        </div>
+
                         <button
                           onClick={() => remove(l.item.id)}
-                          className="w-8 h-8 grid place-items-center rounded-full text-muted/60 hover:text-red-300"
+                          className="w-8 h-8 grid place-items-center rounded-full text-muted/60 hover:text-red-300 hover:bg-red-500/10 transition-all"
                           aria-label={`Remove ${l.item.name}`}
                         >
-                          ✕
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M3 6h18" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                            <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                            <path d="M10 11v6" />
+                            <path d="M14 11v6" />
+                          </svg>
                         </button>
-                      </div>
-                    </div>
-                  ))}
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 </div>
               )}
             </div>
 
-            <div className="px-6 py-5 border-t border-white/5 bg-forest/40">
+            {/* footer */}
+            <div className="relative px-6 py-5 border-t border-white/10 bg-black/25 backdrop-blur-xl">
               <div className="flex items-center justify-between mb-4">
                 <span className="text-muted text-sm">{t("subtotal")}</span>
                 <span className="font-display text-2xl text-gold-metal">{inr(total)}</span>
               </div>
               {lines.length > 0 && total < MIN_ORDER_VALUE && (
-                <p className="text-xs font-semibold text-gold/80 mb-3">
+                <p className="text-xs font-semibold text-gold/80 rounded-xl border border-gold/20 bg-gold/[0.06] px-3.5 py-2.5 mb-3 text-center">
                   Add ₹{(MIN_ORDER_VALUE - total).toLocaleString("en-IN", { maximumFractionDigits: 2 })} more to checkout. (Min order ₹150)
                 </p>
               )}
@@ -1040,13 +1110,14 @@ function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout, i
                     .replace("{closeTime}", formatHour12(closeTime))}
                 </p>
               )}
-              <button
+              <motion.button
                 onClick={onCheckout}
                 disabled={lines.length === 0 || total < MIN_ORDER_VALUE || !isOpen}
-                className="w-full bg-gold-metal text-forest font-bold rounded-2xl px-6 py-4 text-sm transition hover:brightness-110 disabled:opacity-40 disabled:pointer-events-none shadow-glowGold"
+                whileTap={{ scale: lines.length === 0 || total < MIN_ORDER_VALUE || !isOpen ? 1 : 0.98 }}
+                className="w-full bg-gold-metal text-forest font-extrabold rounded-2xl px-6 py-4 text-sm tracking-wide transition-all hover:brightness-110 hover:shadow-[0_0_60px_-12px_rgba(245,158,11,0.55)] disabled:opacity-40 disabled:pointer-events-none shadow-glowGold"
               >
                 {t("proceedCheckout")}
-              </button>
+              </motion.button>
               <p className="text-center text-xs text-muted/60 mt-3">
                 {t("drawerHint")}
               </p>
