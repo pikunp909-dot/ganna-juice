@@ -550,7 +550,7 @@ function Hero({ heroImageUrl }) {
     <section id="top" ref={ref} className="relative min-h-screen flex items-center overflow-hidden">
       {/* layered ambient orbs with drift */}
       <div className="pointer-events-none absolute inset-0">
-        <motion.div style={{ y: orbY }} className="absolute -top-32 -left-32 w-[36rem] h-[36rem] rounded-full bg-gold/15 blur-[130px] animate-orbDrift" />
+        <motion.div style={{ y: orbY }} className="absolute -top-32 -left-32 w-[36rem] h-[36rem] rounded-full bg-gold/[0.15] blur-[130px] animate-orbDrift" />
         <motion.div style={{ y: orbY }} className="absolute bottom-0 right-0 w-[30rem] h-[30rem] rounded-full bg-mint/10 blur-[130px]" />
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full bg-forest3/50 blur-[90px]" />
       </div>
@@ -904,7 +904,7 @@ function CartDrawer({ open, onClose, lines, total, setQty, remove, onCheckout, i
             transition={{ type: "spring", stiffness: 300, damping: 32 }}
           >
             <div className="md:hidden pt-3 flex justify-center">
-              <span className="w-12 h-1.5 rounded-full bg-white/15" />
+              <span className="w-12 h-1.5 rounded-full bg-white/[0.15]" />
             </div>
             <div className="flex items-center justify-between px-6 h-16 border-b border-white/5">
               <h3 className="font-display text-xl text-cream">{t("yourCart")}</h3>
@@ -1407,8 +1407,8 @@ function ReviewsSection({ exactLocation }) {
     <section id="reviews" className="relative px-4 sm:px-6 py-24 overflow-hidden">
       {/* ambient glow */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-gold/8 blur-[120px]" />
-        <div className="absolute bottom-0 -right-32 w-96 h-96 rounded-full bg-mint/6 blur-[120px]" />
+        <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-gold/[0.08] blur-[120px]" />
+        <div className="absolute bottom-0 -right-32 w-96 h-96 rounded-full bg-mint/[0.06] blur-[120px]" />
       </div>
 
       {/* sugarcane decor */}
@@ -1648,7 +1648,7 @@ function ReferSection() {
     <section className="relative px-4 sm:px-6 py-24 overflow-hidden">
       {/* ambient glow */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute top-1/3 -right-24 w-[34rem] h-[34rem] rounded-full bg-gold/8 blur-[130px]" />
+        <div className="absolute top-1/3 -right-24 w-[34rem] h-[34rem] rounded-full bg-gold/[0.08] blur-[130px]" />
         <div className="absolute bottom-0 -left-24 w-96 h-96 rounded-full bg-mint/5 blur-[120px]" />
       </div>
 
@@ -1663,7 +1663,7 @@ function ReferSection() {
           <div className="rounded-[32px] p-px bg-gradient-to-br from-gold/50 via-white/10 to-gold/30 shadow-glass">
             <div className="relative overflow-hidden rounded-[31px] border border-white/10 bg-forest2/60 backdrop-blur-2xl">
               {/* glow orbs + corner sheen */}
-              <div className="pointer-events-none absolute -top-24 -right-16 w-72 h-72 rounded-full bg-gold/15 blur-3xl" />
+              <div className="pointer-events-none absolute -top-24 -right-16 w-72 h-72 rounded-full bg-gold/[0.15] blur-3xl" />
               <div className="pointer-events-none absolute -bottom-28 -left-20 w-72 h-72 rounded-full bg-mint/10 blur-3xl" />
               <div className="absolute inset-0 bg-[radial-gradient(120%_80%_at_0%_0%,rgba(255,255,255,0.05),transparent_50%)]" />
 
