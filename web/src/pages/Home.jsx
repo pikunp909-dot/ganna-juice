@@ -1096,122 +1096,212 @@ function TrackOrder() {
 
   const currentIdx = order ? TRACK_STEPS.indexOf(order.deliveryStatus) : -1;
 
+  const orderDate = (() => {
+    if (!order?.createdAt) return "";
+    const d = new Date(String(order.createdAt).replace(" ", "T"));
+    if (Number.isNaN(d.getTime())) return String(order.createdAt);
+    return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  })();
+
   return (
     <section id="track" className="relative px-4 sm:px-6 py-24 overflow-hidden">
-      {/* ambient glow */}
+      {/* ambient depth — drifting gold/mint orbs + horizon wash */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute top-1/4 -left-32 w-96 h-96 rounded-full bg-gold/8 blur-[120px]" />
-        <div className="absolute bottom-0 -right-32 w-96 h-96 rounded-full bg-mint/6 blur-[120px]" />
+        <motion.div
+          animate={{ x: [0, 44, -24, 0], y: [0, -34, 22, 0] }}
+          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute top-1/4 -left-24 w-[28rem] h-[28rem] rounded-full bg-gold/[0.09] blur-[120px]"
+        />
+        <motion.div
+          animate={{ x: [0, -44, 26, 0], y: [0, 36, -26, 0] }}
+          transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-0 -right-24 w-[28rem] h-[28rem] rounded-full bg-mint/[0.07] blur-[120px]"
+        />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[42rem] h-64 bg-gold/[0.05] blur-[100px]" />
       </div>
 
       <div className="relative max-w-3xl mx-auto">
+        {/* header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-14"
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+          className="text-center mb-12"
         >
-          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-gold-metal mb-4">{t("trackEyebrow")}</p>
-          <h2 className="font-display font-semibold text-4xl sm:text-6xl text-cream">{t("trackTitle")}</h2>
-          <p className="text-muted mt-4 max-w-lg mx-auto">{t("trackSub")}</p>
+          <span className="inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-xl px-4 py-1.5 text-[11px] font-bold uppercase tracking-[0.3em] text-goldLight">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-gold opacity-75 animate-ping" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-goldLight" />
+            </span>
+            {t("trackEyebrow")}
+          </span>
+          <h2 className="mt-5 font-display font-semibold text-4xl sm:text-5xl text-cream leading-tight">
+            {t("trackTitle")}
+          </h2>
+          <p className="text-muted mt-4 max-w-lg mx-auto leading-relaxed">{t("trackSub")}</p>
         </motion.div>
 
-        {/* order id form */}
+        {/* search form */}
         <motion.form
           onSubmit={handleTrack}
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          viewport={{ once: true, margin: "-60px" }}
           transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-          className="relative glass-card rounded-3xl p-4 sm:p-5 flex gap-3 shadow-glass"
+          className="group relative"
         >
-          <input
-            type="text"
-            inputMode="numeric"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={t("trackPlaceholder")}
-            className="flex-1 min-w-0 bg-black/30 border-white/10 focus:border-gold/70 focus:shadow-[0_0_0_3px_rgba(245,158,11,0.15)]"
-          />
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex items-center gap-2 bg-gold-metal text-forest font-bold rounded-2xl px-6 sm:px-7 py-3 text-sm transition hover:brightness-110 disabled:opacity-50 shadow-glowGold"
-          >
-            {loading ? <Spinner className="w-4 h-4" /> : t("trackBtn")}
-          </button>
+          <div className="absolute -inset-px rounded-3xl bg-gradient-to-r from-gold/40 via-white/10 to-mint/40 opacity-50 blur-[2px] transition-opacity duration-300 group-focus-within:opacity-90" />
+          <div className="relative flex items-stretch gap-2 sm:gap-3 rounded-3xl border border-white/10 bg-forest2/70 backdrop-blur-2xl p-2.5 sm:p-3 shadow-glass">
+            <div className="flex items-center pl-3 sm:pl-4 text-muted">
+              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+            </div>
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder={t("trackPlaceholder")}
+              className="flex-1 min-w-0 bg-transparent px-2 py-3 text-sm sm:text-base text-cream placeholder:text-muted/60 outline-none"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-gold-metal text-forest font-bold px-5 sm:px-7 py-3 text-sm transition-all hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:active:scale-100 shadow-glowGold"
+            >
+              {loading ? (
+                <>
+                  <Spinner className="w-4 h-4" />
+                  <span className="hidden sm:inline">{t("trackBtn")}</span>
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 17l6-6 4 4 8-8" />
+                    <path d="M14 7h7v7" />
+                  </svg>
+                  {t("trackBtn")}
+                </>
+              )}
+            </button>
+          </div>
         </motion.form>
 
         {error && (
-          <div className="mt-5 text-sm text-red-300 bg-red-500/10 border border-red-500/25 rounded-2xl px-5 py-4">
-            {error}
-          </div>
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.35 }}
+            className="mt-5 flex items-start gap-3 rounded-2xl border border-red-400/25 bg-red-500/10 backdrop-blur-xl px-5 py-4 text-sm text-red-200"
+          >
+            <svg className="w-5 h-5 mt-0.5 shrink-0 text-red-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4" />
+              <path d="M12 16h.01" />
+            </svg>
+            <span>{error}</span>
+          </motion.div>
         )}
 
         {order && (
           <motion.div
-            initial={{ opacity: 0, y: 28 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-6 relative rounded-[32px] border border-white/10 bg-white/[0.03] backdrop-blur-xl shadow-glass overflow-hidden"
+            initial={{ opacity: 0, y: 28, scale: 0.985 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-8 glow-ring rounded-[32px]"
           >
-            <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-gold/60 to-transparent" />
-            <div className="pointer-events-none absolute -top-20 -right-16 w-56 h-56 rounded-full bg-gold/10 blur-3xl" />
-            <div className="relative p-6 sm:p-8">
-              <div className="flex items-center justify-between gap-3 flex-wrap mb-8">
-                <div>
-                  <p className="text-xs text-muted uppercase tracking-wider font-bold">{t("orderLabel")}</p>
-                  <p className="font-display text-2xl text-gold2">#{String(order.id).padStart(5, "0")}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted uppercase tracking-wider font-bold">{t("trackTotal")}</p>
-                  <p className="font-display text-2xl text-cream">{inr(order.totalAmount)}</p>
-                </div>
-              </div>
+            <div className="relative rounded-[31px] border border-white/10 bg-forest2/60 backdrop-blur-2xl overflow-hidden shadow-glass">
+              {/* glass sheen + corner light pools */}
+              <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/25 to-transparent" />
+              <div className="pointer-events-none absolute -top-24 -right-20 w-72 h-72 rounded-full bg-gold/[0.10] blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-32 -left-20 w-72 h-72 rounded-full bg-mint/[0.08] blur-3xl" />
 
-              {/* status timeline */}
-              <div className="flex items-start">
-                {TRACK_STEPS.map((step, i) => {
-                  const done = i <= currentIdx;
-                  const fill = i < currentIdx;
-                  const isLast = i === TRACK_STEPS.length - 1;
-                  return (
-                    <div key={step} className="flex items-start flex-1">
-                      <div className="flex flex-col items-center flex-1">
-                        <div
-                          className={`w-10 h-10 rounded-full grid place-items-center text-lg font-bold border transition ${done ? "bg-gold-metal text-forest border-gold shadow-glowGoldSoft" : "bg-white/[0.03] text-muted border-white/10"}`}
-                        >
-                          {done ? "✓" : i + 1}
-                        </div>
-                        <p className={`text-[11px] font-bold mt-2.5 text-center leading-tight ${done ? "text-cream" : "text-muted"}`}>
-                          {t(TRACK_STEP_KEYS[i])}
-                        </p>
-                      </div>
-                      {!isLast && (
-                        <div className={`mt-5 flex-1 h-0.5 rounded-full ${fill ? "bg-gold/60" : "bg-white/10"}`} />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* items */}
-              <div className="mt-8 bg-white/[0.02] border border-white/5 rounded-2xl p-4 space-y-2 text-sm">
-                {(order.items || []).map((it) => (
-                  <div key={it.name} className="flex justify-between gap-3">
-                    <span className="text-cream">
-                      {it.name} <span className="text-muted">×{it.quantity}</span>
-                    </span>
-                    <span className="text-muted">{inr(it.price * it.quantity)}</span>
+              <div className="relative p-6 sm:p-8">
+                {/* order identity row */}
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div>
+                    <p className="text-[10px] text-muted uppercase tracking-[0.25em] font-bold">{t("orderLabel")}</p>
+                    <p className="mt-1 font-display text-3xl text-gold2 leading-none">#{String(order.id).padStart(5, "0")}</p>
+                    {order.customerName ? (
+                      <p className="mt-2 text-xs text-muted">{order.customerName}</p>
+                    ) : null}
                   </div>
-                ))}
-              </div>
+                  <div className="text-right">
+                    <p className="text-[10px] text-muted uppercase tracking-[0.25em] font-bold">{t("trackTotal")}</p>
+                    <p className="mt-1 font-display text-3xl text-cream leading-none">{inr(order.totalAmount)}</p>
+                    {orderDate ? <p className="mt-2 text-xs text-muted">{orderDate}</p> : null}
+                  </div>
+                </div>
 
-              <p className="mt-5 text-center text-xs text-muted/60 flex items-center justify-center gap-1.5">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-gold animate-pulse" />
-                {t("trackRefresh")}
-              </p>
+                <div className="my-8 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+                {/* status timeline */}
+                <div className="flex items-start">
+                  {TRACK_STEPS.map((step, i) => {
+                    const done = i <= currentIdx;
+                    const fill = i < currentIdx;
+                    const isLast = i === TRACK_STEPS.length - 1;
+                    return (
+                      <div key={step} className="flex items-start flex-1">
+                        <div className="flex flex-col items-center flex-1">
+                          <div
+                            className={`relative w-11 h-11 rounded-full grid place-items-center text-lg font-bold border transition-all duration-500 ${
+                              done
+                                ? "bg-gold-metal text-forest border-gold shadow-glowGoldSoft"
+                                : "bg-white/[0.03] text-muted border-white/10"
+                            }`}
+                          >
+                            {done ? "✓" : i + 1}
+                            {i === currentIdx && (
+                              <span className="absolute -inset-1.5 rounded-full border border-gold/40 animate-pulseGlow" />
+                            )}
+                          </div>
+                          <p className={`text-[11px] font-bold mt-3 text-center leading-tight ${done ? "text-cream" : "text-muted"}`}>
+                            {t(TRACK_STEP_KEYS[i])}
+                          </p>
+                        </div>
+                        {!isLast && (
+                          <div className="mt-5 flex-1 h-0.5 rounded-full bg-white/10 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full bg-gradient-to-r from-gold to-goldLight transition-all duration-700 ${fill ? "w-full" : "w-0"}`}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* items */}
+                {(order.items || []).length > 0 && (
+                  <div className="mt-8 rounded-2xl border border-white/5 bg-black/20 backdrop-blur-md p-2">
+                    {(order.items || []).map((it, idx) => (
+                      <div
+                        key={it.name}
+                        className={`flex items-center justify-between gap-3 px-4 py-3 text-sm ${idx > 0 ? "border-t border-white/5" : ""}`}
+                      >
+                        <span className="text-cream">
+                          {it.name} <span className="text-muted">×{it.quantity}</span>
+                        </span>
+                        <span className="text-muted font-medium">{inr(it.price * it.quantity)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* live refresh footer */}
+                <div className="mt-7 flex items-center justify-center gap-2 text-xs text-muted/70">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-gold opacity-75 animate-ping" />
+                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-goldLight" />
+                  </span>
+                  {t("trackRefresh")}
+                </div>
+              </div>
             </div>
           </motion.div>
         )}
