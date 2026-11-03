@@ -546,25 +546,38 @@ function Hero({ heroImageUrl }) {
   const textY = useTransform(scrollYProgress, [0, 0.5], [0, -70]);
   const fade = useTransform(scrollYProgress, [0, 0.7], [1, 0.15]);
 
+  // staggered entrance orchestration
+  const heroVariant = {
+    hidden: {},
+    show: { transition: { staggerChildren: 0.14, delayChildren: 0.12 } }
+  };
+  const itemVariant = {
+    hidden: { opacity: 0, y: 28 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] } }
+  };
+
   return (
     <section id="top" ref={ref} className="relative min-h-screen flex items-center overflow-hidden">
-      {/* layered ambient orbs with drift */}
+      {/* layered ambient orbs with drift — gold/mint glow */}
       <div className="pointer-events-none absolute inset-0">
         <motion.div style={{ y: orbY }} className="absolute -top-32 -left-32 w-[36rem] h-[36rem] rounded-full bg-gold/[0.15] blur-[130px] animate-orbDrift" />
         <motion.div style={{ y: orbY }} className="absolute bottom-0 right-0 w-[30rem] h-[30rem] rounded-full bg-mint/10 blur-[130px]" />
+        <motion.div style={{ y: orbY }} className="absolute top-1/4 right-[8%] w-[24rem] h-[24rem] rounded-full bg-gold/[0.10] blur-[120px] animate-orbDrift" />
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] rounded-full bg-forest3/50 blur-[90px]" />
       </div>
 
-      {/* background image + cinematic vignette */}
+      {/* hero image — LCP: eager + high priority, NEVER lazy */}
       <img
         src={heroImageUrl || DEFAULT_HERO_IMAGE}
         alt=""
+        fetchPriority="high"
+        loading="eager"
         className="absolute inset-0 w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-forest/60" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(5,13,8,0.45)_60%,rgba(5,13,8,0.94)_100%)]" />
 
-      {/* sugarcane decor — lightweight stroke SVGs, no blur */}
+      {/* sugarcane decor — lightweight stroke SVGs */}
       <motion.div
         className="pointer-events-none absolute top-24 left-[6%] text-gold opacity-10"
         style={{ rotate: -18 }}
@@ -607,65 +620,90 @@ function Hero({ heroImageUrl }) {
         </div>
       </motion.div>
 
-      <motion.div style={{ y: textY, opacity: fade }} className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 pt-28 pb-24 text-center">
+      <motion.div
+        style={{ y: textY, opacity: fade }}
+        className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 pt-28 pb-24 text-center"
+        variants={heroVariant}
+        initial="hidden"
+        animate="show"
+      >
+        {/* eyebrow pill */}
         <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.8 }}
-          className="inline-flex items-center gap-2 text-[11px] sm:text-xs font-bold uppercase tracking-[0.35em] text-gold-metal mb-7 glass-card px-5 py-2 rounded-full"
+          variants={itemVariant}
+          className="inline-flex items-center gap-2.5 text-[11px] sm:text-xs font-bold uppercase tracking-[0.35em] rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-xl px-5 py-2 text-goldLight shadow-glass"
         >
-          <span className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse" /> Sugarcane Juice
+          <span className="relative flex h-1.5 w-1.5">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-gold opacity-75 animate-ping" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-goldLight" />
+          </span>
+          Sugarcane Juice
         </motion.p>
 
         <h1 className="font-display font-semibold text-6xl sm:text-8xl leading-[0.95] tracking-tight">
           <AnimatedWords text={t("heroLine1")} className="block text-cream" start={0.3} />
-          <AnimatedWords text={t("heroLine2")} className="block" start={0.75} goldWords={[1]} />
-          <AnimatedWords text={t("heroLine3")} className="block text-gold-metal" start={1.2} />
+          <motion.span
+            variants={itemVariant}
+            className="mt-2 block bg-[linear-gradient(110deg,#f9e3a8_0%,#f59e0b_28%,#fbbf24_50%,#f9e3a8_72%,#d97706_92%)] bg-[length:200%_auto] bg-clip-text text-transparent animate-shimmer"
+          >
+            {t("heroLine2")}
+          </motion.span>
+          <AnimatedWords text={t("heroLine3")} className="block text-cream" start={1.1} />
         </h1>
+
         <motion.p
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.7, duration: 0.8 }}
-          className="mt-7 text-muted max-w-xl mx-auto text-base sm:text-lg"
+          variants={itemVariant}
+          className="mt-7 text-muted max-w-xl mx-auto text-base sm:text-lg leading-relaxed"
         >
           {t("heroSub")}
         </motion.p>
 
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.9, duration: 0.8 }}
-          className="mt-11 flex flex-wrap items-center justify-center gap-3.5"
-        >
-          <button
+        <motion.div variants={itemVariant} className="mt-11 flex flex-wrap items-center justify-center gap-3.5">
+          <motion.button
             onClick={() => scrollTo("menu")}
-            className="inline-flex items-center gap-2 bg-gold-metal text-forest font-bold rounded-full px-9 py-4 text-sm transition hover:brightness-110 shadow-glowGold"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.96 }}
+            className="group inline-flex items-center gap-2.5 bg-gold-metal text-forest font-bold rounded-full px-9 py-4 text-sm shadow-glowGold transition-shadow hover:shadow-[0_0_60px_-12px_rgba(245,158,11,0.6)]"
           >
             {t("orderNow")}
-          </button>
-          <button
+            <svg className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12h14" />
+              <path d="m12 5 7 7-7 7" />
+            </svg>
+          </motion.button>
+
+          <motion.button
             onClick={() => scrollTo("menu")}
-            className="inline-flex items-center gap-2 glass-card text-cream rounded-full px-9 py-4 text-sm font-bold transition hover:border-gold/50"
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.97 }}
+            className="group inline-flex items-center gap-2.5 rounded-full border border-white/10 bg-white/[0.04] backdrop-blur-xl text-cream px-9 py-4 text-sm font-bold shadow-glass transition-all hover:border-gold/50 hover:text-goldLight hover:shadow-glowGoldSoft"
           >
             {t("viewMenu")}
-          </button>
+          </motion.button>
         </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2.4, duration: 0.8 }}
-          className="mt-16 flex justify-center"
-        >
-          <button onClick={() => scrollTo("menu")} className="text-muted/60 hover:text-gold transition" aria-label="Scroll to menu">
-            <motion.span
-              className="block text-xl"
-              animate={{ y: [0, 8, 0] }}
+        <motion.div variants={itemVariant} className="mt-16 flex justify-center">
+          <motion.button
+            onClick={() => scrollTo("menu")}
+            className="w-12 h-12 grid place-items-center rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-md text-gold/80 hover:text-gold hover:border-gold/40 hover:shadow-glowGoldSoft transition-all"
+            aria-label="Scroll to menu"
+            whileHover={{ y: 3 }}
+            whileTap={{ scale: 0.92 }}
+          >
+            <motion.svg
+              className="w-5 h-5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              animate={{ y: [0, 6, 0] }}
               transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
             >
-              ↓
-            </motion.span>
-          </button>
+              <path d="M12 5v14" />
+              <path d="m19 12-7 7-7-7" />
+            </motion.svg>
+          </motion.button>
         </motion.div>
       </motion.div>
     </section>
