@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { get, run } from "../db.js";
 import requireAdmin from "../middleware/requireAdmin.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 const router = Router();
 
@@ -16,7 +17,7 @@ function parsePhone(raw) {
  * Returns { phone, stamps, scratchCards, totalFreeGlasses }.
  * Unknown phones resolve to zeros.
  */
-router.get("/:phone", async (req, res) => {
+router.get("/:phone", asyncHandler(async (req, res) => {
   const phone = parsePhone(req.params.phone);
   if (!phone) return res.status(400).json({ error: "Invalid phone number" });
 
@@ -35,7 +36,7 @@ router.get("/:phone", async (req, res) => {
     console.error("Loyalty lookup failed:", err.message);
     return res.status(500).json({ error: "Failed to load loyalty data" });
   }
-});
+}));
 
 /**
  * POST /api/loyalty/scratch/:phone — public, redeem one scratch card.
@@ -43,7 +44,7 @@ router.get("/:phone", async (req, res) => {
  * The guarded UPDATE prevents double-spend: it only touches rows with
  * scratchCards > 0, so two concurrent scratches can't both win.
  */
-router.post("/scratch/:phone", async (req, res) => {
+router.post("/scratch/:phone", asyncHandler(async (req, res) => {
   const phone = parsePhone(req.params.phone);
   if (!phone) return res.status(400).json({ error: "Invalid phone number" });
 
@@ -80,13 +81,13 @@ router.post("/scratch/:phone", async (req, res) => {
     console.error("Scratch card failed:", err.message);
     return res.status(500).json({ error: "Failed to scratch card" });
   }
-});
+}));
 
 /**
  * POST /api/loyalty/redeem/:phone — admin only.
  * Resets totalFreeGlasses to 0 after the owner hands out the free juice.
  */
-router.post("/redeem/:phone", requireAdmin, async (req, res) => {
+router.post("/redeem/:phone", requireAdmin, asyncHandler(async (req, res) => {
   const phone = parsePhone(req.params.phone);
   if (!phone) return res.status(400).json({ error: "Invalid phone number" });
 
@@ -112,6 +113,6 @@ router.post("/redeem/:phone", requireAdmin, async (req, res) => {
     console.error("Redeem failed:", err.message);
     return res.status(500).json({ error: "Failed to redeem glasses" });
   }
-});
+}));
 
 export default router;

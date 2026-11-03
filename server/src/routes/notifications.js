@@ -2,6 +2,7 @@ import { Router } from "express";
 import { run } from "../db.js";
 import requireAdmin from "../middleware/requireAdmin.js";
 import { VAPID_PUBLIC_KEY, notifyAllSubscribers } from "../push.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 const router = Router();
 
@@ -11,7 +12,7 @@ router.get("/vapid", (_req, res) => {
 });
 
 /** POST /api/notifications/subscribe — admin only, save the owner's push subscription. */
-router.post("/subscribe", requireAdmin, async (req, res) => {
+router.post("/subscribe", requireAdmin, asyncHandler(async (req, res) => {
   const { endpoint, keys } = req.body || {};
   if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
     return res.status(400).json({ error: "endpoint, keys.p256dh and keys.auth are required" });
@@ -28,10 +29,10 @@ router.post("/subscribe", requireAdmin, async (req, res) => {
     console.error("Subscribe error:", err.message);
     res.status(500).json({ error: "Failed to save subscription" });
   }
-});
+}));
 
 /** POST /api/notifications/subscribe-customer — public, save a customer's push subscription. */
-router.post("/subscribe-customer", async (req, res) => {
+router.post("/subscribe-customer", asyncHandler(async (req, res) => {
   const { endpoint, keys } = req.body || {};
   if (!endpoint || !keys || !keys.p256dh || !keys.auth) {
     return res.status(400).json({ error: "endpoint, keys.p256dh and keys.auth are required" });
@@ -48,10 +49,10 @@ router.post("/subscribe-customer", async (req, res) => {
     console.error("Customer subscribe error:", err.message);
     res.status(500).json({ error: "Failed to save subscription" });
   }
-});
+}));
 
 /** POST /api/notifications/broadcast — admin only, send a push to all customer subscriptions. */
-router.post("/broadcast", requireAdmin, async (req, res) => {
+router.post("/broadcast", requireAdmin, asyncHandler(async (req, res) => {
   const { title, body, data = {} } = req.body || {};
   if (!title || !body) {
     return res.status(400).json({ error: "title and body are required" });
@@ -64,10 +65,10 @@ router.post("/broadcast", requireAdmin, async (req, res) => {
     console.error("Broadcast error:", err.message);
     res.status(500).json({ error: "Broadcast failed" });
   }
-});
+}));
 
 /** POST /api/notifications/test — admin only, send a test push to the owner. */
-router.post("/test", requireAdmin, async (_req, res) => {
+router.post("/test", requireAdmin, asyncHandler(async (_req, res) => {
   try {
     const result = await notifyAllSubscribers({
       title: "Sugarcane Juice",
@@ -79,6 +80,6 @@ router.post("/test", requireAdmin, async (_req, res) => {
     console.error("Test push error:", err.message);
     res.status(500).json({ error: "Push failed" });
   }
-});
+}));
 
 export default router;

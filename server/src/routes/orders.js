@@ -2,6 +2,7 @@ import { Router } from "express";
 import { run, all, get } from "../db.js";
 import requireAdmin from "../middleware/requireAdmin.js";
 import { notifyAllSubscribers } from "../push.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 const router = Router();
 
@@ -13,7 +14,7 @@ const DELIVERY_STATUSES = ["Pending", "Preparing", "Out for Delivery", "Delivere
  *         items: [{ menuItemId, quantity }] }
  * Server recomputes totals from the Menu table (no trusting client prices).
  */
-router.post("/", async (req, res) => {
+router.post("/", asyncHandler(async (req, res) => {
   const { customerName, customerPhone, address = "", mode = "Delivery", items = [], paymentMethod = "UPI" } = req.body || {};
   const method = String(paymentMethod).trim().toUpperCase() === "COD" ? "COD" : "UPI";
 
@@ -116,13 +117,13 @@ router.post("/", async (req, res) => {
   }).catch((err) => console.error("Order push error:", err.message));
 
   res.status(201).json({ order });
-});
+}));
 
 /**
  * GET /api/orders/track/:id — public live tracking by order ID.
  * Returns only tracking-safe fields (no UTR, phone, or payment details).
  */
-router.get("/track/:id", async (req, res) => {
+router.get("/track/:id", asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) {
     return res.status(400).json({ error: "Invalid order id" });
@@ -134,22 +135,22 @@ router.get("/track/:id", async (req, res) => {
   if (!order) return res.status(404).json({ error: "Order not found" });
   order.items = await all("SELECT name, quantity, price FROM OrderItems WHERE orderId = ?", [id]);
   res.json({ order });
-});
+}));
 
 // Admin — all orders with items.
-router.get("/", requireAdmin, async (_req, res) => {
+router.get("/", requireAdmin, asyncHandler(async (_req, res) => {
   const orders = await all("SELECT * FROM Orders ORDER BY createdAt DESC, id DESC");
   for (const o of orders) {
     o.items = await all("SELECT menuItemId, name, quantity, price FROM OrderItems WHERE orderId = ?", [o.id]);
   }
   res.json({ orders });
-});
+}));
 
 // Admin — wipe every order + order item so the owner starts fresh.
 // OrderItems cascade via FK, but we delete explicitly so both backends
 // (local SQLite and Turso) behave identically. Irreversible — the
 // frontend confirms before calling.
-router.post("/clear-all", requireAdmin, async (_req, res) => {
+router.post("/clear-all", requireAdmin, asyncHandler(async (_req, res) => {
   try {
     await run("DELETE FROM OrderItems");
     const { changes } = await run("DELETE FROM Orders");
@@ -158,11 +159,11 @@ router.post("/clear-all", requireAdmin, async (_req, res) => {
     console.error("Clear all orders failed:", err.message);
     res.status(500).json({ error: "Failed to clear orders" });
   }
-});
+}));
 
 // Admin — analytics rollups: today, this month, verified payment split,
 // optional custom date range, and the last 7 days for the sales graph.
-router.get("/stats", requireAdmin, async (req, res) => {
+router.get("/stats", requireAdmin, asyncHandler(async (req, res) => {
   const now = new Date();
   const y = now.getFullYear();
   const m = now.getMonth();
@@ -267,12 +268,12 @@ router.get("/stats", requireAdmin, async (req, res) => {
       last7Days
     }
   });
-});
+}));
 
 // Admin — CRM: unique customers grouped by phone with loyalty stamps.
 // Name is the most recent one on file; stamps join against the Loyalty
 // table (one row per phone).
-router.get("/customers-list", requireAdmin, async (_req, res) => {
+router.get("/customers-list", requireAdmin, asyncHandler(async (_req, res) => {
   const customers = await all(
     `SELECT
        o.customerPhone AS phone,
@@ -286,10 +287,10 @@ router.get("/customers-list", requireAdmin, async (_req, res) => {
      ORDER BY orderCount DESC, totalSpent DESC`
   );
   res.json({ customers });
-});
+}));
 
 // Admin — mark payment verified (UTR checked by owner).
-router.patch("/:id/verify", requireAdmin, async (req, res) => {
+router.patch("/:id/verify", requireAdmin, asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   const order = await get("SELECT * FROM Orders WHERE id = ?", [id]);
   if (!order) return res.status(404).json({ error: "Order not found" });
@@ -301,10 +302,10 @@ router.patch("/:id/verify", requireAdmin, async (req, res) => {
   }
   await run("UPDATE Orders SET utrNumber = ?, status = ? WHERE id = ?", [utr, status, id]);
   res.json({ order: await get("SELECT * FROM Orders WHERE id = ?", [id]) });
-});
+}));
 
 // Admin — update delivery status (Pending → Preparing → Out for Delivery → Delivered).
-router.patch("/:id/status", requireAdmin, async (req, res) => {
+router.patch("/:id/status", requireAdmin, asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   const { status } = req.body || {};
   const next = String(status || "").trim();
@@ -315,15 +316,15 @@ router.patch("/:id/status", requireAdmin, async (req, res) => {
   if (!order) return res.status(404).json({ error: "Order not found" });
   await run("UPDATE Orders SET deliveryStatus = ? WHERE id = ?", [next, id]);
   res.json({ order: await get("SELECT * FROM Orders WHERE id = ?", [id]) });
-});
+}));
 
 // Admin — delete an order (spam/cancelled). OrderItems cascade via FK.
-router.delete("/:id", requireAdmin, async (req, res) => {
+router.delete("/:id", requireAdmin, asyncHandler(async (req, res) => {
   const id = Number(req.params.id);
   const order = await get("SELECT * FROM Orders WHERE id = ?", [id]);
   if (!order) return res.status(404).json({ error: "Order not found" });
   await run("DELETE FROM Orders WHERE id = ?", [id]);
   res.json({ ok: true });
-});
+}));
 
 export default router;

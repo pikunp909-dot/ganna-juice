@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { run, get } from "../db.js";
 import requireAdmin from "../middleware/requireAdmin.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 const router = Router();
 
@@ -17,7 +18,7 @@ function todayKey() {
  * POST /api/analytics/track-visit — public. Increments today's visit count.
  * Idempotent per client via localStorage dedupe on the frontend.
  */
-router.post("/track-visit", async (_req, res) => {
+router.post("/track-visit", asyncHandler(async (_req, res) => {
   try {
     await run(
       `INSERT INTO Analytics (date, visits) VALUES (?, 1)
@@ -29,10 +30,10 @@ router.post("/track-visit", async (_req, res) => {
     console.error("Track visit failed:", err.message);
     res.status(500).json({ error: "Failed to track visit" });
   }
-});
+}));
 
 /** GET /api/analytics/visits — admin. Today + all-time visit totals. */
-router.get("/visits", requireAdmin, async (_req, res) => {
+router.get("/visits", requireAdmin, asyncHandler(async (_req, res) => {
   const key = todayKey();
   const todayRow = await get("SELECT visits FROM Analytics WHERE date = ?", [key]);
   const totalRow = await get("SELECT COALESCE(SUM(visits), 0) AS total FROM Analytics");
@@ -40,6 +41,6 @@ router.get("/visits", requireAdmin, async (_req, res) => {
     today: Number(todayRow?.visits || 0),
     total: Number(totalRow?.total || 0)
   });
-});
+}));
 
 export default router;
